@@ -1,5 +1,6 @@
 package cn.lili.controller.other;
 
+import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.vo.ResultMessage;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+
 /**
  * 买家端,意见反馈接口
  *
@@ -20,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @Api(tags = "买家端,意见反馈接口")
-@RequestMapping("/buyer/feedback")
+@RequestMapping("/buyer/other/feedback")
 public class FeedbackBuyerController {
 
     /**
@@ -29,9 +32,10 @@ public class FeedbackBuyerController {
     @Autowired
     private FeedbackService feedbackService;
 
+    @PreventDuplicateSubmissions
     @ApiOperation(value = "添加意见反馈")
     @PostMapping()
-    public ResultMessage<Object> save(Feedback feedback) {
+    public ResultMessage<Object> save(@Valid Feedback feedback) {
         feedback.setUserName(UserContext.getCurrentUser().getNickName());
         feedbackService.save(feedback);
         return ResultUtil.success();

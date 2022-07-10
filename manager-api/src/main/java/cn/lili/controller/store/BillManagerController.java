@@ -4,6 +4,7 @@ import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.order.order.entity.dos.StoreFlow;
+import cn.lili.modules.order.order.service.StoreFlowService;
 import cn.lili.modules.store.entity.dos.Bill;
 import cn.lili.modules.store.entity.dto.BillSearchParams;
 import cn.lili.modules.store.entity.vos.BillListVO;
@@ -22,14 +23,17 @@ import javax.validation.constraints.NotNull;
  * 管理端,商家结算单接口
  *
  * @author Chopper
- * @since: 2020/11/17 7:23 下午
+ * @since 2020/11/17 7:23 下午
  */
 @RestController
 @Api(tags = "管理端,商家结算单接口")
-@RequestMapping("/manager/store/bill")
+@RequestMapping("/manager/order/bill")
 public class BillManagerController {
     @Autowired
     private BillService billService;
+
+    @Autowired
+    private StoreFlowService storeFlowService;
 
     @ApiOperation(value = "通过id获取结算单")
     @ApiImplicitParam(name = "id", value = "结算单ID", required = true, paramType = "path")
@@ -51,7 +55,7 @@ public class BillManagerController {
     })
     @GetMapping(value = "/{id}/getStoreFlow")
     public ResultMessage<IPage<StoreFlow>> getStoreFlow(@PathVariable String id, String flowType, PageVO pageVO) {
-        return ResultUtil.data(billService.getStoreFlow(id, flowType, pageVO));
+        return ResultUtil.data(storeFlowService.getStoreFlow(id, flowType, pageVO));
     }
 
     @ApiOperation(value = "支付结算单")

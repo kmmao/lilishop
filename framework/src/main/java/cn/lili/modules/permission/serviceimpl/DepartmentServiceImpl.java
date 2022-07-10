@@ -27,7 +27,6 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class DepartmentServiceImpl extends ServiceImpl<DepartmentMapper, Department> implements DepartmentService {
 
     /**
@@ -42,6 +41,7 @@ public class DepartmentServiceImpl extends ServiceImpl<DepartmentMapper, Departm
     private DepartmentRoleService departmentRoleService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteByIds(List<String> ids) {
         QueryWrapper<AdminUser> queryWrapper = new QueryWrapper<>();
         queryWrapper.in("department_id", ids);

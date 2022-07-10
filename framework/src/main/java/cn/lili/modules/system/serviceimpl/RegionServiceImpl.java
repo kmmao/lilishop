@@ -1,13 +1,13 @@
 package cn.lili.modules.system.serviceimpl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.cache.Cache;
 import cn.lili.common.utils.HttpClientUtils;
 import cn.lili.common.utils.SnowFlake;
-import cn.lili.common.utils.StringUtils;
-import cn.lili.modules.system.mapper.RegionMapper;
-import cn.lili.modules.system.service.RegionService;
 import cn.lili.modules.system.entity.dos.Region;
 import cn.lili.modules.system.entity.vo.RegionVO;
+import cn.lili.modules.system.mapper.RegionMapper;
+import cn.lili.modules.system.service.RegionService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -16,7 +16,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -27,13 +26,12 @@ import java.util.*;
  * @since 2020/12/2 11:11
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region> implements RegionService {
 
     /**
      * 同步请求地址
      */
-    private String syncUrl = "https://restapi.amap.com/v3/config/district?subdistrict=4&key=e456d77800e2084a326f7b777278f89d";
+    private final String syncUrl = "https://restapi.amap.com/v3/config/district?subdistrict=4&key=e456d77800e2084a326f7b777278f89d";
 
     @Autowired
     private Cache cache;
@@ -43,12 +41,12 @@ public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region> impleme
         try {
 
             //清空数据
-            QueryWrapper<Region> queryWrapper = new QueryWrapper();
+            QueryWrapper<Region> queryWrapper = new QueryWrapper<>();
             queryWrapper.ne("id", "-1");
             this.remove(queryWrapper);
 
             //读取数据
-            String jsonString = HttpClientUtils.doGet(StringUtils.isEmpty(url) ? syncUrl : url, null);
+            String jsonString = HttpClientUtils.doGet(CharSequenceUtil.isEmpty(url) ? syncUrl : url, null);
 
             //构造存储数据库的对象集合
             List<Region> regions = this.initData(jsonString);
@@ -63,17 +61,31 @@ public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region> impleme
         }
     }
 
+    /**
+     * 根据最后一级名称获取改所有上级地区id
+     *
+     * @param lastName 最后一级名称
+     * @return 全部地区id
+     */
+    @Override
+    public String getItemByLastName(String lastName) {
+        StringBuilder sql = new StringBuilder();
+        LambdaQueryWrapper<Region> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(Region::getName, lastName);
+        Region region = this.getOne(lambdaQueryWrapper, false);
+        if (region != null) {
+            sql.append(region.getPath()).append(",").append(region.getId());
+            return sql.toString().replace(",0,","");
+        }
+        return null;
+    }
+
     @Override
     public List<Region> getItem(String id) {
         LambdaQueryWrapper<Region> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(Region::getParentId, id);
         List<Region> regions = this.list(lambdaQueryWrapper);
-        regions.sort(new Comparator<Region>() {
-            @Override
-            public int compare(Region o1, Region o2) {
-                return o1.getOrderNum().compareTo(o2.getOrderNum());
-            }
-        });
+        regions.sort(Comparator.comparing(Region::getOrderNum));
         return regions;
     }
 
@@ -91,26 +103,26 @@ public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region> impleme
             result = ArrayUtils.remove(result, 0);
             result = ArrayUtils.remove(result, 0);
             //地址id
-            String regionIds = "";
+            StringBuilder regionIds = new StringBuilder();
             //地址名称
-            String regionNames = "";
+            StringBuilder regionNames = new StringBuilder();
             //循环构建新的数据
             for (String regionId : result) {
                 Region reg = this.baseMapper.selectById(regionId);
                 if (reg != null) {
-                    regionIds += regionId + ",";
-                    regionNames += reg.getName() + ",";
+                    regionIds.append(regionId).append(",");
+                    regionNames.append(reg.getName()).append(",");
                 }
             }
-            regionIds += region.getId();
-            regionNames += region.getName();
+            regionIds.append(region.getId());
+            regionNames.append(region.getName());
             //构建返回数据
             Map<String, Object> obj = new HashMap<>(2);
-            obj.put("id", regionIds);
-            obj.put("name", regionNames);
+            obj.put("id", regionIds.toString());
+            obj.put("name", regionNames.toString());
             return obj;
         }
-        return null;
+        return Collections.emptyMap();
     }
 
     @Override
@@ -123,9 +135,7 @@ public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region> impleme
 
     private List<RegionVO> regionTree(List<Region> regions) {
         List<RegionVO> regionVOS = new ArrayList<>();
-        regions.stream().filter(region -> ("province").equals(region.getLevel())).forEach(item -> {
-            regionVOS.add(new RegionVO(item));
-        });
+        regions.stream().filter(region -> ("province").equals(region.getLevel())).forEach(item -> regionVOS.add(new RegionVO(item)));
         regions.stream().filter(region -> ("city").equals(region.getLevel())).forEach(item -> {
             for (RegionVO region : regionVOS) {
                 if (region.getId().equals(item.getParentId())) {
@@ -240,9 +250,9 @@ public class RegionServiceImpl extends ServiceImpl<RegionMapper, Region> impleme
         record.setParentId(parentId);
         record.setOrderNum(order);
         record.setId(String.valueOf(SnowFlake.getId()));
-        StringBuffer megName = new StringBuffer(",");
+        StringBuilder megName = new StringBuilder(",");
         for (int i = 0; i < ids.length; i++) {
-            megName = megName.append(ids[i])  ;
+            megName.append(ids[i]);
             if (i < ids.length - 1) {
                 megName.append(",");
             }

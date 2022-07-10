@@ -1,25 +1,30 @@
 package cn.lili.modules.goods.entity.dos;
 
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.http.HtmlUtil;
 import cn.hutool.json.JSONUtil;
-import cn.lili.mybatis.BaseEntity;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.modules.goods.entity.dto.GoodsOperationDTO;
 import cn.lili.modules.goods.entity.enums.GoodsAuthEnum;
+import cn.lili.modules.goods.entity.enums.GoodsSalesModeEnum;
 import cn.lili.modules.goods.entity.enums.GoodsStatusEnum;
+import cn.lili.modules.goods.entity.enums.GoodsTypeEnum;
+import cn.lili.mybatis.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.xkcoding.http.util.StringUtil;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.validator.constraints.Length;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 /**
@@ -28,25 +33,24 @@ import java.util.Map;
  * @author pikachu
  * @since 2020-02-23 9:14:33
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Entity
-@Table(name = "li_goods")
 @TableName("li_goods")
 @ApiModel(value = "商品")
 public class Goods extends BaseEntity {
 
     private static final long serialVersionUID = 370683495251252601L;
-    /**
-     * 商品名称
-     */
+
     @ApiModelProperty(value = "商品名称")
+    @NotEmpty(message = "商品名称不能为空")
+    @Length(max = 100, message = "商品名称太长，不能超过100个字符")
     private String goodsName;
-    /**
-     * 商品编号
-     */
-    @Length(max = 30, message = "商品规格编号太长，不能超过30个字符")
-    @ApiModelProperty(value = "商品编号")
-    private String sn;
+
+    @ApiModelProperty(value = "商品价格", required = true)
+    @NotNull(message = "商品价格不能为空")
+    @Min(value = 0, message = "商品价格不能为负数")
+    @Max(value = 99999999, message = "商品价格不能超过99999999")
+    private Double price;
 
     @ApiModelProperty(value = "品牌id")
     private String brandId;
@@ -57,136 +61,82 @@ public class Goods extends BaseEntity {
     @ApiModelProperty(value = "计量单位")
     private String goodsUnit;
 
-    /**
-     * 卖点
-     */
+
+    @Length(max = 60, message = "商品卖点太长，不能超过60个字符")
     @ApiModelProperty(value = "卖点")
     private String sellingPoint;
 
     /**
-     * 重量
-     */
-    @ApiModelProperty(value = "重量")
-    @Max(value = 99999999, message = "重量不能超过99999999")
-    private Double weight;
-    /**
-     * 上架状态
-     *
      * @see GoodsStatusEnum
      */
     @ApiModelProperty(value = "上架状态")
     private String marketEnable;
-    /**
-     * 详情
-     */
+
     @ApiModelProperty(value = "详情")
     private String intro;
-    /**
-     * 商品价格
-     */
-    @Max(value = 99999999, message = "价格不能超过99999999")
-    @ApiModelProperty(value = "商品价格")
-    private Double price;
-    /**
-     * 成本价格
-     */
-    @Max(value = 99999999, message = "成本价格99999999")
-    @ApiModelProperty(value = "成本价格")
-    private Double cost;
 
-    /**
-     * 购买数量
-     */
     @ApiModelProperty(value = "购买数量")
     private Integer buyCount;
-    /**
-     * 库存
-     */
+
     @Max(value = 99999999, message = "库存不能超过99999999")
     @ApiModelProperty(value = "库存")
     private Integer quantity;
-    /**
-     * 商品好评率
-     */
+
     @ApiModelProperty(value = "商品好评率")
     private Double grade;
-    /**
-     * 缩略图路径
-     */
+
     @ApiModelProperty(value = "缩略图路径")
     private String thumbnail;
-    /**
-     * 小图路径
-     */
+
     @ApiModelProperty(value = "小图路径")
     private String small;
-    /**
-     * 原图路径
-     */
+
     @ApiModelProperty(value = "原图路径")
     private String original;
-    /**
-     * 店铺分类id
-     */
+
     @ApiModelProperty(value = "店铺分类id")
     private String storeCategoryPath;
-    /**
-     * 评论数量
-     */
+
     @ApiModelProperty(value = "评论数量")
     private Integer commentNum;
-    /**
-     * 卖家id
-     */
+
     @ApiModelProperty(value = "卖家id")
     private String storeId;
-    /**
-     * 卖家名字
-     */
+
     @ApiModelProperty(value = "卖家名字")
     private String storeName;
-    /**
-     * 运费模板id
-     */
+
     @ApiModelProperty(value = "运费模板id")
     private String templateId;
+
     /**
-     * 审核状态
-     *
      * @see GoodsAuthEnum
      */
     @ApiModelProperty(value = "审核状态")
-    private String isAuth;
-    /**
-     * 审核信息
-     */
+    private String authFlag;
+
     @ApiModelProperty(value = "审核信息")
     private String authMessage;
-    /**
-     * 下架原因
-     */
+
     @ApiModelProperty(value = "下架原因")
     private String underMessage;
-    /**
-     * 是否自营
-     */
+
     @ApiModelProperty(value = "是否自营")
     private Boolean selfOperated;
-    /**
-     * 商品移动端详情
-     */
+
     @ApiModelProperty(value = "商品移动端详情")
     private String mobileIntro;
-    /**
-     * 商品视频
-     */
+
     @ApiModelProperty(value = "商品视频")
     private String goodsVideo;
 
 
     @ApiModelProperty(value = "是否为推荐商品", required = true)
-    private boolean recommend;
+    private Boolean recommend;
 
+    /**
+     * @see cn.lili.modules.goods.entity.enums.GoodsSalesModeEnum
+     */
     @ApiModelProperty(value = "销售模式", required = true)
     private String salesModel;
 
@@ -198,7 +148,6 @@ public class Goods extends BaseEntity {
     private String goodsType;
 
     @ApiModelProperty(value = "商品参数json", hidden = true)
-    @Column(columnDefinition = "TEXT")
     @JsonIgnore
     private String params;
 
@@ -211,9 +160,6 @@ public class Goods extends BaseEntity {
         this.categoryPath = goodsOperationDTO.getCategoryPath();
         this.storeCategoryPath = goodsOperationDTO.getStoreCategoryPath();
         this.brandId = goodsOperationDTO.getBrandId();
-        this.sn = goodsOperationDTO.getSn();
-        this.price = goodsOperationDTO.getPrice();
-        this.weight = goodsOperationDTO.getWeight();
         this.templateId = goodsOperationDTO.getTemplateId();
         this.recommend = goodsOperationDTO.getRecommend();
         this.sellingPoint = goodsOperationDTO.getSellingPoint();
@@ -221,38 +167,51 @@ public class Goods extends BaseEntity {
         this.goodsUnit = goodsOperationDTO.getGoodsUnit();
         this.intro = goodsOperationDTO.getIntro();
         this.mobileIntro = goodsOperationDTO.getMobileIntro();
-        this.cost = goodsOperationDTO.getCost();
         this.goodsVideo = goodsOperationDTO.getGoodsVideo();
+        this.price = goodsOperationDTO.getPrice();
         if (goodsOperationDTO.getGoodsParamsDTOList() != null && goodsOperationDTO.getGoodsParamsDTOList().isEmpty()) {
             this.params = JSONUtil.toJsonStr(goodsOperationDTO.getGoodsParamsDTOList());
         }
         //如果立即上架则
-        this.marketEnable = goodsOperationDTO.getRelease() ? GoodsStatusEnum.UPPER.name() : GoodsStatusEnum.DOWN.name();
+        this.marketEnable = Boolean.TRUE.equals(goodsOperationDTO.getRelease()) ? GoodsStatusEnum.UPPER.name() : GoodsStatusEnum.DOWN.name();
         this.goodsType = goodsOperationDTO.getGoodsType();
         this.grade = 100D;
 
         //循环sku，判定sku是否有效
         for (Map<String, Object> sku : goodsOperationDTO.getSkuList()) {
             //判定参数不能为空
-            if (sku.get("sn") == null) {
+            if (!sku.containsKey("sn") || sku.get("sn") == null) {
                 throw new ServiceException(ResultCode.GOODS_SKU_SN_ERROR);
             }
-            if (StringUtil.isEmpty(sku.get("price").toString()) || Convert.toDouble(sku.get("price")) <= 0) {
+            if ((!sku.containsKey("price") || StringUtil.isEmpty(sku.get("price").toString()) || Convert.toDouble(sku.get("price")) <= 0) && !goodsOperationDTO.getSalesModel().equals(GoodsSalesModeEnum.WHOLESALE.name())) {
                 throw new ServiceException(ResultCode.GOODS_SKU_PRICE_ERROR);
             }
-            if (StringUtil.isEmpty(sku.get("cost").toString()) || Convert.toDouble(sku.get("cost")) <= 0) {
+            if ((!sku.containsKey("cost") || StringUtil.isEmpty(sku.get("cost").toString()) || Convert.toDouble(sku.get("cost")) <= 0) && !goodsOperationDTO.getSalesModel().equals(GoodsSalesModeEnum.WHOLESALE.name())) {
                 throw new ServiceException(ResultCode.GOODS_SKU_COST_ERROR);
             }
             //虚拟商品没有重量字段
-            if (sku.containsKey("weight")) {
-                if (StringUtil.isEmpty(sku.get("weight").toString()) || Convert.toDouble(sku.get("weight").toString()) < 0) {
-                    throw new ServiceException(ResultCode.GOODS_SKU_WEIGHT_ERROR);
-                }
+            if (this.goodsType.equals(GoodsTypeEnum.PHYSICAL_GOODS.name()) && (!sku.containsKey("weight") || sku.containsKey("weight") && (StringUtil.isEmpty(sku.get("weight").toString()) || Convert.toDouble(sku.get("weight").toString()) < 0))) {
+                throw new ServiceException(ResultCode.GOODS_SKU_WEIGHT_ERROR);
             }
-            if (StringUtil.isEmpty(sku.get("quantity").toString()) || Convert.toInt(sku.get("quantity").toString()) < 0) {
+            if (!sku.containsKey("quantity") || StringUtil.isEmpty(sku.get("quantity").toString()) || Convert.toInt(sku.get("quantity").toString()) < 0) {
                 throw new ServiceException(ResultCode.GOODS_SKU_QUANTITY_ERROR);
             }
 
         }
     }
+
+    public String getIntro() {
+        if (CharSequenceUtil.isNotEmpty(intro)) {
+            return HtmlUtil.unescape(intro);
+        }
+        return intro;
+    }
+
+    public String getMobileIntro() {
+        if (CharSequenceUtil.isNotEmpty(mobileIntro)) {
+            return HtmlUtil.unescape(mobileIntro);
+        }
+        return mobileIntro;
+    }
+
 }

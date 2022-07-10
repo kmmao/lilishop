@@ -1,14 +1,14 @@
 package cn.lili.controller.passport.connect;
 
-import cn.lili.common.security.token.Token;
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.security.token.Token;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.connect.entity.dto.WechatMPLoginParams;
 import cn.lili.modules.connect.service.ConnectService;
-import cn.lili.modules.message.entity.dos.WechatMPMessage;
 import cn.lili.modules.message.service.ShortLinkService;
-import cn.lili.modules.message.service.WechatMPMessageService;
-import cn.lili.modules.message.util.WechatMpCodeUtil;
+import cn.lili.modules.wechat.entity.dos.WechatMPMessage;
+import cn.lili.modules.wechat.service.WechatMPMessageService;
+import cn.lili.modules.wechat.util.WechatMpCodeUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ import java.util.List;
  * @since 2021/2/19 09:28
  */
 @RestController
-@RequestMapping("/buyer/mini-program")
+@RequestMapping("/buyer/passport/connect/miniProgram")
 @Api(tags = "买家端,小程序登录接口")
 public class MiniProgramBuyerController {
 

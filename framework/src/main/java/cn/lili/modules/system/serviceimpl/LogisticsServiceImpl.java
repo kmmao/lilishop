@@ -1,6 +1,6 @@
 package cn.lili.modules.system.serviceimpl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.SwitchEnum;
 import cn.lili.common.exception.ServiceException;
@@ -43,9 +43,9 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
     private SettingService settingService;
 
     @Override
-    public Traces getLogistic(String logisticsId, String logisticsNo) {
+    public Traces getLogistic(String logisticsId, String logisticsNo, String customerName) {
         try {
-            return getOrderTracesByJson(logisticsId, logisticsNo);
+            return getOrderTracesByJson(logisticsId, logisticsNo,customerName);
         } catch (Exception e) {
             log.error("获取物流公司错误",e);
 
@@ -65,12 +65,13 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
      *
      * @param logisticsId 物流公司ID
      * @param expNo       物流单号
+     * @param customerName 手机号后四位
      * @return 物流信息
      * @throws Exception
      */
-    private Traces getOrderTracesByJson(String logisticsId, String expNo) throws Exception {
+    private Traces getOrderTracesByJson(String logisticsId, String expNo, String customerName) throws Exception {
         Setting setting = settingService.get(SettingEnum.KUAIDI_SETTING.name());
-        if (StrUtil.isBlank(setting.getSettingValue())) {
+        if (CharSequenceUtil.isBlank(setting.getSettingValue())) {
             throw new ServiceException(ResultCode.LOGISTICS_NOT_SETTING);
         }
         KuaidiSetting kuaidiSetting = new Gson().fromJson(setting.getSettingValue(), KuaidiSetting.class);
@@ -87,8 +88,11 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
         Logistics logistics = this.getById(logisticsId);
 
         if (logistics != null) {
-            String requestData = "{'OrderCode':'','ShipperCode':'" + logistics.getCode() + "','LogisticCode':'" + expNo + "'}";
-            Map<String, String> params = new HashMap<String, String>(8);
+            String requestData = "{'OrderCode':'','ShipperCode':'" + logistics.getCode() +
+                    "','LogisticCode':'" + expNo + "'" +
+                    ",'CustomerName':'" + customerName + "'"+
+                    "}";
+            Map<String, String> params = new HashMap<>(8);
             params.put("RequestData", urlEncoder(requestData, "UTF-8"));
             params.put("EBusinessID", EBusinessID);
             params.put("RequestType", "1002");
@@ -134,14 +138,12 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
      * @throws UnsupportedEncodingException
      */
     private String base64(String str, String charset) throws UnsupportedEncodingException {
-        String encoded = base64Encode(str.getBytes(charset));
-        return encoded;
+        return base64Encode(str.getBytes(charset));
     }
 
     @SuppressWarnings("unused")
     private String urlEncoder(String str, String charset) throws UnsupportedEncodingException {
-        String result = URLEncoder.encode(str, charset);
-        return result;
+        return URLEncoder.encode(str, charset);
     }
 
     /**

@@ -25,6 +25,23 @@ public class DateUtil {
      *
      * @return 今天开始时间
      */
+    public static Long getDayOfStart() {
+        return DateUtil.getDateline()/(60*24*60);
+    }
+    /**
+     * 指定日的开始时间
+     *
+     * @return 指定日时间
+     */
+    public static Long getDayOfStart(Date date) {
+        return date.getTime()/(60*24*60);
+    }
+
+    /**
+     * 当天的开始时间
+     *
+     * @return 今天开始时间
+     */
     public static Date startOfTodDayTime() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -36,6 +53,7 @@ public class DateUtil {
 
     /**
      * 当天的开始时间
+     *
      * @param date 时间
      * @return 根据传入的时间获取开始时间
      */
@@ -79,6 +97,7 @@ public class DateUtil {
 
     /**
      * 当天的结束时间
+     *
      * @param date 传入日期
      * @return 获得传入日期当天结束时间
      */
@@ -271,7 +290,7 @@ public class DateUtil {
      * @return 时间戳
      */
     public static long getDateline(String date) {
-        return toDate(date, STANDARD_DATE_FORMAT).getTime() / 1000;
+        return Objects.requireNonNull(toDate(date, STANDARD_DATE_FORMAT)).getTime() / 1000;
     }
 
     /**
@@ -309,7 +328,7 @@ public class DateUtil {
      * @return 时间戳
      */
     public static long getDateline(String date, String pattern) {
-        return toDate(date, pattern).getTime() / 1000;
+        return Objects.requireNonNull(toDate(date, pattern)).getTime() / 1000;
     }
 
     /**

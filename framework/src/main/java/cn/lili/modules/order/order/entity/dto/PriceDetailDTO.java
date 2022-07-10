@@ -2,7 +2,7 @@ package cn.lili.modules.order.order.entity.dto;
 
 
 import cn.lili.common.utils.CurrencyUtil;
-import cn.lili.modules.promotion.entity.dto.BasePromotion;
+import cn.lili.modules.promotion.entity.vos.PromotionSkuVO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -37,7 +37,7 @@ public class PriceDetailDTO implements Serializable {
     //============discount price============
 
     @ApiModelProperty(value = "支付积分")
-    private Integer payPoint;
+    private Long payPoint;
 
     @ApiModelProperty(value = "优惠金额")
     private Double discountPrice;
@@ -54,7 +54,11 @@ public class PriceDetailDTO implements Serializable {
     private Double distributionCommission;
 
 
-    @ApiModelProperty(value = "平台收取交易佣金")
+    @ApiModelProperty(value = "平台收取交易佣金比例")
+    private Double platFormCommissionPoint;
+
+
+    @ApiModelProperty(value = "平台收取交易佣金=(flowPrice(流水金额) * platFormCommissionPoint(平台佣金比例))/100")
     private Double platFormCommission;
 
     //=========end distribution==========
@@ -79,25 +83,30 @@ public class PriceDetailDTO implements Serializable {
 
     //=========end update price==========
 
-    @ApiModelProperty(value = "流水金额(入账 出帐金额) = goodsPrice + freight - discountPrice - couponPrice + updatePrice")
+    @ApiModelProperty(value = "流水金额(入账 出帐金额) = " +
+            "goodsPrice(商品总金额（商品原价）) + freightPrice(配送费) - " +
+            "discountPrice(优惠金额) - couponPrice(优惠券金额) + updatePrice(订单修改金额)")
     private Double flowPrice;
 
     @ApiModelProperty(value = "结算价格 与 商家/供应商 结算价格（例如积分商品/砍价商品）")
     private Double settlementPrice;
 
-    @ApiModelProperty(value = "最终结算金额 = flowPrice - platFormCommission - distributionCommission")
+    @ApiModelProperty(value = "最终结算金额 = flowPrice(流水金额) - platFormCommission(平台收取交易佣金) - distributionCommission(单品分销返现支出)")
     private Double billPrice;
 
     /**
      * 参与的促销活动
      */
     @ApiModelProperty(value = "参与的促销活动")
-    private List<BasePromotion> joinPromotion;
+    private List<PromotionSkuVO> joinPromotion;
 
 
     public Double getOriginalPrice() {
         if (originalPrice == 0D) {
             return flowPrice;
+        }
+        if (originalPrice < 0) {
+            return 0d;
         }
         return originalPrice;
     }
@@ -107,11 +116,12 @@ public class PriceDetailDTO implements Serializable {
         goodsPrice = 0d;
         freightPrice = 0d;
 
-        payPoint = 0;
+        payPoint = 0L;
         discountPrice = 0d;
         couponPrice = 0d;
 
         distributionCommission = 0d;
+        platFormCommissionPoint = 0d;
         platFormCommission = 0d;
 
         siteCouponPrice = 0d;
@@ -136,119 +146,78 @@ public class PriceDetailDTO implements Serializable {
      */
     public void setUpdatePrice(Double updatePrice) {
         this.updatePrice = updatePrice;
+        this.recount();
     }
 
 
     /**
-     * 写入佣金比例，计算结算金额
-     *
-     * @param commission 佣金比例
+     * 全部重新计算
      */
-    public void setCommission(Double commission) {
-
-        //流水金额(入账 出帐金额) = goodsPrice + freight - （discountPrice + couponPrice）
+    public void recount() {
+        //流水金额(入账 出帐金额) = "流水金额(入账 出帐金额) = goodsPrice + freight - discountPrice - couponPrice + updatePrice"
         this.flowPrice = CurrencyUtil.sub(
                 CurrencyUtil.add(goodsPrice, freightPrice),
                 CurrencyUtil.add(discountPrice,
                         couponPrice != null ? couponPrice : 0));
+        if (updatePrice != 0) {
+            flowPrice = CurrencyUtil.add(flowPrice, updatePrice);
+        }
 
         //计算平台佣金  流水金额*平台佣金比例
-        if (commission != null && commission > 0) {
-            platFormCommission = CurrencyUtil.div(CurrencyUtil.mul(flowPrice, commission), 100);
+        if (platFormCommissionPoint != null && getPlatFormCommissionPoint() > 0) {
+            platFormCommission = CurrencyUtil.div(CurrencyUtil.mul(flowPrice, platFormCommissionPoint), 100);
         }
-        countBill();
+
+        //如果结算信息包含结算金额，则最终结算金额直接等于该交易 平台与商户的结算金额
+        if (settlementPrice > 0) {
+            billPrice = settlementPrice;
+        } else {
+            //如果是普通订单最终结算金额 = flowPrice - platFormCommission - distributionCommission 流水金额-平台佣金-分销佣金
+            billPrice = CurrencyUtil.sub(flowPrice, platFormCommission, distributionCommission);
+        }
     }
 
-    public void countBill() {
-        //如果是普通订单最终结算金额 = flowPrice - platFormCommission - distributionCommission
-        billPrice = CurrencyUtil.sub(CurrencyUtil.sub(flowPrice, platFormCommission), distributionCommission);
+    /**
+     * 累加金额
+     */
+    public void increase(PriceDetailDTO priceDetailDTO) {
+
+        originalPrice = CurrencyUtil.add(originalPrice, priceDetailDTO.getOriginalPrice());
+        goodsPrice = CurrencyUtil.add(goodsPrice, priceDetailDTO.getGoodsPrice());
+        freightPrice = CurrencyUtil.add(freightPrice, priceDetailDTO.getFreightPrice());
+
+        payPoint = payPoint + priceDetailDTO.getPayPoint();
+        discountPrice = CurrencyUtil.add(discountPrice, priceDetailDTO.getDiscountPrice());
+        couponPrice = CurrencyUtil.add(couponPrice, priceDetailDTO.getCouponPrice());
+
+        distributionCommission = CurrencyUtil.add(distributionCommission, priceDetailDTO.getDistributionCommission());
+        platFormCommission = CurrencyUtil.add(platFormCommission, priceDetailDTO.getPlatFormCommission());
+
+        siteCouponPrice = CurrencyUtil.add(siteCouponPrice, priceDetailDTO.getSiteCouponPrice());
+        //平台优惠券一笔交易只有一个，所以这里直接移值就好了
+        siteCouponPoint = priceDetailDTO.getSiteCouponPoint();
+        siteCouponCommission = CurrencyUtil.add(siteCouponCommission, priceDetailDTO.getSiteCouponCommission());
+
+        updatePrice = CurrencyUtil.add(updatePrice, priceDetailDTO.getUpdatePrice());
+
+        flowPrice = CurrencyUtil.add(flowPrice, priceDetailDTO.getFlowPrice());
+        billPrice = CurrencyUtil.add(billPrice, priceDetailDTO.getBillPrice());
+        settlementPrice = CurrencyUtil.add(settlementPrice, priceDetailDTO.getSettlementPrice());
 
     }
 
     /**
-     * 累加
+     * 批量累加
      *
      * @param priceDetailDTOS
      * @return
      */
     public void accumulationPriceDTO(List<PriceDetailDTO> priceDetailDTOS) {
-
-
-        double goodsPrice = 0d;
-        double freightPrice = 0d;
-
-        int payPoint = 0;
-        double discountPrice = 0d;
-
-        double distributionCommission = 0d;
-        double platFormCommission = 0d;
-
-        double siteCouponPrice = 0d;
-        double siteCouponPoint = 0d;
-        double siteCouponCommission = 0d;
-
-        double updatePrice = 0d;
-
-        double flowPrice = 0d;
-        double billPrice = 0d;
-
         for (PriceDetailDTO price : priceDetailDTOS) {
-
-            goodsPrice = CurrencyUtil.add(goodsPrice, price.getGoodsPrice());
-            freightPrice = CurrencyUtil.add(freightPrice, price.getFreightPrice());
-            payPoint = payPoint + price.getPayPoint();
-            discountPrice = CurrencyUtil.add(discountPrice, price.getDiscountPrice());
-
-            updatePrice = CurrencyUtil.add(updatePrice, price.getUpdatePrice());
-
-
-            distributionCommission = CurrencyUtil.add(distributionCommission, price.getDistributionCommission());
-            platFormCommission = CurrencyUtil.add(platFormCommission, price.getPlatFormCommission());
-
-            siteCouponPrice = CurrencyUtil.add(siteCouponPrice, price.getSiteCouponPrice());
-            siteCouponPoint = CurrencyUtil.add(siteCouponPoint, price.getSiteCouponPoint());
-            siteCouponCommission = CurrencyUtil.add(siteCouponCommission, price.getSiteCouponCommission());
-
-            flowPrice = CurrencyUtil.add(flowPrice, price.getFlowPrice());
-            billPrice = CurrencyUtil.add(billPrice, price.getBillPrice());
-
+            this.increase(price);
         }
-        this.setGoodsPrice(goodsPrice);
-        this.setFreightPrice(freightPrice);
-        this.setPayPoint(payPoint);
-        this.setUpdatePrice(updatePrice);
-        this.setDiscountPrice(discountPrice);
-
-        this.setDistributionCommission(distributionCommission);
-        this.setPlatFormCommission(platFormCommission);
-
-        this.setSiteCouponPrice(siteCouponPrice);
-        this.setSiteCouponPoint(siteCouponPoint);
-        this.setSiteCouponCommission(siteCouponCommission);
-
-        this.setFlowPrice(flowPrice);
-        this.setBillPrice(billPrice);
     }
 
-    /**
-     * 累加
-     *
-     * @param priceDetailDTOS
-     * @return
-     */
-    public static Double sumGoodsPrice(List<PriceDetailDTO> priceDetailDTOS) {
-
-
-        double goodsPrice = 0d;
-
-        for (PriceDetailDTO price : priceDetailDTOS) {
-
-            goodsPrice = CurrencyUtil.add(goodsPrice, price.getGoodsPrice());
-
-        }
-
-        return goodsPrice;
-    }
 
     public Double getGoodsPrice() {
         if (goodsPrice == null || goodsPrice <= 0) {
@@ -264,9 +233,9 @@ public class PriceDetailDTO implements Serializable {
         return freightPrice;
     }
 
-    public Integer getPayPoint() {
+    public Long getPayPoint() {
         if (payPoint == null || payPoint <= 0) {
-            return 0;
+            return 0L;
         }
         return payPoint;
     }
@@ -340,5 +309,105 @@ public class PriceDetailDTO implements Serializable {
             return 0D;
         }
         return billPrice;
+    }
+
+    public Double getUpdatePrice() {
+        if (updatePrice == null) {
+            return 0D;
+        }
+        return updatePrice;
+    }
+
+
+    public void setSiteCouponPrice(Double siteCouponPrice) {
+        this.siteCouponPrice = siteCouponPrice;
+
+        if (siteCouponPoint != null && siteCouponPoint != 0) {
+            this.siteCouponCommission = CurrencyUtil.mul(siteCouponPrice, siteCouponPoint);
+        }
+    }
+
+    public void setSiteCouponPoint(Double siteCouponPoint) {
+        this.siteCouponPoint = siteCouponPoint;
+
+        if (siteCouponPoint != null && siteCouponPoint != 0) {
+            this.siteCouponCommission = CurrencyUtil.div(CurrencyUtil.mul(siteCouponPrice, siteCouponPoint), 100);
+        }
+    }
+
+
+    public void setGoodsPrice(Double goodsPrice) {
+        this.goodsPrice = goodsPrice;
+        this.recount();
+    }
+
+    public void setFreightPrice(Double freightPrice) {
+        this.freightPrice = freightPrice;
+        this.recount();
+    }
+
+    public void setPayPoint(Long payPoint) {
+        this.payPoint = payPoint;
+    }
+
+    public void setDiscountPrice(Double discountPrice) {
+        this.discountPrice = discountPrice;
+        promotionPriceHandler();
+        this.recount();
+    }
+
+    public void setCouponPrice(Double couponPrice) {
+        this.couponPrice = couponPrice;
+        promotionPriceHandler();
+        this.recount();
+    }
+
+    /**
+     * 如果促销金额+优惠券金额大于商品金额问题处理
+     */
+    private void promotionPriceHandler() {
+        if (couponPrice == null || discountPrice == null) {
+            return;
+        }
+        //如果订单优惠总额>商品金额，则处理一下数据，使得两数相加<=商品金额
+        if (CurrencyUtil.add(couponPrice, discountPrice) > goodsPrice) {
+            couponPrice = CurrencyUtil.sub(goodsPrice, discountPrice);
+            this.setCouponPrice(couponPrice);
+        }
+    }
+
+    public void setDistributionCommission(Double distributionCommission) {
+        this.distributionCommission = distributionCommission;
+        this.recount();
+    }
+
+    public void setPlatFormCommissionPoint(Double platFormCommissionPoint) {
+        this.platFormCommissionPoint = platFormCommissionPoint;
+        this.recount();
+    }
+
+    public void setPlatFormCommission(Double platFormCommission) {
+        this.platFormCommission = platFormCommission;
+        this.recount();
+    }
+
+    public void setSiteCouponCommission(Double siteCouponCommission) {
+        this.siteCouponCommission = siteCouponCommission;
+        this.recount();
+    }
+
+    public void setFlowPrice(Double flowPrice) {
+        this.flowPrice = flowPrice;
+        this.recount();
+    }
+
+    public void setSettlementPrice(Double settlementPrice) {
+        this.settlementPrice = settlementPrice;
+        this.recount();
+    }
+
+    public void setBillPrice(Double billPrice) {
+        this.billPrice = billPrice;
+        this.recount();
     }
 }

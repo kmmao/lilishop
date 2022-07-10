@@ -23,10 +23,10 @@ import javax.validation.constraints.NotNull;
  * 管理端,直播间接口
  *
  * @author Bulbasaur
- * @since: 2021/5/28 11:56 上午
+ * @since 2021/5/28 11:56 上午
  */
 @RestController
-@Api(tags = "店铺端,直播间接口")
+@Api(tags = "管理端,直播间接口")
 @RequestMapping("/manager/broadcast/studio")
 public class StudioManagerController {
 
@@ -36,7 +36,7 @@ public class StudioManagerController {
     @ApiOperation(value = "获取店铺直播间列表")
     @ApiImplicitParam(name = "status", value = "直播间状态", paramType = "query")
     @GetMapping
-    public ResultMessage<IPage<Studio>> page(PageVO pageVO, String status) {
+    public ResultMessage<IPage<StudioVO>> page(PageVO pageVO, String status) {
         return ResultUtil.data(studioService.studioList(pageVO, null, status));
     }
 

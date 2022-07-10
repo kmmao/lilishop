@@ -1,15 +1,15 @@
 package cn.lili.modules.page.entity.dos;
 
-import cn.lili.mybatis.BaseEntity;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.http.HtmlUtil;
 import cn.lili.modules.page.entity.enums.ArticleEnum;
+import cn.lili.mybatis.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -20,8 +20,6 @@ import javax.validation.constraints.NotNull;
  * @since 2020/12/10 17:42
  */
 @Data
-@Entity
-@Table(name = "li_article")
 @TableName("li_article")
 @ApiModel(value = "文章")
 public class Article extends BaseEntity {
@@ -51,4 +49,12 @@ public class Article extends BaseEntity {
      */
     @ApiModelProperty(value = "类型")
     private String type;
+
+    public String getContent() {
+        if (CharSequenceUtil.isNotEmpty(content)) {
+            return HtmlUtil.unescape(content);
+        }
+        return content;
+    }
+
 }

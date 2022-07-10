@@ -1,16 +1,14 @@
 package cn.lili.modules.store.service;
 
 import cn.hutool.core.date.DateTime;
-import cn.lili.common.vo.PageVO;
-import cn.lili.modules.order.order.entity.dos.StoreFlow;
 import cn.lili.modules.store.entity.dos.Bill;
 import cn.lili.modules.store.entity.dto.BillSearchParams;
-import cn.lili.modules.store.entity.enums.BillStatusEnum;
 import cn.lili.modules.store.entity.vos.BillListVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.cache.annotation.CacheConfig;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 
 /**
@@ -42,25 +40,6 @@ public interface BillService extends IService<Bill> {
     void immediatelyBill(String storeId, Long endTime);
 
     /**
-     * 根据结算单ID获取商家流水
-     *
-     * @param pageVO 分页
-     * @param id     结算单ID
-     * @param type   类型
-     * @return 商家流水
-     */
-    IPage<StoreFlow> getStoreFlow(String id, String type, PageVO pageVO);
-
-    /**
-     * 根据结算单ID获取商家流水
-     *
-     * @param pageVO 分页
-     * @param id     结算单ID
-     * @return 商家流水
-     */
-    IPage<StoreFlow> getDistributionFlow(String id, PageVO pageVO);
-
-    /**
      * 获取结算单分页
      *
      * @param billSearchParams 结算单搜索条件
@@ -85,11 +64,9 @@ public interface BillService extends IService<Bill> {
     boolean complete(String id);
 
     /**
-     * 商家待结算数量
-     *
-     * @param billStatusEnum 结算单类型
-     * @return 待结算商家数量
+     * 下载结算单
+     * @response response
+     * @param id 结算单ID
      */
-    Integer billNum(BillStatusEnum billStatusEnum);
-
+    void download(HttpServletResponse response, String id);
 }

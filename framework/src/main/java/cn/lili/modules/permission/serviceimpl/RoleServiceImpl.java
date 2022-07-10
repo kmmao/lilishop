@@ -5,6 +5,7 @@ import cn.lili.common.exception.ServiceException;
 import cn.lili.modules.permission.entity.dos.Role;
 import cn.lili.modules.permission.mapper.RoleMapper;
 import cn.lili.modules.permission.service.DepartmentRoleService;
+import cn.lili.modules.permission.service.RoleMenuService;
 import cn.lili.modules.permission.service.RoleService;
 import cn.lili.modules.permission.service.UserRoleService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -22,7 +23,6 @@ import java.util.List;
  * @since 2020/11/17 3:50 下午
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements RoleService {
 
     /**
@@ -36,6 +36,9 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Autowired
     private UserRoleService userRoleService;
 
+    @Autowired
+    private RoleMenuService roleMenuService;
+
     @Override
     public List<Role> findByDefaultRole(Boolean defaultRole) {
         QueryWrapper<Role> queryWrapper = new QueryWrapper<>();
@@ -44,6 +47,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteRoles(List<String> roleIds) {
         QueryWrapper queryWrapper = new QueryWrapper<>();
         queryWrapper.in("role_id", roleIds);
@@ -56,6 +60,6 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         //删除角色
         this.removeByIds(roleIds);
         //删除角色与菜单关联
-        userRoleService.remove(queryWrapper);
+        roleMenuService.remove(queryWrapper);
     }
 }

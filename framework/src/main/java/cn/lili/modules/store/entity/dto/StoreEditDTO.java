@@ -3,14 +3,10 @@ package cn.lili.modules.store.entity.dto;
 import cn.lili.common.validation.Mobile;
 import cn.lili.common.validation.Phone;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
-import javax.validation.constraints.Email;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -25,10 +21,6 @@ import javax.validation.constraints.Size;
 public class StoreEditDTO {
 
 
-    @Id
-    @TableId
-    @TableField
-    @Column(columnDefinition = "bigint(20)")
     @ApiModelProperty(value = "唯一标识", hidden = true)
     private String id;
 
@@ -61,7 +53,6 @@ public class StoreEditDTO {
     @ApiModelProperty(value = "公司电话")
     private String companyPhone;
 
-    @Email
     @ApiModelProperty(value = "电子邮箱")
     private String companyEmail;
 
@@ -87,7 +78,6 @@ public class StoreEditDTO {
     @ApiModelProperty(value = "营业执照号")
     private String licenseNum;
 
-    @Size(min = 1, max = 200, message = "法定经营范围长度为1-200位字符")
     @ApiModelProperty(value = "法定经营范围")
     private String scope;
 
@@ -131,7 +121,6 @@ public class StoreEditDTO {
 
     @NotBlank(message = "店铺经营类目不能为空")
     @ApiModelProperty(value = "店铺经营类目")
-    @Column(columnDefinition = "TEXT")
     private String goodsManagementCategory;
 
     @ApiModelProperty(value = "结算周期")
@@ -149,7 +138,6 @@ public class StoreEditDTO {
     private String ddCode;
 
     //店铺退货收件地址
-
     @ApiModelProperty(value = "收货人姓名")
     private String salesConsigneeName;
 

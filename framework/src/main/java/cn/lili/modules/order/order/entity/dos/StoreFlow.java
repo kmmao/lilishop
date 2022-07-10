@@ -1,9 +1,10 @@
 package cn.lili.modules.order.order.entity.dos;
 
 import cn.lili.modules.order.order.entity.enums.FlowTypeEnum;
+import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
+import cn.lili.mybatis.BaseIdEntity;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
@@ -12,10 +13,6 @@ import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
 import java.util.Date;
 
 /**
@@ -25,18 +22,9 @@ import java.util.Date;
  * @since 2020/11/17 7:31 下午
  */
 @Data
-@Entity
-@Table(name = "li_store_flow")
 @TableName("li_store_flow")
 @ApiModel(value = "商家订单流水")
-public class StoreFlow {
-
-    @Id
-    @TableId
-    @TableField
-    @Column(columnDefinition = "bigint(20)")
-    @ApiModelProperty(value = "唯一标识", hidden = true)
-    private String id;
+public class StoreFlow extends BaseIdEntity {
 
     private static final long serialVersionUID = -5998757398902747939L;
 
@@ -52,10 +40,10 @@ public class StoreFlow {
     @ApiModelProperty(value = "售后SN")
     private String refundSn;
 
-    @ApiModelProperty(value = "商家id")
+    @ApiModelProperty(value = "店铺id")
     private String storeId;
 
-    @ApiModelProperty(value = "商家名称 ")
+    @ApiModelProperty(value = "店铺名称 ")
     private String storeName;
 
     @ApiModelProperty(value = "会员id")
@@ -81,7 +69,6 @@ public class StoreFlow {
     private String categoryId;
 
     @ApiModelProperty(value = "规格json")
-    @Column(columnDefinition = "TEXT")
     private String specs;
 
 
@@ -106,10 +93,10 @@ public class StoreFlow {
     @ApiModelProperty(value = "平台优惠券 使用金额")
     private Double siteCouponPrice;
 
-    @ApiModelProperty(value = "站点优惠券佣金比例")
+    @ApiModelProperty(value = "站点优惠券补贴比例")
     private Double siteCouponPoint;
 
-    @ApiModelProperty(value = "站点优惠券佣金")
+    @ApiModelProperty(value = "站点优惠券补贴金额")
     private Double siteCouponCommission;
 
     @ApiModelProperty(value = "单品分销返现支出")
@@ -127,6 +114,9 @@ public class StoreFlow {
     @ApiModelProperty(value = "第三方交易流水号")
     private String transactionId;
 
+    /**
+     * @see  PaymentMethodEnum
+     */
     @ApiModelProperty(value = "支付方式名称")
     private String paymentName;
 

@@ -2,9 +2,10 @@ package cn.lili.modules.statistics.aop.aspect;
 
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
+import cn.lili.common.context.ThreadContextHolder;
+import cn.lili.common.utils.IpUtils;
 import cn.lili.common.utils.SpelUtil;
 import cn.lili.common.vo.ResultMessage;
-import cn.lili.common.utils.IpUtils;
 import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import cn.lili.modules.statistics.aop.PageViewPoint;
 import cn.lili.modules.statistics.aop.enums.PageViewEnum;
@@ -17,7 +18,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 
-import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,8 +36,6 @@ public class PageViewInterceptor {
     @Autowired
     private Cache cache;
 
-    @Autowired
-    private HttpServletRequest request;
 
 
     @AfterReturning(returning = "rvt", pointcut = "@annotation(cn.lili.modules.statistics.aop.PageViewPoint)")
@@ -61,13 +59,18 @@ public class PageViewInterceptor {
                     break;
                 }
             case STORE:
-                Map<String, String> map = spelFormat(point);
+                Map<String, String> map = null;
+                try {
+                    map = spelFormat(point);
+                } catch (Exception e) {
+                    return;
+                }
                 storeId = map.get("id");
                 break;
             default:
                 storeId = "-1";
         }
-        String ip = IpUtils.getIpAddress(request);
+        String ip = IpUtils.getIpAddress(ThreadContextHolder.getHttpRequest());
         try {
             //PV 统计48小时过期 留下一定时间予以统计累计数据库
             cache.incr(CachePrefix.PV.getPrefix() + StatisticsSuffix.suffix(), 60 * 60 * 48);

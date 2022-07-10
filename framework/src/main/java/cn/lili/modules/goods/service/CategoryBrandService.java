@@ -23,6 +23,7 @@ public interface CategoryBrandService extends IService<CategoryBrand> {
 
     /**
      * 通过分类ID删除关联品牌
+     *
      * @param categoryId 品牌ID
      */
     void deleteByCategoryId(String categoryId);
@@ -34,6 +35,14 @@ public interface CategoryBrandService extends IService<CategoryBrand> {
      * @param brandId 品牌ID
      * @return 分类品牌关联信息
      */
-    List<CategoryBrand> getCategoryBrandListByBrandId(String brandId);
+    List<CategoryBrand> getCategoryBrandListByBrandId(List<String> brandId);
+
+    /**
+     * 保存分类品牌关系
+     *
+     * @param categoryId 分类id
+     * @param brandIds   品牌ids
+     */
+    void saveCategoryBrandList(String categoryId, List<String> brandIds);
 
 }

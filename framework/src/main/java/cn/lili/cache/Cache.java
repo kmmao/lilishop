@@ -89,7 +89,7 @@ public interface Cache<T> {
      *
      * @param key 缓存key
      */
-    void remove(Object key);
+    Boolean remove(Object key);
 
     /**
      * 删除
@@ -211,6 +211,14 @@ public interface Cache<T> {
      * @return 计数器结果
      */
     Long incr(String key, long liveTime);
+    /**
+     * redis 计数器 累加
+     * 注：到达liveTime之后，该次增加取消，即自动-1，而不是redis值为空
+     *
+     * @param key      为累计的key，同一key每次调用则值 +1
+     * @return 计数器结果
+     */
+    Long incr(String key);
     //-----------------------------------------------redis计数---------------------------------------------
 
     /**

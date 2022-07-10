@@ -14,6 +14,7 @@ import cn.lili.modules.search.entity.dos.EsGoodsIndex;
 import cn.lili.modules.search.entity.dos.EsGoodsRelatedInfo;
 import cn.lili.modules.search.entity.dto.EsGoodsSearchDTO;
 import cn.lili.modules.search.service.EsGoodsSearchService;
+import cn.lili.modules.search.service.HotWordsService;
 import cn.lili.modules.statistics.aop.PageViewPoint;
 import cn.lili.modules.statistics.aop.enums.PageViewEnum;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,6 +25,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.elasticsearch.core.SearchPage;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,7 +44,7 @@ import java.util.Map;
 @Slf4j
 @Api(tags = "买家端,商品接口")
 @RestController
-@RequestMapping("/buyer/goods")
+@RequestMapping("/buyer/goods/goods")
 public class GoodsBuyerController {
 
     /**
@@ -60,6 +62,9 @@ public class GoodsBuyerController {
      */
     @Autowired
     private EsGoodsSearchService goodsSearchService;
+
+    @Autowired
+    private HotWordsService hotWordsService;
 
     @ApiOperation(value = "通过id获取商品信息")
     @ApiImplicitParam(name = "goodsId", value = "商品ID", required = true, paramType = "path", dataType = "Long")
@@ -99,9 +104,9 @@ public class GoodsBuyerController {
 
     @ApiOperation(value = "从ES中获取商品信息")
     @GetMapping("/es")
-    public ResultMessage<Page<EsGoodsIndex>> getGoodsByPageFromEs(EsGoodsSearchDTO goodsSearchParams, PageVO pageVO) {
+    public ResultMessage<SearchPage<EsGoodsIndex>> getGoodsByPageFromEs(EsGoodsSearchDTO goodsSearchParams, PageVO pageVO) {
         pageVO.setNotConvert(true);
-        Page<EsGoodsIndex> esGoodsIndices = goodsSearchService.searchGoods(goodsSearchParams, pageVO);
+        SearchPage<EsGoodsIndex> esGoodsIndices = goodsSearchService.searchGoods(goodsSearchParams, pageVO);
         return ResultUtil.data(esGoodsIndices);
     }
 
@@ -116,7 +121,7 @@ public class GoodsBuyerController {
     @ApiOperation(value = "获取搜索热词")
     @GetMapping("/hot-words")
     public ResultMessage<List<String>> getGoodsHotWords(Integer count) {
-        List<String> hotWords = goodsSearchService.getHotWords(count);
+        List<String> hotWords = hotWordsService.getHotWords(count);
         return ResultUtil.data(hotWords);
     }
 

@@ -2,8 +2,12 @@ package cn.lili.modules.member.mapper;
 
 
 import cn.lili.modules.member.entity.dos.Member;
-import cn.lili.modules.member.entity.vo.MemberDistributionVO;
+import cn.lili.modules.member.entity.vo.MemberVO;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -23,10 +27,6 @@ public interface MemberMapper extends BaseMapper<Member> {
     @Select("select m.mobile from li_member m")
     List<String> getAllMemberMobile();
 
-    /**
-     * 获取会员分布列表
-     * @return 会员分布列表
-     */
-    @Select("select client_enum,count(0) as num from li_member group by client_enum")
-    List<MemberDistributionVO> distribution();
+    @Select("select * from li_member ${ew.customSqlSegment}")
+    IPage<MemberVO> pageByMemberVO(IPage<MemberVO> page, @Param(Constants.WRAPPER) Wrapper<Member> queryWrapper);
 }

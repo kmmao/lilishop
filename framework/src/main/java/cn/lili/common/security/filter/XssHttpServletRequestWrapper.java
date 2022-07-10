@@ -1,9 +1,25 @@
 package cn.lili.common.security.filter;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.http.HtmlUtil;
+import cn.hutool.json.JSONUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
+
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
-import java.util.regex.Pattern;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * 防止Xss
@@ -12,16 +28,31 @@ import java.util.regex.Pattern;
  * @version v1.0
  * 2021-06-04 10:39
  */
+@Slf4j
 public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
-    private HttpServletRequest request;
 
+    //允许的标签
+    private static final String[] allowedTags = {"h1", "h2", "h3", "h4", "h5", "h6",
+            "span", "strong",
+            "img", "video", "source", "iframe", "code",
+            "blockquote", "p", "div",
+            "ul", "ol", "li",
+            "table", "thead", "caption", "tbody", "tr", "th", "td", "br",
+            "a"
+    };
 
+    //需要转化的标签
+    private static final String[] needTransformTags = {"article", "aside", "command", "datalist", "details", "figcaption", "figure",
+            "footer", "header", "hgroup", "section", "summary"};
 
+    //带有超链接的标签
+    private static final String[] linkTags = {"img", "video", "source", "a", "iframe", "p"};
 
+    //带有超链接的标签
+    private static final String[] allowAttributes = {"style", "src", "href", "target", "width", "height"};
 
     public XssHttpServletRequestWrapper(HttpServletRequest request) {
         super(request);
-        this.request = request;
     }
 
     /**
@@ -31,12 +62,12 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
     public String[] getParameterValues(String name) {
         String[] values = super.getParameterValues(name);
         if (values == null) {
-            return null;
+            return new String[0];
         }
         int count = values.length;
         String[] encodedValues = new String[count];
         for (int i = 0; i < count; i++) {
-            encodedValues[i] = cleanXSS(values[i]);
+            encodedValues[i] = filterXss(name, values[i]);
         }
         return encodedValues;
     }
@@ -50,7 +81,7 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
         if (value == null) {
             return null;
         }
-        return cleanXSS(value);
+        return filterXss(name, value);
     }
 
     /**
@@ -59,8 +90,8 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
     @Override
     public Object getAttribute(String name) {
         Object value = super.getAttribute(name);
-        if (value != null && value instanceof String) {
-            cleanXSS((String) value);
+        if (value instanceof String) {
+            value = filterXss(name, (String) value);
         }
         return value;
     }
@@ -74,59 +105,177 @@ public class XssHttpServletRequestWrapper extends HttpServletRequestWrapper {
         if (value == null) {
             return null;
         }
-        return cleanXSS(value);
+        return filterXss(name, value);
+    }
+
+    @Override
+    public Map<String, String[]> getParameterMap() {
+        Map<String, String[]> parameterMap = super.getParameterMap();
+        //因为super.getParameterMap()返回的是Map,所以我们需要定义Map的实现类对数据进行封装
+        Map<String, String[]> params = new LinkedHashMap<>();
+        //如果参数不为空
+        if (parameterMap != null) {
+            //对map进行遍历
+            for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+                //根据key获取value
+                String[] values = entry.getValue();
+                //遍历数组
+                for (int i = 0; i < values.length; i++) {
+                    String value = values[i];
+                    value = filterXss(entry.getKey(), value);
+                    //将转义后的数据放回数组中
+                    values[i] = value;
+                }
+
+                //将转义后的数组put到linkMap当中
+                params.put(entry.getKey(), values);
+            }
+        }
+        return params;
     }
 
     /**
-     * 转义字符,使用该方法存在一定的弊端
+     * 获取输入流
      *
-     * @param value
-     * @return
+     * @return 过滤后的输入流
+     * @throws IOException 异常信息
      */
-    private String cleanXSS2(String value) {
-        //移除特殊标签
-        value = value.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-        value = value.replaceAll("\\(", "&#40;").replaceAll("\\)", "&#41;");
-        value = value.replaceAll("'", "&#39;");
-        value = value.replaceAll("eval\\((.*)\\)", "");
-        value = value.replaceAll("[\\\"\\\'][\\s]*javascript:(.*)[\\\"\\\']", "\"\"");
-        value = value.replaceAll("script", "");
-        return value;
+    @Override
+    public ServletInputStream getInputStream() throws IOException {
+
+        BufferedReader bufferedReader = null;
+
+        InputStreamReader reader = null;
+
+        //获取输入流
+        ServletInputStream in = null;
+        try {
+            in = super.getInputStream();
+            //用于存储输入流
+            StringBuilder body = new StringBuilder();
+            reader = new InputStreamReader(in, StandardCharsets.UTF_8);
+            bufferedReader = new BufferedReader(reader);
+            //按行读取输入流
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                //将获取到的第一行数据append到StringBuffer中
+                body.append(line);
+                //继续读取下一行流，直到line为空
+                line = bufferedReader.readLine();
+            }
+            if (CharSequenceUtil.isNotEmpty(body) && Boolean.TRUE.equals(JSONUtil.isJsonObj(body.toString()))) {
+                //将body转换为map
+                Map<String, Object> map = JSONUtil.parseObj(body.toString());
+                //创建空的map用于存储结果
+                Map<String, Object> resultMap = new HashMap<>(map.size());
+                //遍历数组
+                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                    //如果map.get(key)获取到的是字符串就需要进行处理，如果不是直接存储resultMap
+                    if (map.get(entry.getKey()) instanceof String) {
+                        resultMap.put(entry.getKey(), filterXss(entry.getKey(), entry.getValue().toString()));
+                    } else {
+                        resultMap.put(entry.getKey(), entry.getValue());
+                    }
+                }
+
+                //将resultMap转换为json字符串
+                String resultStr = JSONUtil.toJsonStr(resultMap);
+                //将json字符串转换为字节
+                final ByteArrayInputStream resultBIS = new ByteArrayInputStream(resultStr.getBytes());
+
+                //实现接口
+                return new ServletInputStream() {
+                    @Override
+                    public boolean isFinished() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isReady() {
+                        return false;
+                    }
+
+                    @Override
+                    public void setReadListener(ReadListener readListener) {
+                    }
+
+                    @Override
+                    public int read() {
+                        return resultBIS.read();
+                    }
+                };
+            }
+
+            //将json字符串转换为字节
+            final ByteArrayInputStream bis = new ByteArrayInputStream(body.toString().getBytes());
+            //实现接口
+            return new ServletInputStream() {
+                @Override
+                public boolean isFinished() {
+                    return false;
+                }
+
+                @Override
+                public boolean isReady() {
+                    return false;
+                }
+
+                @Override
+                public void setReadListener(ReadListener readListener) {
+
+                }
+
+                @Override
+                public int read() {
+                    return bis.read();
+                }
+            };
+        } catch (Exception e) {
+
+            log.error("get request inputStream error", e);
+            return null;
+        } finally {
+            //关闭流
+            if (bufferedReader != null) {
+                bufferedReader.close();
+            }
+            if (reader != null) {
+                reader.close();
+            }
+            if (in != null) {
+                in.close();
+            }
+        }
+
     }
-
-
-    private static final Pattern SCRIPT_PATTERN1 = Pattern.compile("<script>(.*?)</script>", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SCRIPT_PATTERN2 = Pattern.compile("</script>", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SCRIPT_PATTERN3 = Pattern.compile("<script(.*?)>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
-    private static final Pattern SCRIPT_PATTERN4 = Pattern.compile("javascript:", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SRC_PATTERN = Pattern.compile("src[\r\n]*=[\r\n]*\\\'(.*?)\\\'", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
-    private static final Pattern EVAL_PATTERN = Pattern.compile("eval\\((.*?)\\)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
-    private static final Pattern E_­_XPRESSION_PATTERN = Pattern.compile("e­xpression\\((.*?)\\)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
-    private static final Pattern VB_SCRIPT_PATTERN = Pattern.compile("vbscript:", Pattern.CASE_INSENSITIVE);
-    private static final Pattern ONLOAD_PATTERN = Pattern.compile("onload(.*?)=", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
     private String cleanXSS(String value) {
         if (value != null) {
-            //推荐使用ESAPI库来避免脚本攻击,value = ESAPI.encoder().canonicalize(value);
-            //避免script 标签
-            value = SCRIPT_PATTERN1.matcher(value).replaceAll("");
-            //删除单个的 </script> 标签
-            value = SCRIPT_PATTERN2.matcher(value).replaceAll("");
-            //删除单个的<script ...> 标签
-            value = SCRIPT_PATTERN3.matcher(value).replaceAll("");
-            //避免 javascript: 表达式
-            value = SCRIPT_PATTERN4.matcher(value).replaceAll("");
-            //避免src形式的表达式
-            value = SRC_PATTERN.matcher(value).replaceAll("");
-            //避免 eval(...) 形式表达式
-            value = EVAL_PATTERN.matcher(value).replaceAll("");
-            //避免 e­xpression(...) 表达式
-            value = E_­_XPRESSION_PATTERN.matcher(value).replaceAll("");
-            //避免 vbscript:表达式
-            value = VB_SCRIPT_PATTERN.matcher(value).replaceAll("");
-            //避免 onload= 表达式
-            value = ONLOAD_PATTERN.matcher(value).replaceAll("");
+            // 自定义策略
+            PolicyFactory policy = new HtmlPolicyBuilder()
+                    .allowStandardUrlProtocols()
+                    //所有允许的标签
+                    .allowElements(allowedTags)
+                    //内容标签转化为div
+                    .allowElements((elementName, attributes) -> "div", needTransformTags)
+                    .allowAttributes(allowAttributes).onElements(linkTags)
+                    .allowStyling()
+                    .toFactory();
+            // basic prepackaged policies for links, tables, integers, images, styles, blocks
+            value = policy.sanitize(value);
         }
-        return value;
+        return HtmlUtil.unescape(value);
     }
+
+    /**
+     * 过滤xss
+     *
+     * @param name  参数名
+     * @param value 参数值
+     * @return 参数值
+     */
+    private String filterXss(String name, String value) {
+        return cleanXSS(value);
+    }
+
 }

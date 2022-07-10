@@ -6,20 +6,16 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 /**
  * 小程序直播商品
  * @author Bulbasaur
- * @since: 2021/5/17 9:34 上午
+ * @since 2021/5/17 9:34 上午
  *
  */
 @Data
-@Entity
 @ApiModel(value = "Commodity", description = "直播商品")
 @TableName("li_commodity")
-@Table(name = "li_commodity")
 public class Commodity extends BaseEntity {
 
     @ApiModelProperty(value = "图片")

@@ -5,11 +5,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import java.math.BigDecimal;
+import javax.validation.constraints.NotNull;
 
 
 /**
@@ -19,21 +17,20 @@ import java.math.BigDecimal;
  * @since 2020/11/19 11:57
  */
 @Data
-@Entity
-@Table(name = "li_department")
 @TableName("li_department")
 @ApiModel(value = "部门")
+@EqualsAndHashCode(callSuper = true)
 public class Department extends BaseEntity {
 
     private static final long serialVersionUID = 1L;
 
     @ApiModelProperty(value = "部门名称")
+    @NotNull(message = "部门名称不能为空")
     private String title;
 
     @ApiModelProperty(value = "父id")
     private String parentId;
 
     @ApiModelProperty(value = "排序值")
-    @Column(precision = 10, scale = 2)
-    private BigDecimal sortOrder;
+    private Double sortOrder;
 }

@@ -54,7 +54,7 @@ public class CategoryManagerController {
     @ApiOperation(value = "查询全部分类列表")
     @GetMapping(value = "/allChildren")
     public ResultMessage<List<CategoryVO>> list() {
-        return ResultUtil.data(this.categoryService.listAllChildrenDB());
+        return ResultUtil.data(this.categoryService.listAllChildren());
     }
 
     @PostMapping
@@ -89,7 +89,7 @@ public class CategoryManagerController {
     }
 
     @DeleteMapping(value = "/{id}")
-    @ApiImplicitParam(name = "goodsId", value = "分类ID", required = true, paramType = "path", dataType = "String")
+    @ApiImplicitParam(name = "id", value = "分类ID", required = true, paramType = "path", dataType = "String")
     @ApiOperation(value = "通过id删除分类")
     public ResultMessage<Category> delAllByIds(@NotNull @PathVariable String id) {
         Category category = new Category();
@@ -100,7 +100,7 @@ public class CategoryManagerController {
 
         }
         //查询某商品分类的商品数量
-        Integer count = goodsService.getGoodsCountByCategory(id);
+        long count = goodsService.getGoodsCountByCategory(id);
         if (count > 0) {
             throw new ServiceException(ResultCode.CATEGORY_HAS_GOODS);
         }

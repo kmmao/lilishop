@@ -1,7 +1,7 @@
 package cn.lili.modules.goods.serviceimpl;
 
 import cn.hutool.json.JSONUtil;
-import cn.lili.modules.file.plugin.FileManagerPlugin;
+import cn.lili.modules.file.util.FileUtil;
 import cn.lili.modules.goods.entity.dos.GoodsGallery;
 import cn.lili.modules.goods.mapper.GoodsGalleryMapper;
 import cn.lili.modules.goods.service.GoodsGalleryService;
@@ -27,13 +27,7 @@ import java.util.List;
  * 2020-02-23 15:18:56
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class GoodsGalleryServiceImpl extends ServiceImpl<GoodsGalleryMapper, GoodsGallery> implements GoodsGalleryService {
-    /**
-     * 文件
-     */
-    @Autowired
-    private FileManagerPlugin fileManagerPlugin;
     /**
      * 设置
      */
@@ -42,6 +36,7 @@ public class GoodsGalleryServiceImpl extends ServiceImpl<GoodsGalleryMapper, Goo
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<String> goodsGalleryList, String goodsId) {
         //删除原来商品相册信息
         this.baseMapper.delete(new UpdateWrapper<GoodsGallery>().eq("goods_id", goodsId));
@@ -65,9 +60,9 @@ public class GoodsGalleryServiceImpl extends ServiceImpl<GoodsGalleryMapper, Goo
         Setting setting = settingService.get(SettingEnum.GOODS_SETTING.name());
         GoodsSetting goodsSetting = JSONUtil.toBean(setting.getSettingValue(), GoodsSetting.class);
         //缩略图
-        String thumbnail = fileManagerPlugin.getUrl(origin, goodsSetting.getAbbreviationPictureWidth(), goodsSetting.getAbbreviationPictureHeight());
+        String thumbnail = FileUtil.getUrl(origin, goodsSetting.getAbbreviationPictureWidth(), goodsSetting.getAbbreviationPictureHeight());
         //小图
-        String small = fileManagerPlugin.getUrl(origin, goodsSetting.getSmallPictureWidth(), goodsSetting.getSmallPictureHeight());
+        String small = FileUtil.getUrl(origin, goodsSetting.getSmallPictureWidth(), goodsSetting.getSmallPictureHeight());
         //赋值
         goodsGallery.setSmall(small);
         goodsGallery.setThumbnail(thumbnail);
@@ -79,5 +74,15 @@ public class GoodsGalleryServiceImpl extends ServiceImpl<GoodsGalleryMapper, Goo
     public List<GoodsGallery> goodsGalleryList(String goodsId) {
         //根据商品id查询商品相册
         return this.baseMapper.selectList(new QueryWrapper<GoodsGallery>().eq("goods_id", goodsId));
+    }
+
+    /**
+     * 根据商品 id删除商品相册缩略图
+     *
+     * @param goodsId 商品ID
+     */
+    @Override
+    public void removeByGoodsId(String goodsId) {
+        this.baseMapper.delete(new UpdateWrapper<GoodsGallery>().eq("goods_id", goodsId));
     }
 }

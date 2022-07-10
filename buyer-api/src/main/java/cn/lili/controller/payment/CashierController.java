@@ -6,8 +6,8 @@ import cn.lili.common.exception.ServiceException;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.payment.kit.CashierSupport;
 import cn.lili.modules.payment.kit.dto.PayParam;
-import cn.lili.modules.payment.kit.enums.PaymentClientEnum;
-import cn.lili.modules.payment.kit.enums.PaymentMethodEnum;
+import cn.lili.modules.payment.entity.enums.PaymentClientEnum;
+import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
 import cn.lili.modules.payment.kit.params.dto.CashierParam;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @RestController
 @Api(tags = "买家端,收银台接口")
-@RequestMapping("/buyer/cashier")
+@RequestMapping("/buyer/payment/cashier")
 public class CashierController {
 
     @Autowired

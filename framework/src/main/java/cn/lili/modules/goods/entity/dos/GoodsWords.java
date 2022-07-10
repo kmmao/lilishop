@@ -1,14 +1,12 @@
 package cn.lili.modules.goods.entity.dos;
 
+import cn.lili.modules.goods.entity.enums.GoodsWordsTypeEnum;
 import cn.lili.mybatis.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 
 /**
@@ -18,8 +16,6 @@ import javax.persistence.Table;
  * @since 2020/10/15
  */
 @Data
-@Entity
-@Table(name = "li_goods_words")
 @TableName("li_goods_words")
 @ApiModel(value = "商品关键字")
 @NoArgsConstructor
@@ -46,7 +42,7 @@ public class GoodsWords extends BaseEntity {
     private String abbreviate;
 
     /**
-     * 类型
+     * @see  GoodsWordsTypeEnum
      */
     @ApiModelProperty(value = "类型")
     private String type;

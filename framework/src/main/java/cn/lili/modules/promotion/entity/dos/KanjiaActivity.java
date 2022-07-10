@@ -6,19 +6,17 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 /**
  * 砍价活动参与实体类
  *
  * @author qiuqiu
- * @date 2020-7-1 10:44 上午
+ * @since 2020-7-1 10:44 上午
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Entity
-@Table(name = "li_kanjia_activity")
 @TableName("li_kanjia_activity")
 @ApiModel(value = "砍价活动参与对象")
 public class KanjiaActivity extends BaseEntity {

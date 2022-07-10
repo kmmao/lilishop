@@ -1,10 +1,11 @@
 package cn.lili.controller.member;
 
+import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.member.entity.dos.MemberAddress;
-import cn.lili.modules.promotion.service.MemberAddressService;
+import cn.lili.modules.member.service.MemberAddressService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -33,6 +34,7 @@ public class MemberAddressManagerController {
         return ResultUtil.data(memberAddressService.getAddressByMember(page, memberId));
     }
 
+    @PreventDuplicateSubmissions
     @ApiOperation(value = "删除会员收件地址")
     @ApiImplicitParam(name = "id", value = "会员地址ID", dataType = "String", paramType = "path")
     @DeleteMapping(value = "/delById/{id}")
@@ -48,6 +50,7 @@ public class MemberAddressManagerController {
         return ResultUtil.data(memberAddressService.updateMemberAddress(shippingAddress));
     }
 
+    @PreventDuplicateSubmissions
     @ApiOperation(value = "新增会员收件地址")
     @PostMapping
     public ResultMessage<MemberAddress> addShippingAddress(@Valid MemberAddress shippingAddress) {

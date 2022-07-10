@@ -8,10 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -22,8 +19,6 @@ import java.util.Date;
  * @since 2020-02-18 15:18:56
  */
 @Data
-@Entity
-@Table(name = "li_category")
 @TableName("li_category")
 @ApiModel(value = "商品分类")
 @AllArgsConstructor
@@ -33,6 +28,7 @@ public class Category extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
     @NotEmpty(message = "分类名称不能为空")
+    @Size(max = 20)
     @ApiModelProperty(value = "分类名称")
     private String name;
 
@@ -41,14 +37,16 @@ public class Category extends BaseEntity {
     private String parentId;
 
     @NotNull(message = "层级不能为空")
+    @Min(value = 0,message = "层级需要大于0")
+    @Max(value = 3,message = "层级最大为3")
     @ApiModelProperty(value = "层级, 从0开始")
     private Integer level;
 
     @NotNull(message = "排序值不能为空")
+    @Max(value = 999,message = "排序值最大999")
     @ApiModelProperty(value = "排序值")
     private BigDecimal sortOrder;
 
-    @NotNull(message = "请填写佣金比例")
     @ApiModelProperty(value = "佣金比例")
     private Double commissionRate;
 

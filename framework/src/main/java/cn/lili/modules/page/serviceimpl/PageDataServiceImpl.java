@@ -21,6 +21,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 楼层装修管理业务层实现
@@ -36,6 +37,7 @@ public class PageDataServiceImpl extends ServiceImpl<PageDataMapper, PageData> i
     private SystemSettingProperties systemSettingProperties;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addStorePageData(String storeId) {
         //设置店铺的PC页面
         PageData pageData = new PageData();
@@ -55,10 +57,11 @@ public class PageDataServiceImpl extends ServiceImpl<PageDataMapper, PageData> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PageData addPageData(PageData pageData) {
         //如果页面为发布，则关闭其他页面，开启此页面
         //演示站点不可以开启楼层
-        if (!systemSettingProperties.getIsDemoSite() && pageData.getPageShow().equals(SwitchEnum.OPEN.name())) {
+        if (!Boolean.TRUE.equals(systemSettingProperties.getIsDemoSite()) && pageData.getPageShow().equals(SwitchEnum.OPEN.name())) {
             LambdaUpdateWrapper<PageData> lambdaUpdateWrapper = Wrappers.lambdaUpdate();
             lambdaUpdateWrapper.eq(PageData::getPageType, pageData.getPageType());
             lambdaUpdateWrapper.eq(PageData::getPageClientType, pageData.getPageClientType());
@@ -72,6 +75,7 @@ public class PageDataServiceImpl extends ServiceImpl<PageDataMapper, PageData> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PageData updatePageData(PageData pageData) {
         //如果页面为发布，则关闭其他页面，开启此页面
         if (pageData.getPageShow() != null && pageData.getPageShow().equals(SwitchEnum.OPEN.name())) {
@@ -91,6 +95,7 @@ public class PageDataServiceImpl extends ServiceImpl<PageDataMapper, PageData> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PageData releasePageData(String id) {
         PageData pageData = this.getById(id);
 
@@ -120,10 +125,11 @@ public class PageDataServiceImpl extends ServiceImpl<PageDataMapper, PageData> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean removePageData(String id) {
         PageData pageData = this.getById(id);
         //专题则直接进行删除
-        if (pageData.getPageType().equals(PageEnum.SPECIAL)) {
+        if (pageData.getPageType().equals(PageEnum.SPECIAL.name())) {
             return this.removeById(id);
         }
         //店铺、平台首页需要判断是否开启，开启则无法删除
@@ -135,7 +141,7 @@ public class PageDataServiceImpl extends ServiceImpl<PageDataMapper, PageData> i
         queryWrapper.eq(pageData.getPageType() != null, "page_type", pageData.getPageType());
         queryWrapper.eq(pageData.getPageClientType() != null, "page_client_type", pageData.getPageClientType());
         //如果为店铺页面需要设置店铺ID
-        if (pageData.getPageType().equals(PageEnum.STORE)) {
+        if (pageData.getPageType().equals(PageEnum.STORE.name())) {
             queryWrapper.eq(pageData.getNum() != null, "num", pageData.getNum());
         }
         //判断是否为唯一的页面

@@ -1,5 +1,7 @@
 package cn.lili.controller.member;
 
+import cn.lili.cache.limit.annotation.LimitPoint;
+import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.member.entity.dos.MemberSign;
@@ -18,7 +20,7 @@ import java.util.List;
  * 会员签到控制器
  *
  * @author pikachu
- * @since: 2020/11/16 10:07 下午
+ * @since 2020/11/16 10:07 下午
  */
 @RestController
 @Api(tags = "买家端，会员签到API")
@@ -27,6 +29,8 @@ public class MemberSignBuyerController {
     @Autowired
     private MemberSignService memberSignService;
 
+
+    @PreventDuplicateSubmissions
     @PostMapping
     @ApiOperation(value = "会员签到")
     public ResultMessage<Boolean> memberSign() {

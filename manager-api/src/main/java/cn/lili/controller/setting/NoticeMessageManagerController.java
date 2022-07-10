@@ -1,10 +1,10 @@
 package cn.lili.controller.setting;
 
 import cn.lili.common.enums.ResultCode;
+import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.enums.SwitchEnum;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.utils.BeanUtil;
-import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.message.entity.dos.NoticeMessage;
@@ -30,12 +30,12 @@ import java.util.List;
  * 管理端,会员站内信管理接口
  *
  * @author Chopper
- * @since: 2020/11/17 4:31 下午
+ * @since 2020/11/17 4:31 下午
  */
 @Slf4j
 @RestController
 @Api(tags = "管理端,会员站内信管理接口")
-@RequestMapping("/manager/noticeMessage")
+@RequestMapping("/manager/setting/noticeMessage")
 public class NoticeMessageManagerController {
     @Autowired
     private NoticeMessageService noticeMessageService;
@@ -96,7 +96,7 @@ public class NoticeMessageManagerController {
             noticeMessage.setNoticeContent(noticeContent);
             noticeMessage.setNoticeTitle(noticeTitle);
             noticeMessageService.updateById(noticeMessage);
-            ResultUtil.data(noticeMessage);
+            return ResultUtil.data(noticeMessage);
         }
         throw new ResourceNotFoundException(ResultCode.NOTICE_NOT_EXIST.message());
     }

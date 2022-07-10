@@ -1,18 +1,17 @@
 package cn.lili.modules.page.entity.dos;
 
-import cn.lili.mybatis.BaseEntity;
-import cn.lili.common.security.context.UserContext;
-import cn.lili.common.enums.SwitchEnum;
+import cn.hutool.http.HtmlUtil;
 import cn.lili.common.enums.ClientTypeEnum;
+import cn.lili.common.enums.SwitchEnum;
+import cn.lili.common.utils.StringUtils;
 import cn.lili.modules.page.entity.enums.PageEnum;
+import cn.lili.mybatis.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 /**
  * 页面数据DO
@@ -21,8 +20,6 @@ import javax.persistence.Table;
  * @since 2020/12/10 17:42
  */
 @Data
-@Entity
-@Table(name = "li_page_data")
 @TableName("li_page_data")
 @ApiModel(value = "页面数据DO")
 @NoArgsConstructor
@@ -58,12 +55,19 @@ public class PageData extends BaseEntity {
     @ApiModelProperty(value = "值")
     private String num;
 
-    public PageData(String name, String pageClientType, String pageData) {
+    public PageData(String name, String pageClientType, String pageData, String num) {
+        this.name = name;
         this.pageClientType = pageClientType;
         this.pageData = pageData;
-        this.num = UserContext.getCurrentUser().getStoreId();
+        this.num = num;
         this.pageShow = SwitchEnum.CLOSE.name();
         this.pageType = PageEnum.STORE.name();
     }
 
+    public String getPageData() {
+        if (StringUtils.isNotEmpty(pageData)) {
+            return HtmlUtil.unescape(pageData);
+        }
+        return pageData;
+    }
 }

@@ -1,8 +1,9 @@
 package cn.lili.controller.goods;
 
+import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
 import cn.lili.common.enums.ResultCode;
-import cn.lili.common.exception.ServiceException;
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.exception.ServiceException;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.goods.entity.dos.Goods;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
@@ -32,7 +33,7 @@ import java.util.List;
  */
 @RestController
 @Api(tags = "管理端,商品管理接口")
-@RequestMapping("/manager/goods")
+@RequestMapping("/manager/goods/goods")
 public class GoodsManagerController {
     /**
      * 商品
@@ -61,10 +62,11 @@ public class GoodsManagerController {
     @GetMapping(value = "/auth/list")
     public IPage<Goods> getAuthPage(GoodsSearchParams goodsSearchParams) {
 
-        goodsSearchParams.setIsAuth(GoodsAuthEnum.TOBEAUDITED.name());
+        goodsSearchParams.setAuthFlag(GoodsAuthEnum.TOBEAUDITED.name());
         return goodsService.queryByParams(goodsSearchParams);
     }
 
+    @PreventDuplicateSubmissions
     @ApiOperation(value = "管理员下架商品", notes = "管理员下架商品时使用")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "goodsId", value = "商品ID", required = true, paramType = "query", allowMultiple = true),
@@ -73,27 +75,29 @@ public class GoodsManagerController {
     @PutMapping(value = "/{goodsId}/under")
     public ResultMessage<Object> underGoods(@PathVariable String goodsId, @NotEmpty(message = "下架原因不能为空") @RequestParam String reason) {
         List<String> goodsIds = Arrays.asList(goodsId.split(","));
-        if (Boolean.TRUE.equals(goodsService.updateGoodsMarketAble(goodsIds, GoodsStatusEnum.DOWN, reason))) {
+        if (Boolean.TRUE.equals(goodsService.managerUpdateGoodsMarketAble(goodsIds, GoodsStatusEnum.DOWN, reason))) {
             return ResultUtil.success();
         }
         throw new ServiceException(ResultCode.GOODS_UNDER_ERROR);
     }
 
+    @PreventDuplicateSubmissions
     @ApiOperation(value = "管理员审核商品", notes = "管理员审核商品")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "goodsIds", value = "商品ID", required = true, paramType = "path", allowMultiple = true, dataType = "int"),
-            @ApiImplicitParam(name = "isAuth", value = "审核结果", required = true, paramType = "query", dataType = "string")
+            @ApiImplicitParam(name = "authFlag", value = "审核结果", required = true, paramType = "query", dataType = "string")
     })
     @PutMapping(value = "{goodsIds}/auth")
-    public ResultMessage<Object> auth(@PathVariable List<String> goodsIds, @RequestParam String isAuth) {
+    public ResultMessage<Object> auth(@PathVariable List<String> goodsIds, @RequestParam String authFlag) {
         //校验商品是否存在
-        if (goodsService.auditGoods(goodsIds, GoodsAuthEnum.valueOf(isAuth))) {
+        if (goodsService.auditGoods(goodsIds, GoodsAuthEnum.valueOf(authFlag))) {
             return ResultUtil.success();
         }
         throw new ServiceException(ResultCode.GOODS_AUTH_ERROR);
     }
 
 
+    @PreventDuplicateSubmissions
     @ApiOperation(value = "管理员上架商品", notes = "管理员上架商品时使用")
     @PutMapping(value = "/{goodsId}/up")
     @ApiImplicitParams({

@@ -5,6 +5,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.RandomUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
+import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.utils.BeanUtil;
 import cn.lili.common.utils.CurrencyUtil;
@@ -17,10 +18,10 @@ import cn.lili.modules.promotion.entity.dos.KanjiaActivity;
 import cn.lili.modules.promotion.entity.dos.KanjiaActivityGoods;
 import cn.lili.modules.promotion.entity.dos.KanjiaActivityLog;
 import cn.lili.modules.promotion.entity.dto.KanjiaActivityDTO;
-import cn.lili.modules.promotion.entity.dto.KanjiaActivityQuery;
+import cn.lili.modules.promotion.entity.dto.search.KanjiaActivityQuery;
+import cn.lili.modules.promotion.entity.dto.search.KanjiaActivitySearchParams;
 import cn.lili.modules.promotion.entity.enums.KanJiaStatusEnum;
-import cn.lili.modules.promotion.entity.enums.PromotionStatusEnum;
-import cn.lili.modules.promotion.entity.vos.kanjia.KanjiaActivitySearchParams;
+import cn.lili.modules.promotion.entity.enums.PromotionsStatusEnum;
 import cn.lili.modules.promotion.entity.vos.kanjia.KanjiaActivityVO;
 import cn.lili.modules.promotion.mapper.KanJiaActivityMapper;
 import cn.lili.modules.promotion.service.KanjiaActivityGoodsService;
@@ -29,6 +30,7 @@ import cn.lili.modules.promotion.service.KanjiaActivityService;
 import cn.lili.mybatis.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,16 +38,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Objects;
 
 
 /**
  * 砍价活动参与记录业务层实现
  *
  * @author qiuqiu
- * @date 2021/7/1
+ * @since 2021/7/1
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper, KanjiaActivity> implements KanjiaActivityService {
 
     @Autowired
@@ -64,6 +67,7 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
 
     @Override
     public KanjiaActivityVO getKanjiaActivityVO(KanjiaActivitySearchParams kanJiaActivitySearchParams) {
+        AuthUser authUser = Objects.requireNonNull(UserContext.getCurrentUser());
         KanjiaActivity kanjiaActivity = this.getKanjiaActivity(kanJiaActivitySearchParams);
         KanjiaActivityVO kanjiaActivityVO = new KanjiaActivityVO();
         //判断是否参与活动
@@ -73,35 +77,35 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
         BeanUtil.copyProperties(kanjiaActivity, kanjiaActivityVO);
 
         //判断是否发起了砍价活动,如果发起可参与活动
-        if (kanjiaActivity != null) {
-            kanjiaActivityVO.setLaunch(true);
-            //如果已发起砍价判断用户是否可以砍价
-            KanjiaActivityLog kanjiaActivityLog = kanjiaActivityLogService.getOne(new LambdaQueryWrapper<KanjiaActivityLog>()
-                    .eq(KanjiaActivityLog::getKanjiaActivityId, kanjiaActivity.getId())
-                    .eq(KanjiaActivityLog::getKanjiaMemberId, UserContext.getCurrentUser().getId()));
-            if (kanjiaActivityLog == null) {
-                kanjiaActivityVO.setHelp(true);
-            }
-            //判断活动已通过并且是当前用户发起的砍价则可以进行购买
-            if (kanjiaActivity.getStatus().equals(KanJiaStatusEnum.SUCCESS.name()) &&
-                    kanjiaActivity.getMemberId().equals(UserContext.getCurrentUser().getId())) {
-                kanjiaActivityVO.setPass(true);
-            }
+        kanjiaActivityVO.setLaunch(true);
+        //如果已发起砍价判断用户是否可以砍价
+        KanjiaActivityLog kanjiaActivityLog = kanjiaActivityLogService.getOne(new LambdaQueryWrapper<KanjiaActivityLog>()
+                .eq(KanjiaActivityLog::getKanjiaActivityId, kanjiaActivity.getId())
+                .eq(KanjiaActivityLog::getKanjiaMemberId, authUser.getId()));
+        if (kanjiaActivityLog == null) {
+            kanjiaActivityVO.setHelp(true);
+        }
+        //判断活动已通过并且是当前用户发起的砍价则可以进行购买
+        if (kanjiaActivity.getStatus().equals(KanJiaStatusEnum.SUCCESS.name()) &&
+                kanjiaActivity.getMemberId().equals(UserContext.getCurrentUser().getId())) {
+            kanjiaActivityVO.setPass(true);
         }
         return kanjiaActivityVO;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public KanjiaActivityLog add(String id) {
+        AuthUser authUser = Objects.requireNonNull(UserContext.getCurrentUser());
         //根据skuId查询当前sku是否参与活动并且是在活动进行中
         KanjiaActivityGoods kanJiaActivityGoods = kanjiaActivityGoodsService.getById(id);
         //只有砍价商品存在且已经开始的活动才可以发起砍价
-        if (kanJiaActivityGoods == null || !kanJiaActivityGoods.getPromotionStatus().equals(PromotionStatusEnum.START.name())) {
+        if (kanJiaActivityGoods == null || !kanJiaActivityGoods.getPromotionStatus().equals(PromotionsStatusEnum.START.name())) {
             throw new ServiceException(ResultCode.PROMOTION_STATUS_END);
         }
         KanjiaActivityLog kanjiaActivityLog = new KanjiaActivityLog();
         //获取会员信息
-        Member member = memberService.getById(UserContext.getCurrentUser().getId());
+        Member member = memberService.getById(authUser.getId());
         //校验此活动是否已经发起过
         QueryWrapper<KanjiaActivity> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("kanjia_activity_goods_id", kanJiaActivityGoods.getId());
@@ -112,7 +116,7 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
         KanjiaActivity kanJiaActivity = new KanjiaActivity();
         //获取商品信息
         GoodsSku goodsSku = goodsSkuService.getGoodsSkuByIdFromCache(kanJiaActivityGoods.getSkuId());
-        if (goodsSku != null && member != null) {
+        if (goodsSku != null) {
             kanJiaActivity.setSkuId(kanJiaActivityGoods.getSkuId());
             kanJiaActivity.setGoodsName(goodsSku.getGoodsName());
             kanJiaActivity.setKanjiaActivityGoodsId(kanJiaActivityGoods.getId());
@@ -120,7 +124,7 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
             kanJiaActivity.setMemberId(UserContext.getCurrentUser().getId());
             kanJiaActivity.setMemberName(member.getUsername());
             kanJiaActivity.setStatus(KanJiaStatusEnum.START.name());
-            //剩余砍价金额 开始 是商品金额;
+            //剩余砍价金额 开始 是商品金额
             kanJiaActivity.setSurplusPrice(goodsSku.getPrice());
             //砍价最低购买金额
             kanJiaActivity.setPurchasePrice(kanJiaActivityGoods.getPurchasePrice());
@@ -138,12 +142,13 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
 
     @Override
     public KanjiaActivityLog helpKanJia(String kanjiaActivityId) {
+        AuthUser authUser = Objects.requireNonNull(UserContext.getCurrentUser());
         //获取会员信息
-        Member member = memberService.getById(UserContext.getCurrentUser().getId());
+        Member member = memberService.getById(authUser.getId());
         //根据砍价发起活动id查询砍价活动信息
         KanjiaActivity kanjiaActivity = this.getById(kanjiaActivityId);
         //判断活动非空或非正在进行中的活动
-        if (kanjiaActivity == null || !kanjiaActivity.getStatus().equals(PromotionStatusEnum.START.name())) {
+        if (kanjiaActivity == null || !kanjiaActivity.getStatus().equals(PromotionsStatusEnum.START.name())) {
             throw new ServiceException(ResultCode.PROMOTION_STATUS_END);
         } else if (member == null) {
             throw new ServiceException(ResultCode.USER_NOT_EXIST);
@@ -154,7 +159,7 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
             throw new ServiceException(ResultCode.PROMOTION_STATUS_END);
         }
         //判断是否已参与
-        LambdaQueryWrapper lambdaQueryWrapper = new LambdaQueryWrapper<KanjiaActivityLog>()
+        LambdaQueryWrapper<KanjiaActivityLog> lambdaQueryWrapper = new LambdaQueryWrapper<KanjiaActivityLog>()
                 .eq(KanjiaActivityLog::getKanjiaActivityId, kanjiaActivityId)
                 .eq(KanjiaActivityLog::getKanjiaMemberId, member.getId());
         if (kanjiaActivityLogService.count(lambdaQueryWrapper) > 0) {
@@ -190,7 +195,7 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
      *
      * @param kanjiaActivityGoods 砍价商品信息
      * @param surplusPrice        剩余可砍金额
-     * @return
+     * @return 砍一刀价格
      */
     private Double getKanjiaPrice(KanjiaActivityGoods kanjiaActivityGoods, Double surplusPrice) {
 
@@ -206,8 +211,7 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
         //获取随机砍价金额
         BigDecimal bigDecimal = RandomUtil.randomBigDecimal(Convert.toBigDecimal(kanjiaActivityGoods.getLowestPrice()),
                 Convert.toBigDecimal(kanjiaActivityGoods.getHighestPrice()));
-        bigDecimal.setScale(2, BigDecimal.ROUND_UP);
-        return Convert.toDouble(bigDecimal, 0.0);
+        return bigDecimal.setScale(2, RoundingMode.UP).doubleValue();
 
     }
 
@@ -218,4 +222,16 @@ public class KanjiaActivityServiceImpl extends ServiceImpl<KanJiaActivityMapper,
         return this.page(PageUtil.initPage(page), queryWrapper);
     }
 
+    /**
+     * 结束砍价活动
+     *
+     * @param kanjiaId 砍价活动id
+     * @return 是否更新成功
+     */
+    @Override
+    public boolean endKanjiaActivity(String kanjiaId) {
+        return this.update(new LambdaUpdateWrapper<KanjiaActivity>()
+                .eq(KanjiaActivity::getId, kanjiaId)
+                .set(KanjiaActivity::getStatus, KanJiaStatusEnum.END.name()));
+    }
 }

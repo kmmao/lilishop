@@ -1,11 +1,11 @@
 package cn.lili.controller.setting;
 
 import cn.hutool.json.JSONUtil;
+import cn.lili.common.aop.annotation.DemoSite;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.vo.ResultMessage;
-import cn.lili.modules.system.aspect.annotation.DemoSite;
 import cn.lili.modules.system.entity.dos.Setting;
 import cn.lili.modules.system.entity.dto.*;
 import cn.lili.modules.system.entity.dto.connect.QQConnectSetting;
@@ -32,7 +32,7 @@ import java.util.Collections;
  */
 @RestController
 @Api(tags = "管理端,系统设置接口")
-@RequestMapping("/manager/system/setting")
+@RequestMapping("/manager/setting/setting")
 public class SettingManagerController {
     @Autowired
     private SettingService settingService;
@@ -46,7 +46,7 @@ public class SettingManagerController {
                     "WECHAT_PC_CONNECT,WECHAT_WAP_CONNECT,WECHAT_APP_CONNECT,WECHAT_MP_CONNECT," +
                     "QQ_WEB_CONNECT,QQ_APP_CONNECT," +
                     "QQ_WEB_CONNECT,QQ_APP_CONNECT,WEIBO_CONNECT,ALIPAY_CONNECT," +
-                    "PAYMENT_SUPPORT,ALIPAY_PAYMENT,WECHAT_PAYMENT,SECKILL_SETTING,EXPERIENCE_SETTING")
+                    "PAYMENT_SUPPORT,ALIPAY_PAYMENT,WECHAT_PAYMENT,SECKILL_SETTING,EXPERIENCE_SETTING,IM")
     public ResultMessage saveConfig(@PathVariable String key, @RequestBody String configValue) {
         SettingEnum settingEnum = SettingEnum.valueOf(key);
         //获取系统配置
@@ -62,6 +62,23 @@ public class SettingManagerController {
         settingService.saveUpdate(setting);
         return ResultUtil.success();
     }
+
+
+    @DemoSite
+    @ApiOperation(value = "查看配置")
+    @GetMapping(value = "/get/{key}")
+    @ApiImplicitParam(name = "key", value = "配置key", paramType = "path"
+            , allowableValues = "BASE_SETTING,EMAIL_SETTING,GOODS_SETTING,KUAIDI_SETTING,ORDER_SETTING,OSS_SETTING,POINT_SETTING," +
+            "WECHAT_PC_CONNECT,WECHAT_WAP_CONNECT,WECHAT_APP_CONNECT,WECHAT_MP_CONNECT," +
+            "QQ_WEB_CONNECT,QQ_APP_CONNECT," +
+            "QQ_WEB_CONNECT,QQ_APP_CONNECT,WEIBO_CONNECT,ALIPAY_CONNECT," +
+            "PAYMENT_SUPPORT,ALIPAY_PAYMENT,WECHAT_PAYMENT,SECKILL_SETTING,EXPERIENCE_SETTING,IM"
+    )
+    public ResultMessage settingGet(@PathVariable String key) {
+        return createSetting(key);
+    }
+
+
 
     /**
      * 对配置进行过滤
@@ -81,21 +98,6 @@ public class SettingManagerController {
             configValue = JSONUtil.toJsonStr(pointSetting);
         }
         return configValue;
-    }
-
-
-    @DemoSite
-    @ApiOperation(value = "查看配置")
-    @GetMapping(value = "/get/{key}")
-    @ApiImplicitParam(name = "key", value = "配置key", paramType = "path"
-            , allowableValues = "BASE_SETTING,EMAIL_SETTING,GOODS_SETTING,KUAIDI_SETTING,ORDER_SETTING,OSS_SETTING,POINT_SETTING," +
-            "WECHAT_PC_CONNECT,WECHAT_WAP_CONNECT,WECHAT_APP_CONNECT,WECHAT_MP_CONNECT," +
-            "QQ_WEB_CONNECT,QQ_APP_CONNECT," +
-            "QQ_WEB_CONNECT,QQ_APP_CONNECT,WEIBO_CONNECT,ALIPAY_CONNECT," +
-            "PAYMENT_SUPPORT,ALIPAY_PAYMENT,WECHAT_PAYMENT,SECKILL_SETTING,EXPERIENCE_SETTING"
-    )
-    public ResultMessage settingGet(@PathVariable String key) {
-        return createSetting(key);
     }
 
     /**
@@ -179,6 +181,14 @@ public class SettingManagerController {
                 return setting == null ?
                         ResultUtil.data(new ExperienceSetting()) :
                         ResultUtil.data(JSONUtil.toBean(setting.getSettingValue(), ExperienceSetting.class));
+            case IM_SETTING:
+                return setting == null ?
+                        ResultUtil.data(new ImSetting()) :
+                        ResultUtil.data(JSONUtil.toBean(setting.getSettingValue(), ImSetting.class));
+            case HOT_WORDS:
+                return setting == null ?
+                        ResultUtil.data(new HotWordsSetting()) :
+                        ResultUtil.data(JSONUtil.toBean(setting.getSettingValue(), HotWordsSetting.class));
             default:
                 throw new ServiceException(ResultCode.SETTING_NOT_TO_SET);
         }

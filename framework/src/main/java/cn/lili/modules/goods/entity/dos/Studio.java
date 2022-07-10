@@ -1,25 +1,22 @@
 package cn.lili.modules.goods.entity.dos;
 
+import cn.lili.modules.goods.entity.enums.StudioStatusEnum;
 import cn.lili.mybatis.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 /**
  * 小程序直播间
  *
  * @author Bulbasaur
- * @since: 2021/5/17 9:47 上午
+ * @since 2021/5/17 9:47 上午
  */
 @Data
-@Entity
 @ApiModel(value = "直播间")
 @TableName("li_studio")
-@Table(name = "li_studio")
 public class Studio extends BaseEntity {
 
     /**
@@ -92,6 +89,9 @@ public class Studio extends BaseEntity {
     @ApiModelProperty(value = "推荐直播间")
     private boolean recommend;
 
+    /**
+     * @see StudioStatusEnum
+     */
     @ApiModelProperty(value = "直播间状态")
     private String  status;
 }

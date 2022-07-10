@@ -1,15 +1,16 @@
 package cn.lili.controller.passport;
 
 import cn.lili.common.enums.ResultCode;
-import cn.lili.common.exception.ServiceException;
-import cn.lili.modules.system.sms.SmsUtil;
 import cn.lili.common.enums.ResultUtil;
-import cn.lili.modules.verification.enums.VerificationEnums;
-import cn.lili.modules.verification.service.VerificationService;
+import cn.lili.common.exception.ServiceException;
+import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.entity.dto.MemberEditDTO;
 import cn.lili.modules.member.service.MemberService;
+import cn.lili.modules.sms.SmsUtil;
+import cn.lili.modules.verification.entity.enums.VerificationEnums;
+import cn.lili.modules.verification.service.VerificationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -23,11 +24,11 @@ import javax.validation.constraints.NotNull;
  * 买家端,会员接口
  *
  * @author Chopper
- * @since: 2020/11/16 10:07 下午
+ * @since 2020/11/16 10:07 下午
  */
 @RestController
 @Api(tags = "买家端,会员接口")
-@RequestMapping("/buyer/members")
+@RequestMapping("/buyer/passport/member")
 public class MemberBuyerController {
 
     @Autowired
@@ -47,11 +48,15 @@ public class MemberBuyerController {
     public ResultMessage<Object> userLogin(@NotNull(message = "用户名不能为空") @RequestParam String username,
                                            @NotNull(message = "密码不能为空") @RequestParam String password,
                                            @RequestHeader String uuid) {
-        if (verificationService.check(uuid, VerificationEnums.LOGIN)) {
-            return ResultUtil.data(this.memberService.usernameLogin(username, password));
-        } else {
-            throw new ServiceException(ResultCode.VERIFICATION_ERROR);
-        }
+        verificationService.check(uuid, VerificationEnums.LOGIN);
+        return ResultUtil.data(this.memberService.usernameLogin(username, password));
+    }
+
+    @ApiOperation(value = "注销接口")
+    @PostMapping("/logout")
+    public ResultMessage<Object> logout() {
+        this.memberService.logout(UserEnums.MEMBER);
+        return ResultUtil.success();
     }
 
     @ApiOperation(value = "短信登录接口")
@@ -66,7 +71,7 @@ public class MemberBuyerController {
         if (smsUtil.verifyCode(mobile, VerificationEnums.LOGIN, uuid, code)) {
             return ResultUtil.data(memberService.mobilePhoneLogin(mobile));
         } else {
-            throw new ServiceException(ResultCode.VERIFICATION_SMS_ERROR);
+            throw new ServiceException(ResultCode.VERIFICATION_SMS_CHECKED_ERROR);
         }
     }
 
@@ -84,12 +89,12 @@ public class MemberBuyerController {
                                           @RequestHeader String uuid,
                                           @NotNull(message = "验证码不能为空") @RequestParam String code) {
 
-        boolean result = smsUtil.verifyCode(mobilePhone, VerificationEnums.REGISTER, uuid, code);
-        if (result) {
+        if (smsUtil.verifyCode(mobilePhone, VerificationEnums.REGISTER, uuid, code)) {
             return ResultUtil.data(memberService.register(username, password, mobilePhone));
         } else {
-            throw new ServiceException(ResultCode.VERIFICATION_SMS_ERROR);
+            throw new ServiceException(ResultCode.VERIFICATION_SMS_CHECKED_ERROR);
         }
+
     }
 
     @ApiOperation(value = "获取当前登录用户接口")
@@ -111,16 +116,15 @@ public class MemberBuyerController {
         //校验短信验证码是否正确
         if (smsUtil.verifyCode(mobile, VerificationEnums.FIND_USER, uuid, code)) {
             //校验是否通过手机号可获取会员,存在则将会员信息存入缓存，有效时间3分钟
-            if (memberService.findByMobile(uuid, mobile)) {
-                return ResultUtil.success();
-            }
+            memberService.findByMobile(uuid, mobile);
+            return ResultUtil.success();
+        } else {
+            throw new ServiceException(ResultCode.VERIFICATION_SMS_CHECKED_ERROR);
         }
-        throw new ServiceException(ResultCode.VERIFICATION_ERROR);
     }
 
     @ApiOperation(value = "修改密码")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = "mobile", value = "手机号", required = true, paramType = "query"),
             @ApiImplicitParam(name = "password", value = "是否保存登录", required = true, paramType = "query")
     })
     @PostMapping("/resetPassword")
@@ -147,6 +151,34 @@ public class MemberBuyerController {
         return ResultUtil.data(memberService.modifyPass(password, newPassword));
     }
 
+    @ApiOperation(value = "初始设置密码")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "newPassword", value = "新密码", required = true, paramType = "query")
+    })
+    @PutMapping("/canInitPassword")
+    public ResultMessage<Object> canInitPassword() {
+        return ResultUtil.data(memberService.canInitPass());
+    }
+
+    @ApiOperation(value = "初始设置密码")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "newPassword", value = "新密码", required = true, paramType = "query")
+    })
+    @PutMapping("/initPassword")
+    public ResultMessage<Object> initPassword(@NotNull(message = "密码不能为空") @RequestParam String password) {
+        memberService.initPass(password);
+        return ResultUtil.success();
+    }
+
+    @ApiOperation(value = "注销账号")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "password", value = "密码", required = true, paramType = "query")
+    })
+    @PutMapping("/cancellation")
+    public ResultMessage<Member> cancellation(@NotNull(message = "密码不能为空") @RequestParam String password) {
+        memberService.cancellation(password);
+        return ResultUtil.success();
+    }
 
     @ApiOperation(value = "刷新token")
     @GetMapping("/refresh/{refreshToken}")

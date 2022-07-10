@@ -2,11 +2,11 @@ package cn.lili.controller.common;
 
 import cn.lili.cache.Cache;
 import cn.lili.common.enums.ResultCode;
+import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.security.enums.UserEnums;
-import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.common.vo.SearchVO;
@@ -30,8 +30,8 @@ import java.util.List;
  * @since 2020/11/26 15:41
  */
 @RestController
-@Api(tags = "文件管理管理接口")
-@RequestMapping("/common/file")
+@Api(tags = "文件管理接口")
+@RequestMapping("/common/common/file")
 public class FileController {
 
     @Autowired
@@ -78,9 +78,7 @@ public class FileController {
                 }
                 throw new ServiceException(ResultCode.USER_AUTHORITY_ERROR);
             case MANAGER:
-                if (file.getUserEnums().equals(authUser.getRole().name())) {
-                    break;
-                }
+                break;
             default:
                 throw new ServiceException(ResultCode.USER_AUTHORITY_ERROR);
         }

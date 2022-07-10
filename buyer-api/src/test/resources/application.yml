@@ -25,25 +25,11 @@ spring:
     admin:
       client:
         url: http://192.168.0.116:8000
-  # mongodb
-  data:
-    mongodb:
-      host: 192.168.0.116
-      port: 27017
-      database: lilishop
-      username: root
-      password: lilishop
-      authentication-database: admin
-  #      replica-set-name: mongoreplset
   cache:
     type: redis
   #amqp
   #  rabbitmq:
   #    host: 192.168.0.116
-  jpa:
-    # 自动生成表结构
-    generate-ddl: true
-    open-in-view: false
   # Redis
   redis:
     host: 192.168.0.116
@@ -190,7 +176,6 @@ logging:
     cn.lili: info
   #    org.hibernate: debug
   #    org.springframework: debug
-  #    org.springframework.data.mongodb.core: debug
   file:
     # 指定路径
     path: lili-logs
@@ -254,7 +239,8 @@ lili:
     #      account:
     #        username: elastic
     #        password: LiLiShopES
-
+    logstash:
+      server: 127.0.0.1:4560
     rocketmq:
       promotion-topic: lili_promotion_topic
       promotion-group: lili_promotion_group

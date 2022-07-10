@@ -7,7 +7,7 @@ import cn.lili.modules.distribution.entity.dos.DistributionOrder;
 import cn.lili.modules.distribution.entity.enums.DistributionOrderStatusEnum;
 import cn.lili.modules.distribution.mapper.DistributionOrderMapper;
 import cn.lili.modules.distribution.service.DistributionOrderService;
-import cn.lili.modules.order.order.entity.dos.AfterSale;
+import cn.lili.modules.order.aftersale.entity.dos.AfterSale;
 import cn.lili.modules.order.order.entity.dto.OrderMessage;
 import cn.lili.modules.order.trade.entity.enums.AfterSaleStatusEnum;
 import cn.lili.timetask.handler.EveryDayExecute;
@@ -44,14 +44,19 @@ public class DistributionOrderExecute implements OrderStatusChangeEvent, EveryDa
     public void orderChange(OrderMessage orderMessage) {
 
         switch (orderMessage.getNewStatus()) {
-            case PAID: {
+            //订单带校验/订单代发货，则记录分销信息
+            case TAKE:
+            case UNDELIVERED: {
                 //记录分销订单
-                distributionOrderService.payOrder(orderMessage.getOrderSn());
+                distributionOrderService.calculationDistribution(orderMessage.getOrderSn());
                 break;
             }
             case CANCELLED: {
                 //修改分销订单状态
                 distributionOrderService.cancelOrder(orderMessage.getOrderSn());
+                break;
+            }
+            default: {
                 break;
             }
         }

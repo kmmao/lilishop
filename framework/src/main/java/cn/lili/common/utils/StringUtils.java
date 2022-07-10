@@ -148,6 +148,20 @@ public class StringUtils extends StrUtil {
     }
 
     /**
+     * 切割字符串
+     *
+     * @param str    字符串
+     * @param length 长度
+     * @return 处理后的字符串
+     */
+    public static String sub(String str, Integer length) {
+        if (str.length() < length) {
+            return str;
+        }
+        return str.substring(0, length);
+    }
+
+    /**
      * 过滤特殊字符串
      *
      * @param str
@@ -159,6 +173,23 @@ public class StringUtils extends StrUtil {
         Matcher m = p.matcher(str);
         return m.replaceAll("").trim();
     }
+
+    /**
+     * double 转价格字符串
+     *
+     * @return
+     */
+    public static String toFen(Double doubleValue) {
+        String str = doubleValue.toString();
+
+        if (!str.contains(".")) {
+            str = str + ".00";
+        } else if (str.substring(str.indexOf(".")).length() == 2) {
+            str = str + "0";
+        }
+        return str;
+    }
+
 }
 
 

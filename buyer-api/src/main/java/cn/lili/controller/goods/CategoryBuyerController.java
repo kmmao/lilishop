@@ -21,11 +21,11 @@ import java.util.List;
  * 买家端,商品分类接口
  *
  * @author Chopper
- * @since: 2020/11/16 10:05 下午
+ * @since 2020/11/16 10:05 下午
  */
 @RestController
 @Api(tags = "买家端,商品分类接口")
-@RequestMapping("/buyer/category")
+@RequestMapping("/buyer/goods/category")
 public class CategoryBuyerController {
     /**
      * 商品分类

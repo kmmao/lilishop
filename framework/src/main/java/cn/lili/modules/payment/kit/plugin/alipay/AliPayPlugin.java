@@ -3,20 +3,22 @@ package cn.lili.modules.payment.kit.plugin.alipay;
 import cn.hutool.core.net.URLDecoder;
 import cn.hutool.core.net.URLEncoder;
 import cn.hutool.json.JSONUtil;
+import cn.lili.common.context.ThreadContextHolder;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.exception.ServiceException;
+import cn.lili.common.properties.ApiProperties;
+import cn.lili.common.properties.DomainProperties;
 import cn.lili.common.utils.BeanUtil;
 import cn.lili.common.utils.SnowFlake;
 import cn.lili.common.utils.StringUtils;
 import cn.lili.common.vo.ResultMessage;
-import cn.lili.common.properties.ApiProperties;
 import cn.lili.modules.payment.entity.RefundLog;
+import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
 import cn.lili.modules.payment.kit.CashierSupport;
 import cn.lili.modules.payment.kit.Payment;
 import cn.lili.modules.payment.kit.dto.PayParam;
 import cn.lili.modules.payment.kit.dto.PaymentSuccessParams;
-import cn.lili.modules.payment.kit.enums.PaymentMethodEnum;
 import cn.lili.modules.payment.kit.params.dto.CashierParam;
 import cn.lili.modules.payment.service.PaymentService;
 import cn.lili.modules.payment.service.RefundLogService;
@@ -73,6 +75,11 @@ public class AliPayPlugin implements Payment {
      */
     @Autowired
     private ApiProperties apiProperties;
+    /**
+     * 域名配置
+     */
+    @Autowired
+    private DomainProperties domainProperties;
 
     @Override
     public ResultMessage<Object> h5pay(HttpServletRequest request, HttpServletResponse response, PayParam payParam) {
@@ -104,7 +111,7 @@ public class AliPayPlugin implements Payment {
 
 
     @Override
-    public ResultMessage<Object> JSApiPay(HttpServletRequest request, PayParam payParam) {
+    public ResultMessage<Object> jsApiPay(HttpServletRequest request, PayParam payParam) {
         throw new ServiceException(ResultCode.PAY_NOT_SUPPORT);
     }
 
@@ -205,45 +212,47 @@ public class AliPayPlugin implements Payment {
     }
 
     @Override
-    public void cancel(RefundLog refundLog) {
-        AlipayTradeCancelModel model = new AlipayTradeCancelModel();
-        //这里取支付回调时返回的流水
-        if (StringUtils.isNotEmpty(refundLog.getPaymentReceivableNo())) {
-            model.setTradeNo(refundLog.getPaymentReceivableNo());
-        } else {
-            log.error("退款时，支付参数为空导致异常：{}", refundLog);
-            throw new ServiceException(ResultCode.ALIPAY_PARAMS_EXCEPTION);
-        }
-        try {
-            //与阿里进行交互
-            AlipayTradeCancelResponse alipayTradeCancelResponse = AliPayApi.tradeCancelToResponse(model);
-            if (alipayTradeCancelResponse.isSuccess()) {
-                refundLog.setIsRefund(true);
-                refundLog.setReceivableNo(refundLog.getOutOrderNo());
-            } else {
-                refundLog.setErrorMessage(String.format("错误码：%s,错误原因：%s", alipayTradeCancelResponse.getSubCode(), alipayTradeCancelResponse.getSubMsg()));
-            }
-            refundLogService.save(refundLog);
-        } catch (Exception e) {
-            log.error("支付宝退款异常", e);
-        }
-    }
-
-    @Override
     public void refundNotify(HttpServletRequest request) {
         //不需要实现
     }
 
     @Override
     public void callBack(HttpServletRequest request) {
-        verifyNotify(request);
         log.info("支付同步回调：");
+        callback(request);
+
     }
 
     @Override
     public void notify(HttpServletRequest request) {
         verifyNotify(request);
         log.info("支付异步通知：");
+    }
+
+    /**
+     * 验证支付结果
+     *
+     * @param request
+     */
+    private void callback(HttpServletRequest request) {
+        try {
+            AlipayPaymentSetting alipayPaymentSetting = alipayPaymentSetting();
+            //获取支付宝反馈信息
+            Map<String, String> map = AliPayApi.toMap(request);
+            log.info("同步回调：{}", JSONUtil.toJsonStr(map));
+            boolean verifyResult = AlipaySignature.rsaCertCheckV1(map, alipayPaymentSetting.getAlipayPublicCertPath(), "UTF-8",
+                    "RSA2");
+            if (verifyResult) {
+                log.info("支付回调通知：支付成功-参数：{}", map);
+            } else {
+                log.info("支付回调通知：支付失败-参数：{}", map);
+            }
+
+            ThreadContextHolder.getHttpResponse().sendRedirect(domainProperties.getWap() + "/pages/order/myOrder?status=0");
+        } catch (Exception e) {
+            log.error("支付回调同步通知异常", e);
+        }
+
     }
 
     /**
@@ -259,7 +268,11 @@ public class AliPayPlugin implements Payment {
             log.info("支付回调响应：{}", JSONUtil.toJsonStr(map));
             boolean verifyResult = AlipaySignature.rsaCertCheckV1(map, alipayPaymentSetting.getAlipayPublicCertPath(), "UTF-8",
                     "RSA2");
-
+            //支付完成判定
+            if (!"TRADE_FINISHED".equals(map.get("trade_status")) &&
+                    !"TRADE_SUCCESS".equals(map.get("trade_status"))) {
+                return;
+            }
             String payParamStr = map.get("passback_params");
             String payParamJson = URLDecoder.decode(payParamStr, StandardCharsets.UTF_8);
             PayParam payParam = BeanUtil.formatKeyValuePair(payParamJson, new PayParam());

@@ -26,6 +26,22 @@ public interface CategoryService extends IService<Category> {
     List<Category> dbList(String parentId);
 
     /**
+     * 获取分类
+     *
+     * @param id
+     * @return
+     */
+    Category getCategoryById(String id);
+
+    /**
+     * 根据分类id集合获取所有分类根据层级排序
+     *
+     * @param ids 分类ID集合
+     * @return 商品分类列表
+     */
+    List<Category> listByIdsOrderByLevel(List<String> ids);
+
+    /**
      * 获取分类树
      *
      * @return 分类树
@@ -41,11 +57,12 @@ public interface CategoryService extends IService<Category> {
     List<CategoryVO> listAllChildren(String parentId);
 
     /**
-     * 查询所有的分类，父子关系 数据库获取
+     * 查询所有的分类，父子关系
+     * 数据库获取
      *
      * @return 所有的分类，父子关系
      */
-    List<CategoryVO> listAllChildrenDB();
+    List<CategoryVO> listAllChildren();
 
     /**
      * 获取指定分类的分类名称

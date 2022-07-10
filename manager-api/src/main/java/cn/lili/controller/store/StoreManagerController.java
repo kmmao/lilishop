@@ -1,19 +1,18 @@
 package cn.lili.controller.store;
 
+import cn.lili.common.aop.annotation.DemoSite;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
-import cn.lili.modules.system.aspect.annotation.DemoSite;
-import cn.lili.modules.goods.entity.vos.CategoryVO;
 import cn.lili.modules.store.entity.dos.Store;
 import cn.lili.modules.store.entity.dto.AdminStoreApplyDTO;
 import cn.lili.modules.store.entity.dto.StoreEditDTO;
 import cn.lili.modules.store.entity.vos.StoreDetailVO;
+import cn.lili.modules.store.entity.vos.StoreManagementCategoryVO;
 import cn.lili.modules.store.entity.vos.StoreSearchParams;
 import cn.lili.modules.store.entity.vos.StoreVO;
 import cn.lili.modules.store.service.StoreDetailService;
 import cn.lili.modules.store.service.StoreService;
-import cn.lili.modules.system.aspect.annotation.DemoSite;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
@@ -30,11 +29,11 @@ import java.util.List;
  * 管理端,店铺管理接口
  *
  * @author Bulbasaur
- * @since: 2020/12/6 16:09
+ * @since 2020/12/6 16:09
  */
 @Api(tags = "管理端,店铺管理接口")
 @RestController
-@RequestMapping("/manager/store")
+@RequestMapping("/manager/store/store")
 public class StoreManagerController {
 
     /**
@@ -113,7 +112,7 @@ public class StoreManagerController {
     @ApiOperation(value = "查询一级分类列表")
     @ApiImplicitParam(name = "storeId", value = "店铺id", required = true, dataType = "String", paramType = "path")
     @GetMapping(value = "/managementCategory/{storeId}")
-    public ResultMessage<List<CategoryVO>> firstCategory(@PathVariable String storeId) {
+    public ResultMessage<List<StoreManagementCategoryVO>> firstCategory(@PathVariable String storeId) {
         return ResultUtil.data(this.storeDetailService.goodsManagementCategory(storeId));
     }
 

@@ -1,6 +1,7 @@
 package cn.lili.modules.member.service;
 
 
+import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.security.token.Token;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.connect.entity.dto.ConnectAuthUser;
@@ -8,12 +9,13 @@ import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.entity.dto.ManagerMemberEditDTO;
 import cn.lili.modules.member.entity.dto.MemberAddDTO;
 import cn.lili.modules.member.entity.dto.MemberEditDTO;
-import cn.lili.modules.member.entity.vo.MemberDistributionVO;
 import cn.lili.modules.member.entity.vo.MemberSearchVO;
+import cn.lili.modules.member.entity.vo.MemberVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 会员业务层
@@ -22,6 +24,11 @@ import java.util.List;
  * @since 2020-02-25 14:10:16
  */
 public interface MemberService extends IService<Member> {
+
+    /**
+     * 默认密码
+     */
+    static String DEFAULT_PASSWORD = "111111";
 
     /**
      * 获取当前登录的用户信息
@@ -91,6 +98,29 @@ public interface MemberService extends IService<Member> {
     Member modifyPass(String oldPassword, String newPassword);
 
     /**
+     * 是否可以初始化密码
+     *
+     * @return
+     */
+    boolean canInitPass();
+
+    /**
+     * 初始化密码
+     *
+     * @param password 密码
+     * @return 操作结果
+     */
+    void initPass(String password);
+
+    /**
+     * 注销账号
+     *
+     * @param password 密码
+     * @return 操作结果
+     */
+    void cancellation(String password);
+
+    /**
      * 注册会员
      *
      * @param userName    会员
@@ -141,7 +171,8 @@ public interface MemberService extends IService<Member> {
      * @param page           分页
      * @return 会员分页
      */
-    IPage<Member> getMemberPage(MemberSearchVO memberSearchVO, PageVO page);
+    IPage<MemberVO> getMemberPage(MemberSearchVO memberSearchVO, PageVO page);
+
 
     /**
      * 一键注册会员
@@ -196,17 +227,49 @@ public interface MemberService extends IService<Member> {
     Boolean updateMemberStatus(List<String> memberIds, Boolean status);
 
     /**
-     * 查看会员数据分布
-     *
-     * @return 会员数据分布
-     */
-    List<MemberDistributionVO> distribution();
-
-    /**
      * 根据条件查询会员总数
      *
      * @param memberSearchVO
      * @return 会员总数
      */
-    Integer getMemberNum(MemberSearchVO memberSearchVO);
+    long getMemberNum(MemberSearchVO memberSearchVO);
+
+    /**
+     * 获取指定会员数据
+     *
+     * @param columns   指定获取的列
+     * @param memberIds 会员ids
+     * @return 指定会员数据
+     */
+    List<Map<String, Object>> listFieldsByMemberIds(String columns, List<String> memberIds);
+
+    /**
+     * 登出
+     *
+     * @param userEnums token角色类型
+     */
+    void logout(UserEnums userEnums);
+
+    /**
+     * 获取所有会员的手机号
+     *
+     * @return 所有会员的手机号
+     */
+    List<String> getAllMemberMobile();
+
+    /**
+     * 更新会员登录时间为最新时间
+     *
+     * @param memberId 会员id
+     * @return 是否更新成功
+     */
+    boolean updateMemberLoginTime(String memberId);
+
+    /**
+     * 获取用户VO
+     *
+     * @param id 会员id
+     * @return 用户VO
+     */
+    MemberVO getMember(String id);
 }

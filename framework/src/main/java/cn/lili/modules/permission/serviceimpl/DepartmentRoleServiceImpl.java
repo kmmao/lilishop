@@ -17,7 +17,6 @@ import java.util.List;
  * @since 2020/11/22 12:08
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class DepartmentRoleServiceImpl extends ServiceImpl<DepartmentRoleMapper, DepartmentRole> implements DepartmentRoleService {
 
 
@@ -29,6 +28,7 @@ public class DepartmentRoleServiceImpl extends ServiceImpl<DepartmentRoleMapper,
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateByDepartmentId(String departmentId, List<DepartmentRole> departmentRoles) {
         QueryWrapper queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("department_id", departmentId);

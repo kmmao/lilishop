@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -84,6 +85,7 @@ public class CartVO extends CartBase implements Serializable {
         this.setCouponList(new ArrayList<>());
         this.setGiftList(new ArrayList<>());
         this.setGiftCouponList(new ArrayList<>());
+        this.setCanReceiveCoupon(new ArrayList<>());
         this.setChecked(false);
         this.isFull = false;
         this.weight = 0d;
@@ -98,4 +100,18 @@ public class CartVO extends CartBase implements Serializable {
             this.goodsNum += goodsNum;
         }
     }
+
+
+    /**
+     * 过滤购物车中已选择的sku
+     *
+     * @return
+     */
+    public List<CartSkuVO> getCheckedSkuList() {
+        if (skuList != null && !skuList.isEmpty()) {
+            return skuList.stream().filter(CartSkuVO::getChecked).collect(Collectors.toList());
+        }
+        return skuList;
+    }
+
 }

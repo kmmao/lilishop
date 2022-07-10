@@ -1,7 +1,7 @@
 package cn.lili.cache;
 
-import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.enums.PromotionTypeEnum;
+import cn.lili.common.security.enums.UserEnums;
 
 /**
  * 缓存前缀
@@ -466,9 +466,28 @@ public enum CachePrefix {
     INIT_INDEX_FLAG,
 
     /**
+     * 店铺
+     */
+    STORE,
+    /**
      * 店铺分类
      */
-    STORE_CATEGORY;
+    STORE_CATEGORY,
+    /**
+     * 用户菜单
+     * <p>
+     * 这个缓存并非永久缓存，而是300秒缓存，也就是说修改用户关联的部门，关联的角色，
+     * 部门关联的角色，角色关联的菜单等等，最多需要5分钟才能生效
+     */
+    USER_MENU,
+    /**
+     * 订单暂时缓存
+     */
+    ORDER,
+    /**
+     * 敏感词
+     */
+    SENSITIVE;
 
 
     public static String removePrefix(String str) {

@@ -18,7 +18,7 @@ import javax.validation.Valid;
  * 管理端,分类绑定参数组管理接口
  *
  * @author Bulbasaur
- * @since: 2020/11/26 16:15
+ * @since 2020/11/26 16:15
  */
 @RestController
 @Api(tags = "管理端,分类绑定参数组管理接口")
@@ -44,7 +44,7 @@ public class ParameterManagerController {
     @PutMapping
     public ResultMessage<Parameters> update(@Valid Parameters parameters) {
 
-        if (parametersService.updateById(parameters)) {
+        if (parametersService.updateParameter(parameters)) {
             return ResultUtil.data(parameters);
         }
         throw new ServiceException(ResultCode.PARAMETER_UPDATE_ERROR);

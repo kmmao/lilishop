@@ -4,8 +4,8 @@ import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.payment.entity.RefundLog;
+import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
 import cn.lili.modules.payment.kit.dto.PayParam;
-import cn.lili.modules.payment.kit.enums.PaymentMethodEnum;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,7 +36,7 @@ public interface Payment {
      * @param payParam api参数
      * @return 公众号内部支付参数
      */
-    default ResultMessage<Object> JSApiPay(HttpServletRequest request, PayParam payParam) {
+    default ResultMessage<Object> jsApiPay(HttpServletRequest request, PayParam payParam) {
         throw new ServiceException(ResultCode.PAY_ERROR);
     }
 
@@ -83,17 +83,6 @@ public interface Payment {
         throw new ServiceException(ResultCode.PAY_ERROR);
     }
 
-
-    /**
-     * 取消支付订单
-     *
-     * @param refundLog 支付参数
-     */
-    default void cancel(RefundLog refundLog) {
-        throw new ServiceException(ResultCode.PAY_ERROR);
-    }
-
-
     /**
      * 回调
      *
@@ -129,7 +118,7 @@ public interface Payment {
      * @return 回调地址
      */
     default String callbackUrl(String api, PaymentMethodEnum paymentMethodEnum) {
-        return api + "/buyer/cashier/callback/" + paymentMethodEnum.name();
+        return api + "/buyer/payment/cashier/callback/" + paymentMethodEnum.name();
     }
 
     /**
@@ -140,7 +129,7 @@ public interface Payment {
      * @return 异步通知地址
      */
     default String notifyUrl(String api, PaymentMethodEnum paymentMethodEnum) {
-        return api + "/buyer/cashier/notify/" + paymentMethodEnum.name();
+        return api + "/buyer/payment/cashier/notify/" + paymentMethodEnum.name();
     }
 
     /**
@@ -151,7 +140,7 @@ public interface Payment {
      * @return 异步通知地址
      */
     default String refundNotifyUrl(String api, PaymentMethodEnum paymentMethodEnum) {
-        return api + "/buyer/cashier/refund/notify/" + paymentMethodEnum.name();
+        return api + "/buyer/payment/cashierRefund/notify/" + paymentMethodEnum.name();
     }
 
 }

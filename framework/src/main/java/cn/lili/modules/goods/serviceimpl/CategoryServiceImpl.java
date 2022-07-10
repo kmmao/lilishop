@@ -1,17 +1,17 @@
 package cn.lili.modules.goods.serviceimpl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.modules.goods.entity.dos.Category;
-import cn.lili.modules.goods.entity.dos.CategoryParameterGroup;
 import cn.lili.modules.goods.entity.vos.CategoryVO;
-import cn.lili.modules.goods.entity.vos.GoodsParamsGroupVO;
-import cn.lili.modules.goods.entity.vos.GoodsParamsVO;
 import cn.lili.modules.goods.mapper.CategoryMapper;
+import cn.lili.modules.goods.service.CategoryBrandService;
+import cn.lili.modules.goods.service.CategoryParameterGroupService;
 import cn.lili.modules.goods.service.CategoryService;
+import cn.lili.modules.goods.service.CategorySpecificationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -19,10 +19,16 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -33,7 +39,7 @@ import java.util.stream.Collectors;
  * @since 2020-02-23 15:18:56
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
+@CacheConfig(cacheNames = "{CATEGORY}")
 public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> implements CategoryService {
 
     private static final String DELETE_FLAG_COLUMN = "delete_flag";
@@ -43,9 +49,35 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Autowired
     private Cache cache;
 
+    @Autowired
+    private CategoryBrandService categoryBrandService;
+
+    @Autowired
+    private CategoryParameterGroupService categoryParameterGroupService;
+
+    @Autowired
+    private CategorySpecificationService categorySpecificationService;
+
     @Override
     public List<Category> dbList(String parentId) {
         return this.list(new LambdaQueryWrapper<Category>().eq(Category::getParentId, parentId));
+    }
+
+    @Override
+    @Cacheable(key = "#id")
+    public Category getCategoryById(String id) {
+        return this.getById(id);
+    }
+
+    /**
+     * 根据分类id集合获取所有分类根据层级排序
+     *
+     * @param ids 分类ID集合
+     * @return 商品分类列表
+     */
+    @Override
+    public List<Category> listByIdsOrderByLevel(List<String> ids) {
+        return this.list(new LambdaQueryWrapper<Category>().in(Category::getId, ids).orderByAsc(Category::getLevel));
     }
 
     @Override
@@ -69,13 +101,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
                 categoryVOList.add(categoryVO);
             }
         }
-        categoryVOList.sort(new Comparator<CategoryVO>() {
-            @Override
-            public int compare(CategoryVO o1, CategoryVO o2) {
-                return o1.getSortOrder().compareTo(o2.getSortOrder());
-            }
-        });
-        if (categoryVOList.size() != 0) {
+        categoryVOList.sort(Comparator.comparing(Category::getSortOrder));
+        if (!categoryVOList.isEmpty()) {
             cache.put(CachePrefix.CATEGORY.getPrefix(), categoryVOList);
             cache.put(CachePrefix.CATEGORY_ARRAY.getPrefix(), list);
         }
@@ -85,15 +112,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Override
     public List<CategoryVO> getStoreCategory(String[] categories) {
         List<String> arr = Arrays.asList(categories.clone());
-        List<CategoryVO> categoryVOS = categoryTree().stream()
+        return categoryTree().stream()
                 .filter(item -> arr.contains(item.getId())).collect(Collectors.toList());
-        return categoryVOS;
-
     }
 
     @Override
     public List<Category> firstCategory() {
-        QueryWrapper queryWrapper = Wrappers.query();
+        QueryWrapper<Category> queryWrapper = Wrappers.query();
         queryWrapper.eq("level", 0);
         return list(queryWrapper);
     }
@@ -108,14 +133,15 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         for (CategoryVO item : topCatList) {
             if (item.getId().equals(parentId)) {
                 return item.getChildren();
+            } else {
+                return getChildren(parentId, item.getChildren());
             }
-            return getChildren(parentId, item.getChildren());
         }
         return new ArrayList<>();
     }
 
     @Override
-    public List<CategoryVO> listAllChildrenDB() {
+    public List<CategoryVO> listAllChildren() {
 
         //获取全部分类
         List<Category> list = this.list();
@@ -129,12 +155,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
                 categoryVOList.add(categoryVO);
             }
         }
-        categoryVOList.sort(new Comparator<CategoryVO>() {
-            @Override
-            public int compare(CategoryVO o1, CategoryVO o2) {
-                return o1.getSortOrder().compareTo(o2.getSortOrder());
-            }
-        });
+        categoryVOList.sort(Comparator.comparing(Category::getSortOrder));
         return categoryVOList;
     }
 
@@ -147,18 +168,18 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Override
     public List<String> getCategoryNameByIds(List<String> ids) {
         List<String> categoryName = new ArrayList<>();
-        List<Category> categoryVOs = (List<Category>) cache.get(CachePrefix.CATEGORY_ARRAY.getPrefix());
+        List<Category> categoryVOList = (List<Category>) cache.get(CachePrefix.CATEGORY_ARRAY.getPrefix());
         //如果缓存中为空，则重新获取缓存
-        if (categoryVOs == null) {
+        if (categoryVOList == null) {
             categoryTree();
-            categoryVOs = (List<Category>) cache.get(CachePrefix.CATEGORY_ARRAY.getPrefix());
+            categoryVOList = (List<Category>) cache.get(CachePrefix.CATEGORY_ARRAY.getPrefix());
         }
         //还为空的话，直接返回
-        if (categoryVOs == null) {
-            return null;
+        if (categoryVOList == null) {
+            return new ArrayList<>();
         }
         //循环顶级分类
-        for (Category category : categoryVOs) {
+        for (Category category : categoryVOList) {
             //循环查询的id匹配
             for (String id : ids) {
                 if (category.getId().equals(id)) {
@@ -174,7 +195,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     public List<Category> findByAllBySortOrder(Category category) {
         QueryWrapper<Category> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(category.getLevel() != null, "level", category.getLevel())
-                .eq(StrUtil.isNotBlank(category.getName()), "name", category.getName())
+                .eq(CharSequenceUtil.isNotBlank(category.getName()), "name", category.getName())
                 .eq(category.getParentId() != null, "parent_id", category.getParentId())
                 .ne(category.getId() != null, "id", category.getId())
                 .eq(DELETE_FLAG_COLUMN, false)
@@ -183,6 +204,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean saveCategory(Category category) {
         //判断分类佣金是否正确
         if (category.getCommissionRate() < 0) {
@@ -199,6 +221,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     }
 
     @Override
+    @CacheEvict(key = "#category.id")
+    @Transactional(rollbackFor = Exception.class)
     public void updateCategory(Category category) {
         //判断分类佣金是否正确
         if (category.getCommissionRate() < 0) {
@@ -224,12 +248,20 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
 
     @Override
+    @CacheEvict(key = "#id")
+    @Transactional(rollbackFor = Exception.class)
     public void delete(String id) {
         this.removeById(id);
         removeCache();
+        //删除关联关系
+        categoryBrandService.deleteByCategoryId(id);
+        categoryParameterGroupService.deleteByCategoryId(id);
+        categorySpecificationService.deleteByCategoryId(id);
     }
 
     @Override
+    @CacheEvict(key = "#categoryId")
+    @Transactional(rollbackFor = Exception.class)
     public void updateCategoryStatus(String categoryId, Boolean enableOperations) {
         //禁用子分类
         CategoryVO categoryVO = new CategoryVO(this.getById(categoryId));
@@ -273,42 +305,14 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Category::getParentId, category.getId());
         List<Category> categories = this.list(queryWrapper);
-        List<CategoryVO> categoryVOS = new ArrayList<>();
+        List<CategoryVO> categoryVOList = new ArrayList<>();
         for (Category category1 : categories) {
-            categoryVOS.add(new CategoryVO(category1));
+            categoryVOList.add(new CategoryVO(category1));
         }
-        category.setChildren(categoryVOS);
-        if (!categoryVOS.isEmpty()) {
-            categoryVOS.forEach(this::findAllChild);
+        category.setChildren(categoryVOList);
+        if (!categoryVOList.isEmpty()) {
+            categoryVOList.forEach(this::findAllChild);
         }
-    }
-
-    /**
-     * 拼装返回值
-     *
-     * @param paramList 参数列表
-     * @return 拼装后的返回值
-     */
-    private List<GoodsParamsGroupVO> convertParamList(List<CategoryParameterGroup> groupList, List<GoodsParamsVO> paramList) {
-        Map<String, List<GoodsParamsVO>> map = new HashMap<>(16);
-        for (GoodsParamsVO param : paramList) {
-            if (map.get(param.getGroupId()) != null) {
-                map.get(param.getGroupId()).add(param);
-            } else {
-                List<GoodsParamsVO> list = new ArrayList<>();
-                list.add(param);
-                map.put(param.getGroupId(), list);
-            }
-        }
-        List<GoodsParamsGroupVO> resList = new ArrayList<>();
-        for (CategoryParameterGroup group : groupList) {
-            GoodsParamsGroupVO list = new GoodsParamsGroupVO();
-            list.setGroupName(group.getGroupName());
-            list.setGroupId(group.getId());
-            list.setParams(map.get(group.getId()));
-            resList.add(list);
-        }
-        return resList;
     }
 
     /**
@@ -329,20 +333,20 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     /**
      * 递归自身，找到id等于parentId的对象，获取他的children 返回
      *
-     * @param parentId    父ID
-     * @param categoryVOS 分类VO
+     * @param parentId       父ID
+     * @param categoryVOList 分类VO
      * @return 子分类列表VO
      */
-    private List<CategoryVO> getChildren(String parentId, List<CategoryVO> categoryVOS) {
-        for (CategoryVO item : categoryVOS) {
+    private List<CategoryVO> getChildren(String parentId, List<CategoryVO> categoryVOList) {
+        for (CategoryVO item : categoryVOList) {
             if (item.getId().equals(parentId)) {
                 return item.getChildren();
             }
-            if (item.getChildren() != null && item.getChildren().size() > 0) {
-                return getChildren(parentId, categoryVOS);
+            if (item.getChildren() != null && !item.getChildren().isEmpty()) {
+                return getChildren(parentId, item.getChildren());
             }
         }
-        return null;
+        return categoryVOList;
     }
 
     /**
@@ -350,5 +354,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      */
     private void removeCache() {
         cache.remove(CachePrefix.CATEGORY.getPrefix());
+        cache.remove(CachePrefix.CATEGORY_ARRAY.getPrefix());
     }
 }

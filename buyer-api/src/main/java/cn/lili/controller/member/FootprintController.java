@@ -5,6 +5,7 @@ import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.member.service.FootprintService;
 import cn.lili.modules.search.entity.dos.EsGoodsIndex;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
@@ -19,11 +20,11 @@ import java.util.List;
  * 买家端,浏览历史接口
  *
  * @author Chopper
- * @since: 2020/11/16 10:06 下午
+ * @since 2020/11/16 10:06 下午
  */
 @RestController
 @Api(tags = "买家端,浏览历史接口")
-@RequestMapping("/buyer/footprint")
+@RequestMapping("/buyer/member/footprint")
 public class FootprintController {
 
     /**
@@ -34,7 +35,7 @@ public class FootprintController {
 
     @ApiOperation(value = "分页获取")
     @GetMapping
-    public ResultMessage<List<EsGoodsIndex>> getByPage(PageVO page) {
+    public ResultMessage<IPage<EsGoodsIndex>> getByPage(PageVO page) {
         return ResultUtil.data(footprintService.footPrintPage(page));
     }
 

@@ -2,14 +2,10 @@ package cn.lili.modules.distribution.serviceimpl;
 
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
-import cn.lili.modules.member.entity.enums.WithdrawStatusEnum;
-import cn.lili.rocketmq.RocketmqSendCallbackBuilder;
-import cn.lili.rocketmq.tags.MemberTagsEnum;
+import cn.lili.common.properties.RocketmqCustomProperties;
 import cn.lili.common.utils.CurrencyUtil;
-import cn.lili.mybatis.util.PageUtil;
 import cn.lili.common.utils.SnowFlake;
 import cn.lili.common.vo.PageVO;
-import cn.lili.common.properties.RocketmqCustomProperties;
 import cn.lili.modules.distribution.entity.dos.Distribution;
 import cn.lili.modules.distribution.entity.dos.DistributionCash;
 import cn.lili.modules.distribution.entity.enums.DistributionStatusEnum;
@@ -17,13 +13,17 @@ import cn.lili.modules.distribution.entity.vos.DistributionCashSearchParams;
 import cn.lili.modules.distribution.mapper.DistributionCashMapper;
 import cn.lili.modules.distribution.service.DistributionCashService;
 import cn.lili.modules.distribution.service.DistributionService;
-import cn.lili.modules.member.entity.dto.MemberWithdrawalMessage;
-import cn.lili.modules.member.entity.enums.MemberWithdrawalDestinationEnum;
-import cn.lili.modules.member.service.MemberWalletService;
-import cn.lili.modules.order.trade.entity.enums.DepositServiceTypeEnum;
+import cn.lili.modules.wallet.entity.dto.MemberWalletUpdateDTO;
+import cn.lili.modules.wallet.entity.dto.MemberWithdrawalMessage;
+import cn.lili.modules.wallet.entity.enums.DepositServiceTypeEnum;
+import cn.lili.modules.wallet.entity.enums.MemberWithdrawalDestinationEnum;
+import cn.lili.modules.wallet.entity.enums.WithdrawStatusEnum;
+import cn.lili.modules.wallet.service.MemberWalletService;
+import cn.lili.mybatis.util.PageUtil;
+import cn.lili.rocketmq.RocketmqSendCallbackBuilder;
+import cn.lili.rocketmq.tags.MemberTagsEnum;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +40,6 @@ import java.util.Date;
  * @since 2020-03-126 18:04:56
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class DistributionCashServiceImpl extends ServiceImpl<DistributionCashMapper, DistributionCash> implements DistributionCashService {
     /**
      * 分销员
@@ -58,6 +57,7 @@ public class DistributionCashServiceImpl extends ServiceImpl<DistributionCashMap
     private RocketmqCustomProperties rocketmqCustomProperties;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cash(Double applyMoney) {
 
         //检查分销功能开关
@@ -76,7 +76,7 @@ public class DistributionCashServiceImpl extends ServiceImpl<DistributionCashMap
             distributionService.updateById(distribution);
             //提现申请记录
             DistributionCash distributionCash = new DistributionCash("D" + SnowFlake.getId(), distribution.getId(), applyMoney, distribution.getMemberName());
-            Boolean result = this.save(distributionCash);
+            boolean result = this.save(distributionCash);
             if (result) {
                 //发送提现消息
                 MemberWithdrawalMessage memberWithdrawalMessage = new MemberWithdrawalMessage();
@@ -110,6 +110,7 @@ public class DistributionCashServiceImpl extends ServiceImpl<DistributionCashMap
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public DistributionCash audit(String id, String result) {
 
         //检查分销功能开关
@@ -121,7 +122,7 @@ public class DistributionCashServiceImpl extends ServiceImpl<DistributionCashMap
         if (distributorCash != null) {
             //获取分销员
             Distribution distribution = distributionService.getById(distributorCash.getDistributionId());
-            if (distribution != null && distributorCash != null && distribution.getDistributionStatus().equals(DistributionStatusEnum.PASS.name())) {
+            if (distribution != null && distribution.getDistributionStatus().equals(DistributionStatusEnum.PASS.name())) {
                 MemberWithdrawalMessage memberWithdrawalMessage = new MemberWithdrawalMessage();
                 //审核通过
                 if (result.equals(WithdrawStatusEnum.VIA_AUDITING.name())) {
@@ -130,7 +131,7 @@ public class DistributionCashServiceImpl extends ServiceImpl<DistributionCashMap
                     distributorCash.setDistributionCashStatus(WithdrawStatusEnum.VIA_AUDITING.name());
                     distributorCash.setPayTime(new Date());
                     //提现到余额
-                    memberWalletService.increase(distributorCash.getPrice(), distribution.getMemberId(), "分销[" + distributorCash.getSn() + "]佣金提现到余额[" + distributorCash.getPrice() + "]", DepositServiceTypeEnum.WALLET_COMMISSION.name());
+                    memberWalletService.increase(new MemberWalletUpdateDTO(distributorCash.getPrice(), distribution.getMemberId(), "分销[" + distributorCash.getSn() + "]佣金提现到余额[" + distributorCash.getPrice() + "]", DepositServiceTypeEnum.WALLET_COMMISSION.name()));
                 } else {
                     memberWithdrawalMessage.setStatus(WithdrawStatusEnum.FAIL_AUDITING.name());
                     //分销员可提现金额退回
@@ -155,12 +156,5 @@ public class DistributionCashServiceImpl extends ServiceImpl<DistributionCashMap
         }
         throw new ServiceException(ResultCode.DISTRIBUTION_CASH_NOT_EXIST);
 
-    }
-
-    @Override
-    public Integer newDistributionCash() {
-        QueryWrapper queryWrapper = Wrappers.query();
-        queryWrapper.eq("distribution_cash_status", WithdrawStatusEnum.APPLY.name());
-        return this.count(queryWrapper);
     }
 }

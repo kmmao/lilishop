@@ -4,7 +4,7 @@ import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.properties.StatisticsProperties;
-import cn.lili.modules.statistics.model.vo.OnlineMemberVO;
+import cn.lili.modules.statistics.entity.vo.OnlineMemberVO;
 import cn.lili.timetask.handler.EveryHourExecute;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -28,7 +29,7 @@ public class OnlineMemberStatistics implements EveryHourExecute {
      * 缓存
      */
     @Autowired
-    private Cache cache;
+    private Cache<List<OnlineMemberVO>> cache;
     /**
      * 统计小时
      */
@@ -41,12 +42,10 @@ public class OnlineMemberStatistics implements EveryHourExecute {
 
         Calendar calendar = Calendar.getInstance();
 
-        Object object = cache.get(CachePrefix.ONLINE_MEMBER.getPrefix());
-        List<OnlineMemberVO> onlineMemberVOS;
-        if (object == null) {
+        List<OnlineMemberVO> onlineMemberVOS = cache.get(CachePrefix.ONLINE_MEMBER.getPrefix());
+
+        if (onlineMemberVOS == null) {
             onlineMemberVOS = new ArrayList<>();
-        } else {
-            onlineMemberVOS = (List<OnlineMemberVO>) object;
         }
 
         //过滤 有效统计时间
@@ -56,8 +55,16 @@ public class OnlineMemberStatistics implements EveryHourExecute {
         calendar.set(Calendar.MILLISECOND, 0);
 
         Calendar finalCalendar = calendar;
+
+        AtomicReference<Integer> lastNum = new AtomicReference<>(0);
         onlineMemberVOS = onlineMemberVOS.stream()
-                .filter(onlineMemberVO -> onlineMemberVO.getDate().after(finalCalendar.getTime()))
+                .filter(onlineMemberVO -> {
+                    //如果为过滤参数，则记录为过期参数，则为统一时段上一周期的在线人数
+                    if (!onlineMemberVO.getDate().after(finalCalendar.getTime())) {
+                        lastNum.set(onlineMemberVO.getNum());
+                    }
+                    return onlineMemberVO.getDate().after(finalCalendar.getTime());
+                })
                 .collect(Collectors.toList());
 
         //计入新数据
@@ -65,7 +72,7 @@ public class OnlineMemberStatistics implements EveryHourExecute {
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
-        onlineMemberVOS.add(new OnlineMemberVO(calendar.getTime(), cache.keys(CachePrefix.ACCESS_TOKEN.getPrefix(UserEnums.MEMBER) + "*").size()));
+        onlineMemberVOS.add(new OnlineMemberVO(calendar.getTime(), cache.keys(CachePrefix.ACCESS_TOKEN.getPrefix(UserEnums.MEMBER) + "*").size(), lastNum.get()));
 
         //写入缓存
         cache.put(CachePrefix.ONLINE_MEMBER.getPrefix(), onlineMemberVOS);
@@ -80,12 +87,10 @@ public class OnlineMemberStatistics implements EveryHourExecute {
      */
     public void execute(Date time, Integer num) {
 
-        Object object = cache.get(CachePrefix.ONLINE_MEMBER.getPrefix());
-        List<OnlineMemberVO> onlineMemberVOS;
-        if (object == null) {
+        List<OnlineMemberVO> onlineMemberVOS = cache.get(CachePrefix.ONLINE_MEMBER.getPrefix());
+
+        if (onlineMemberVOS == null) {
             onlineMemberVOS = new ArrayList<>();
-        } else {
-            onlineMemberVOS = (List<OnlineMemberVO>) object;
         }
 
         Calendar calendar = Calendar.getInstance();
@@ -96,11 +101,10 @@ public class OnlineMemberStatistics implements EveryHourExecute {
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.set(Calendar.HOUR_OF_DAY, calendar.get(Calendar.HOUR_OF_DAY) - 48);
 
-        Calendar finalCalendar = calendar;
         onlineMemberVOS = onlineMemberVOS.stream()
-                .filter(onlineMemberVO -> onlineMemberVO.getDate().after(finalCalendar.getTime()))
+                .filter(onlineMemberVO -> onlineMemberVO.getDate().after(calendar.getTime()))
                 .collect(Collectors.toList());
-        onlineMemberVOS.add(new OnlineMemberVO(time, num));
+        onlineMemberVOS.add(new OnlineMemberVO(time, num, num));
 
         //写入缓存
         cache.put(CachePrefix.ONLINE_MEMBER.getPrefix(), onlineMemberVOS);

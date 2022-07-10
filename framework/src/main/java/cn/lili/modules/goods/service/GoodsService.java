@@ -6,6 +6,7 @@ import cn.lili.modules.goods.entity.dto.GoodsSearchParams;
 import cn.lili.modules.goods.entity.enums.GoodsAuthEnum;
 import cn.lili.modules.goods.entity.enums.GoodsStatusEnum;
 import cn.lili.modules.goods.entity.vos.GoodsVO;
+import cn.lili.modules.store.entity.dos.Store;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -21,6 +22,13 @@ public interface GoodsService extends IService<Goods> {
 
 
     /**
+     * 根据品牌获取商品
+     *
+     * @param brandIds 品牌ids
+     */
+    List<Goods> getByBrandIds(List<String> brandIds);
+
+    /**
      * 下架所有商家商品
      *
      * @param storeId 店铺ID
@@ -28,12 +36,20 @@ public interface GoodsService extends IService<Goods> {
     void underStoreGoods(String storeId);
 
     /**
+     * 更新商品参数
+     *
+     * @param goodsId 商品id
+     * @param params 商品参数
+     */
+    void updateGoodsParams(String goodsId, String params);
+
+    /**
      * 获取某分类下的商品数量
      *
      * @param categoryId 分类ID
      * @return 商品数量
      */
-    Integer getGoodsCountByCategory(String categoryId);
+    long getGoodsCountByCategory(String categoryId);
 
     /**
      * 添加商品
@@ -67,6 +83,15 @@ public interface GoodsService extends IService<Goods> {
      */
     IPage<Goods> queryByParams(GoodsSearchParams goodsSearchParams);
 
+
+    /**
+     * 商品查询
+     *
+     * @param goodsSearchParams 查询参数
+     * @return 商品信息
+     */
+    List<Goods> queryListByParams(GoodsSearchParams goodsSearchParams);
+
     /**
      * 批量审核商品
      *
@@ -76,21 +101,6 @@ public interface GoodsService extends IService<Goods> {
      */
     boolean auditGoods(List<String> goodsIds, GoodsAuthEnum goodsAuthEnum);
 
-    /**
-     * 获取所有的已上架的商品数量
-     *
-     * @param goodsAuthEnum   商品审核枚举
-     * @param goodsStatusEnum 商品状态枚举
-     * @return 所有的已上架的商品数量
-     */
-    Integer goodsNum(GoodsStatusEnum goodsStatusEnum, GoodsAuthEnum goodsAuthEnum);
-
-    /**
-     * 获取今天的已上架的商品数量
-     *
-     * @return 今天的已上架的商品数量
-     */
-    Integer todayUpperNum();
 
     /**
      * 更新商品上架状态状态
@@ -102,6 +112,26 @@ public interface GoodsService extends IService<Goods> {
      */
     Boolean updateGoodsMarketAble(List<String> goodsIds, GoodsStatusEnum goodsStatusEnum, String underReason);
 
+
+    /**
+     * 更新商品上架状态状态
+     *
+     * @param storeId        店铺ID
+     * @param goodsStatusEnum 更新的商品状态
+     * @param underReason     下架原因
+     * @return 更新结果
+     */
+    Boolean updateGoodsMarketAbleByStoreId(String storeId, GoodsStatusEnum goodsStatusEnum, String underReason);
+
+    /**
+     * 更新商品上架状态状态
+     *
+     * @param goodsIds        商品ID集合
+     * @param goodsStatusEnum 更新的商品状态
+     * @param underReason     下架原因
+     * @return 更新结果
+     */
+    Boolean managerUpdateGoodsMarketAble(List<String> goodsIds, GoodsStatusEnum goodsStatusEnum, String underReason);
     /**
      * 删除商品
      *
@@ -128,9 +158,30 @@ public interface GoodsService extends IService<Goods> {
     void updateStock(String goodsId, Integer quantity);
 
     /**
-     * 更新SKU评价数量
+     * 更新商品评价数量
      *
      * @param goodsId 商品ID
      */
     void updateGoodsCommentNum(String goodsId);
+
+    /**
+     * 更新商品的购买数量
+     *
+     * @param goodsId  商品ID
+     * @param buyCount 购买数量
+     */
+    void updateGoodsBuyCount(String goodsId, int buyCount);
+
+    /**
+     * 批量更新商品的店铺信息
+     * @param store
+     */
+    void updateStoreDetail(Store store);
+    /**
+     * 统计店铺的商品数量
+     * @param storeId 店铺id
+     * @return
+     */
+    long countStoreGoodsNum(String storeId);
+
 }

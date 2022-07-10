@@ -1,22 +1,21 @@
 package cn.lili.modules.order.order.serviceimpl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
+import cn.lili.common.security.AuthUser;
+import cn.lili.common.security.OperationalJudgment;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.utils.BeanUtil;
-import cn.lili.modules.system.utils.OperationalJudgment;
-import cn.lili.mybatis.util.PageUtil;
-import cn.lili.common.utils.StringUtils;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
 import cn.lili.modules.goods.service.GoodsSkuService;
+import cn.lili.modules.order.aftersale.entity.enums.ComplaintStatusEnum;
 import cn.lili.modules.order.order.entity.dos.OrderComplaint;
 import cn.lili.modules.order.order.entity.dos.OrderComplaintCommunication;
 import cn.lili.modules.order.order.entity.dos.OrderItem;
 import cn.lili.modules.order.order.entity.dto.OrderComplaintDTO;
-import cn.lili.modules.order.order.entity.enums.ComplaintStatusEnum;
 import cn.lili.modules.order.order.entity.enums.OrderComplaintStatusEnum;
 import cn.lili.modules.order.order.entity.vo.*;
 import cn.lili.modules.order.order.mapper.OrderComplaintMapper;
@@ -24,6 +23,7 @@ import cn.lili.modules.order.order.service.OrderComplaintCommunicationService;
 import cn.lili.modules.order.order.service.OrderComplaintService;
 import cn.lili.modules.order.order.service.OrderItemService;
 import cn.lili.modules.order.order.service.OrderService;
+import cn.lili.mybatis.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -32,9 +32,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 交易投诉业务层实现
@@ -117,9 +119,11 @@ public class OrderComplaintServiceImpl extends ServiceImpl<OrderComplaintMapper,
      * @return 添加结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public OrderComplaint addOrderComplain(OrderComplaintDTO orderComplaintDTO) {
 
         try {
+            AuthUser currentUser = Objects.requireNonNull(UserContext.getCurrentUser());
             //查询订单信息
             OrderDetailVO orderDetailVO = orderService.queryDetail(orderComplaintDTO.getOrderSn());
             List<OrderItem> orderItems = orderDetailVO.getOrderItems();
@@ -159,8 +163,8 @@ public class OrderComplaintServiceImpl extends ServiceImpl<OrderComplaintMapper,
             orderComplaint.setStoreId(orderDetailVO.getOrder().getStoreId());
             orderComplaint.setStoreName(orderDetailVO.getOrder().getStoreName());
 
-            orderComplaint.setMemberId(UserContext.getCurrentUser().getId());
-            orderComplaint.setMemberName(UserContext.getCurrentUser().getUsername());
+            orderComplaint.setMemberId(currentUser.getId());
+            orderComplaint.setMemberName(currentUser.getUsername());
             //保存订单投诉
             this.save(orderComplaint);
 
@@ -203,20 +207,19 @@ public class OrderComplaintServiceImpl extends ServiceImpl<OrderComplaintMapper,
     }
 
     @Override
-    public Integer waitComplainNum() {
+    public long waitComplainNum() {
         QueryWrapper queryWrapper = Wrappers.query();
         queryWrapper.ne("complain_status", ComplaintStatusEnum.COMPLETE.name());
-        queryWrapper.eq(StringUtils.equals(UserContext.getCurrentUser().getRole().name(), UserEnums.STORE.name()),
+        queryWrapper.eq(CharSequenceUtil.equals(UserContext.getCurrentUser().getRole().name(), UserEnums.STORE.name()),
                 "store_id", UserContext.getCurrentUser().getStoreId());
         return this.count(queryWrapper);
     }
 
     @Override
     public boolean cancel(String id) {
-
-        OrderComplaint orderComplaint = this.getById(id);
+        OrderComplaint orderComplaint = OperationalJudgment.judgment(this.getById(id));
         //如果以及仲裁，则不可以进行申诉取消
-        if(orderComplaint.getComplainStatus().equals(ComplaintStatusEnum.COMPLETE.name())){
+        if (orderComplaint.getComplainStatus().equals(ComplaintStatusEnum.COMPLETE.name())) {
             throw new ServiceException(ResultCode.COMPLAINT_CANCEL_ERROR);
         }
         LambdaUpdateWrapper<OrderComplaint> lambdaUpdateWrapper = Wrappers.lambdaUpdate();
@@ -248,12 +251,12 @@ public class OrderComplaintServiceImpl extends ServiceImpl<OrderComplaintMapper,
     private void checkOperationParams(OrderComplaintOperationParams operationParam, OrderComplaint orderComplaint) {
         ComplaintStatusEnum complaintStatusEnum = ComplaintStatusEnum.valueOf(operationParam.getComplainStatus());
         if (complaintStatusEnum == ComplaintStatusEnum.COMPLETE) {
-            if (StrUtil.isEmpty(operationParam.getArbitrationResult())) {
+            if (CharSequenceUtil.isEmpty(operationParam.getArbitrationResult())) {
                 throw new ServiceException(ResultCode.COMPLAINT_ARBITRATION_RESULT_ERROR);
             }
             orderComplaint.setArbitrationResult(operationParam.getArbitrationResult());
         } else if (complaintStatusEnum == ComplaintStatusEnum.COMMUNICATION) {
-            if (StrUtil.isEmpty(operationParam.getAppealContent()) || operationParam.getImages() == null) {
+            if (CharSequenceUtil.isEmpty(operationParam.getAppealContent()) || operationParam.getImages() == null) {
                 throw new ServiceException(ResultCode.COMPLAINT_APPEAL_CONTENT_ERROR);
             }
             orderComplaint.setContent(operationParam.getAppealContent());

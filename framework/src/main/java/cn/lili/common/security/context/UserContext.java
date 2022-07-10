@@ -37,6 +37,19 @@ public class UserContext {
         return null;
     }
 
+    /**
+     * 根据request获取用户信息
+     *
+     * @return 授权用户
+     */
+    public static String getUuid() {
+        if (RequestContextHolder.getRequestAttributes() != null) {
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+            return request.getHeader(SecurityEnum.UUID.getValue());
+        }
+        return null;
+    }
+
 
     /**
      * 根据jwt获取token重的用户信息
@@ -47,13 +60,21 @@ public class UserContext {
      */
     public static AuthUser getAuthUser(Cache cache, String accessToken) {
         try {
-            if (cache.keys("*" + accessToken).size() == 0) {
+            if (cache.keys("*" + accessToken).isEmpty()) {
                 throw new ServiceException(ResultCode.USER_AUTHORITY_ERROR);
             }
             return getAuthUser(accessToken);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public static String getCurrentUserToken() {
+        if (RequestContextHolder.getRequestAttributes() != null) {
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+            return request.getHeader(SecurityEnum.HEADER_TOKEN.getValue());
+        }
+        return null;
     }
 
     /**

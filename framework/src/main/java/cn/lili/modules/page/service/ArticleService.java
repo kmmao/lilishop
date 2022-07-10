@@ -22,6 +22,12 @@ import java.util.List;
 public interface ArticleService extends IService<Article> {
 
     /**
+     * 管理端获取文章
+     * @param articleSearchParams
+     * @return
+     */
+    IPage<ArticleVO> managerArticlePage(ArticleSearchParams articleSearchParams);
+    /**
      * 获取文章分页
      *
      * @param articleSearchParams 文章搜索条件
@@ -47,7 +53,7 @@ public interface ArticleService extends IService<Article> {
     Article updateArticle(Article article);
 
     /**
-     * 删除文章
+     * 删除文章--id
      *
      * @param id
      */
@@ -81,4 +87,12 @@ public interface ArticleService extends IService<Article> {
      */
     @CacheEvict(key = "#id")
     Boolean updateArticleStatus(String id, boolean status);
+
+    /**
+     * 修改文章--文章类型修改
+     * @param article
+     * @return
+     */
+    @CacheEvict(key = "#article.type")
+    Article updateArticleType(Article article);
 }

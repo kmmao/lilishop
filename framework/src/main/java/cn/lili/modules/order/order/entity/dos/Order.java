@@ -2,9 +2,9 @@ package cn.lili.modules.order.order.entity.dos;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import cn.lili.mybatis.BaseEntity;
-import cn.lili.common.utils.BeanUtil;
 import cn.lili.common.enums.ClientTypeEnum;
+import cn.lili.common.enums.PromotionTypeEnum;
+import cn.lili.common.utils.BeanUtil;
 import cn.lili.modules.goods.entity.enums.GoodsTypeEnum;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.cart.entity.enums.CartTypeEnum;
@@ -12,19 +12,17 @@ import cn.lili.modules.order.cart.entity.enums.DeliveryMethodEnum;
 import cn.lili.modules.order.cart.entity.vo.CartVO;
 import cn.lili.modules.order.order.entity.dto.PriceDetailDTO;
 import cn.lili.modules.order.order.entity.enums.*;
-import cn.lili.modules.promotion.entity.dos.PromotionGoods;
-import cn.lili.common.enums.PromotionTypeEnum;
+import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
+import cn.lili.mybatis.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.util.Date;
 import java.util.Optional;
 
@@ -34,9 +32,8 @@ import java.util.Optional;
  * @author Chopper
  * @since 2020/11/17 7:30 下午
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Entity
-@Table(name = "li_order")
 @TableName("li_order")
 @ApiModel(value = "订单")
 @NoArgsConstructor
@@ -82,11 +79,14 @@ public class Order extends BaseEntity {
     @ApiModelProperty(value = "第三方付款流水号")
     private String receivableNo;
 
+    /**
+     * @see  PaymentMethodEnum
+     */
     @ApiModelProperty(value = "支付方式")
     private String paymentMethod;
 
     @ApiModelProperty(value = "支付时间")
-  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     private Date paymentTime;
 
@@ -185,8 +185,7 @@ public class Order extends BaseEntity {
     @ApiModelProperty(value = "订单促销类型")
     private String orderPromotionType;
 
-    @Column(columnDefinition = "TEXT")
-    @ApiModelProperty(value = "价格详情")
+    @ApiModelProperty(value = "价格价格详情")
     private String priceDetail;
 
     @ApiModelProperty(value = "订单是否支持原路退回")
@@ -267,7 +266,7 @@ public class Order extends BaseEntity {
             this.setOrderType(OrderTypeEnum.VIRTUAL.name());
         } else {
             //促销订单（拼团、积分）-判断购买的是虚拟商品还是实物商品
-            String goodsType = cartVO.getSkuList().get(0).getGoodsSku().getGoodsType();
+            String goodsType = cartVO.getCheckedSkuList().get(0).getGoodsSku().getGoodsType();
             if (StrUtil.isEmpty(goodsType) || goodsType.equals(GoodsTypeEnum.PHYSICAL_GOODS.name())) {
                 this.setOrderType(OrderTypeEnum.NORMAL.name());
             } else {
@@ -277,10 +276,9 @@ public class Order extends BaseEntity {
             this.setOrderPromotionType(tradeDTO.getCartTypeEnum().name());
 
             //判断是否为拼团订单，如果为拼团订单获取拼团ID，判断是否为主订单
-            if (tradeDTO.getCartTypeEnum().name().equals(PromotionTypeEnum.PINTUAN.name())) {
-                Optional<String> pintuanId = cartVO.getSkuList().get(0).getPromotions().stream()
-                        .filter(i -> i.getPromotionType().equals(PromotionTypeEnum.PINTUAN.name())).map(PromotionGoods::getPromotionId).findFirst();
-                promotionId = pintuanId.get();
+            if (tradeDTO.getCartTypeEnum().name().equals(PromotionTypeEnum.PINTUAN.name()) && cartVO.getCheckedSkuList().get(0).getPromotionMap() != null && !cartVO.getCheckedSkuList().get(0).getPromotionMap().isEmpty()) {
+                Optional<String> pintuanPromotions = cartVO.getCheckedSkuList().get(0).getPromotionMap().keySet().stream().filter(i -> i.contains(PromotionTypeEnum.PINTUAN.name())).findFirst();
+                pintuanPromotions.ifPresent(s -> promotionId = s.split("-")[1]);
             }
         }
     }

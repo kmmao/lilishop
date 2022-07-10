@@ -5,6 +5,7 @@ import cn.lili.common.security.token.Token;
 import cn.lili.modules.connect.entity.Connect;
 import cn.lili.modules.connect.entity.dto.ConnectAuthUser;
 import cn.lili.modules.connect.entity.dto.WechatMPLoginParams;
+import cn.lili.modules.member.entity.dto.ConnectQueryDTO;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import javax.naming.NoPermissionException;
@@ -103,4 +104,19 @@ public interface ConnectService extends IService<Connect> {
      * @return token
      */
     Token miniProgramAutoLogin(WechatMPLoginParams params);
+
+    /**
+     * 根据查询dto获取查询对象
+     *
+     * @param connectQueryDTO
+     * @return
+     */
+    Connect queryConnect(ConnectQueryDTO connectQueryDTO);
+
+    /**
+     * 根据会员id删除记录
+     *
+     * @param userId 会员id
+     */
+    void deleteByMemberId(String userId);
 }

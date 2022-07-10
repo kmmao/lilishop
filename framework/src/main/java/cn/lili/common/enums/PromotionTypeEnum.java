@@ -14,16 +14,16 @@ public enum PromotionTypeEnum {
     PINTUAN("拼团"),
     SECKILL("秒杀"),
     COUPON("优惠券"),
+    PLATFORM_COUPON("平台优惠券"),
     FULL_DISCOUNT("满减"),
     POINTS_GOODS("积分商品"),
     KANJIA("砍价"),
-    COUPON_ACTIVITY("优惠券活动")
-    ;
+    COUPON_ACTIVITY("优惠券活动");
 
     /**
-     * 拼团秒杀拥有独立库存，如果其他促销也有独立库存涉及库存扣减的，请添加在下方
+     * 有促销库存的活动类型
      */
-    static PromotionTypeEnum[] haveStockPromotion = new PromotionTypeEnum[]{PINTUAN, SECKILL, KANJIA};
+    static final PromotionTypeEnum[] haveStockPromotion = new PromotionTypeEnum[]{PINTUAN, SECKILL, KANJIA, POINTS_GOODS};
 
     private final String description;
 

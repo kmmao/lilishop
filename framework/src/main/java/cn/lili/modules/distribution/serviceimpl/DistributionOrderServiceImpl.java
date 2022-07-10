@@ -4,7 +4,6 @@ import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.json.JSONUtil;
 import cn.lili.common.utils.CurrencyUtil;
-import cn.lili.mybatis.util.PageUtil;
 import cn.lili.modules.distribution.entity.dos.Distribution;
 import cn.lili.modules.distribution.entity.dos.DistributionOrder;
 import cn.lili.modules.distribution.entity.enums.DistributionOrderStatusEnum;
@@ -14,6 +13,7 @@ import cn.lili.modules.distribution.service.DistributionOrderService;
 import cn.lili.modules.distribution.service.DistributionService;
 import cn.lili.modules.order.order.entity.dos.Order;
 import cn.lili.modules.order.order.entity.dos.StoreFlow;
+import cn.lili.modules.order.order.entity.dto.StoreFlowQueryDTO;
 import cn.lili.modules.order.order.entity.enums.PayStatusEnum;
 import cn.lili.modules.order.order.service.OrderService;
 import cn.lili.modules.order.order.service.StoreFlowService;
@@ -21,10 +21,12 @@ import cn.lili.modules.system.entity.dos.Setting;
 import cn.lili.modules.system.entity.dto.DistributionSetting;
 import cn.lili.modules.system.entity.enums.SettingEnum;
 import cn.lili.modules.system.service.SettingService;
+import cn.lili.mybatis.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +40,8 @@ import java.util.List;
  * @author pikachu
  * @since 2020-03-14 23:04:56
  */
+@Slf4j
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderMapper, DistributionOrder> implements DistributionOrderService {
 
     /**
@@ -77,7 +79,8 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
      * @param orderSn 订单编号
      */
     @Override
-    public void payOrder(String orderSn) {
+    @Transactional(rollbackFor = Exception.class)
+    public void calculationDistribution(String orderSn) {
 
         //根据订单编号获取订单数据
         Order order = orderService.getBySn(orderSn);
@@ -85,10 +88,9 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
         //判断是否为分销订单，如果为分销订单则获取分销佣金
         if (order.getDistributionId() != null) {
             //根据订单编号获取有分销金额的店铺流水记录
-            List<StoreFlow> storeFlowList = storeFlowService.list(new LambdaQueryWrapper<StoreFlow>()
-                    .eq(StoreFlow::getOrderSn, orderSn)
-                    .isNotNull(StoreFlow::getDistributionRebate));
-            Double rebate = 0.0;
+            List<StoreFlow> storeFlowList = storeFlowService
+                    .listStoreFlow(StoreFlowQueryDTO.builder().justDistribution(true).orderSn(orderSn).build());
+            double rebate = 0.0;
             //循环店铺流水记录判断是否包含分销商品
             //包含分销商品则进行记录分销订单、计算分销总额
             for (StoreFlow storeFlow : storeFlowList) {
@@ -107,7 +109,7 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
                     distributionOrder.setSettleCycle(new DateTime());
                 } else {
                     DateTime dateTime = new DateTime();
-                    dateTime.offsetNew(DateField.DAY_OF_MONTH, distributionSetting.getCashDay());
+                    dateTime = dateTime.offsetNew(DateField.DAY_OF_MONTH, distributionSetting.getCashDay());
                     distributionOrder.setSettleCycle(dateTime);
                 }
 
@@ -120,13 +122,15 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
 
                     //如果天数写0则立即进行结算
                     if (distributionSetting.getCashDay().equals(0)) {
+                        DateTime dateTime = new DateTime();
+                        dateTime = dateTime.offsetNew(DateField.MINUTE, 5);
                         //计算分销提佣
-                        this.baseMapper.rebate(DistributionOrderStatusEnum.WAIT_BILL.name(), new DateTime());
+                        this.baseMapper.rebate(DistributionOrderStatusEnum.WAIT_BILL.name(), dateTime);
 
                         //修改分销订单状态
                         this.update(new LambdaUpdateWrapper<DistributionOrder>()
                                 .eq(DistributionOrder::getDistributionOrderStatus, DistributionOrderStatusEnum.WAIT_BILL.name())
-                                .le(DistributionOrder::getSettleCycle, new DateTime())
+                                .le(DistributionOrder::getSettleCycle, dateTime)
                                 .set(DistributionOrder::getDistributionOrderStatus, DistributionOrderStatusEnum.WAIT_CASH.name()));
                     }
                 }
@@ -145,6 +149,7 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
      * @param orderSn 订单编号
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void cancelOrder(String orderSn) {
         //根据订单编号获取订单数据
         Order order = orderService.getBySn(orderSn);
@@ -156,8 +161,12 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
             List<DistributionOrder> distributionOrderList = this.list(new LambdaQueryWrapper<DistributionOrder>()
                     .eq(DistributionOrder::getOrderSn, orderSn));
 
+            //如果没有分销定单，则直接返回
+            if (distributionOrderList.isEmpty()) {
+                return;
+            }
             //分销金额
-            Double rebate = 0.0;
+            double rebate = 0.0;
 
             //包含分销商品则进行记录分销订单、计算分销总额
             for (DistributionOrder distributionOrder : distributionOrderList) {
@@ -179,9 +188,7 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
     @Override
     public void refundOrder(String afterSaleSn) {
         //判断是否为分销订单
-        StoreFlow storeFlow = storeFlowService.getOne(new LambdaQueryWrapper<StoreFlow>()
-                .eq(StoreFlow::getRefundSn, afterSaleSn)
-                .isNotNull(StoreFlow::getDistributionRebate));
+        StoreFlow storeFlow = storeFlowService.queryOne(StoreFlowQueryDTO.builder().justDistribution(true).refundSn(afterSaleSn).build());
         if (storeFlow != null) {
 
             //获取收款分销订单
@@ -191,12 +198,7 @@ public class DistributionOrderServiceImpl extends ServiceImpl<DistributionOrderM
             if (distributionOrder == null) {
                 return;
             }
-            //已提交无法重复提交
-            if (distributionOrder.getDistributionOrderStatus().equals(DistributionOrderStatusEnum.CANCEL.name())) {
-                return;
-            }
-            //如果未结算则将分销订单取消
-            else if (distributionOrder.getDistributionOrderStatus().equals(DistributionOrderStatusEnum.WAIT_BILL.name())) {
+            if (distributionOrder.getDistributionOrderStatus().equals(DistributionOrderStatusEnum.WAIT_BILL.name())) {
                 this.update(new LambdaUpdateWrapper<DistributionOrder>()
                         .eq(DistributionOrder::getOrderItemSn, storeFlow.getOrderItemSn())
                         .set(DistributionOrder::getDistributionOrderStatus, DistributionOrderStatusEnum.CANCEL.name()));

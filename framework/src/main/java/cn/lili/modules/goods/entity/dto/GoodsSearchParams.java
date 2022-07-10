@@ -1,12 +1,15 @@
 package cn.lili.modules.goods.entity.dto;
 
-import cn.lili.common.utils.StringUtils;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.goods.entity.enums.GoodsAuthEnum;
 import cn.lili.modules.goods.entity.enums.GoodsStatusEnum;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.Arrays;
 
 /**
  * 商品查询条件
@@ -14,6 +17,7 @@ import lombok.Data;
  * @author pikachu
  * @since 2020-02-24 19:27:20
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class GoodsSearchParams extends PageVO {
 
@@ -26,7 +30,7 @@ public class GoodsSearchParams extends PageVO {
     private String goodsName;
 
     @ApiModelProperty(value = "商品编号")
-    private String sn;
+    private String id;
 
     @ApiModelProperty(value = "商家ID")
     private String storeId;
@@ -56,10 +60,13 @@ public class GoodsSearchParams extends PageVO {
      * @see GoodsAuthEnum
      */
     @ApiModelProperty(value = "审核状态")
-    private String isAuth;
+    private String authFlag;
 
     @ApiModelProperty(value = "库存数量")
-    private Integer quantity;
+    private Integer leQuantity;
+
+    @ApiModelProperty(value = "库存数量")
+    private Integer geQuantity;
 
     @ApiModelProperty(value = "是否为推荐商品")
     private Boolean recommend;
@@ -70,46 +77,58 @@ public class GoodsSearchParams extends PageVO {
     @ApiModelProperty(value = "商品类型")
     private String goodsType;
 
+    /**
+     * @see cn.lili.modules.goods.entity.enums.GoodsSalesModeEnum
+     */
+    @ApiModelProperty(value = "销售模式", required = true)
+    private String salesModel;
+
     public <T> QueryWrapper<T> queryWrapper() {
         QueryWrapper<T> queryWrapper = new QueryWrapper<>();
-        if (StringUtils.isNotEmpty(goodsId)) {
+        if (CharSequenceUtil.isNotEmpty(goodsId)) {
             queryWrapper.eq("goods_id", goodsId);
         }
-        if (StringUtils.isNotEmpty(goodsName)) {
+        if (CharSequenceUtil.isNotEmpty(goodsName)) {
             queryWrapper.like("goods_name", goodsName);
         }
-        if (StringUtils.isNotEmpty(sn)) {
-            queryWrapper.eq("sn", sn);
+        if (CharSequenceUtil.isNotEmpty(id)) {
+            queryWrapper.in("id", Arrays.asList(id.split(",")));
         }
-        if (StringUtils.isNotEmpty(storeId)) {
+        if (CharSequenceUtil.isNotEmpty(storeId)) {
             queryWrapper.eq("store_id", storeId);
         }
-        if (StringUtils.isNotEmpty(storeName)) {
+        if (CharSequenceUtil.isNotEmpty(storeName)) {
             queryWrapper.like("store_name", storeName);
         }
-        if (StringUtils.isNotEmpty(categoryPath)) {
+        if (CharSequenceUtil.isNotEmpty(categoryPath)) {
             queryWrapper.like("category_path", categoryPath);
         }
-        if (StringUtils.isNotEmpty(storeCategoryPath)) {
+        if (CharSequenceUtil.isNotEmpty(storeCategoryPath)) {
             queryWrapper.like("store_category_path", storeCategoryPath);
         }
         if (selfOperated != null) {
             queryWrapper.eq("self_operated", selfOperated);
         }
-        if (StringUtils.isNotEmpty(marketEnable)) {
+        if (CharSequenceUtil.isNotEmpty(marketEnable)) {
             queryWrapper.eq("market_enable", marketEnable);
         }
-        if (StringUtils.isNotEmpty(isAuth)) {
-            queryWrapper.eq("is_auth", isAuth);
+        if (CharSequenceUtil.isNotEmpty(authFlag)) {
+            queryWrapper.eq("auth_flag", authFlag);
         }
-        if (quantity != null) {
-            queryWrapper.le("quantity", quantity);
+        if (leQuantity != null) {
+            queryWrapper.le("quantity", leQuantity);
+        }
+        if (geQuantity != null) {
+            queryWrapper.ge("quantity", geQuantity);
         }
         if (recommend != null) {
             queryWrapper.le("recommend", recommend);
         }
-        if (goodsType != null) {
+        if (CharSequenceUtil.isNotEmpty(goodsType)) {
             queryWrapper.eq("goods_type", goodsType);
+        }
+        if (CharSequenceUtil.isNotEmpty(salesModel)) {
+            queryWrapper.eq("sales_model", salesModel);
         }
 
         queryWrapper.eq("delete_flag", false);
@@ -118,12 +137,12 @@ public class GoodsSearchParams extends PageVO {
     }
 
     private <T> void betweenWrapper(QueryWrapper<T> queryWrapper) {
-        if (StringUtils.isNotEmpty(price)) {
+        if (CharSequenceUtil.isNotEmpty(price)) {
             String[] s = price.split("_");
             if (s.length > 1) {
-                queryWrapper.ge("price", s[1]);
+                queryWrapper.between("price", s[0], s[1]);
             } else {
-                queryWrapper.le("price", s[0]);
+                queryWrapper.ge("price", s[0]);
             }
         }
     }

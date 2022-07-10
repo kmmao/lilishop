@@ -14,7 +14,7 @@ import java.util.List;
  * 优惠券活动关联优惠券业务层实现
  *
  * @author Bulbasaur
- * @since: 2021/5/21 6:42 下午
+ * @since 2021/5/21 6:42 下午
  */
 @Service
 public class CouponActivityItemServiceImpl extends ServiceImpl<CouponActivityItemMapper, CouponActivityItem> implements CouponActivityItemService {
@@ -31,4 +31,14 @@ public class CouponActivityItemServiceImpl extends ServiceImpl<CouponActivityIte
         return this.baseMapper.getCouponActivityItemListVO(activityId);
     }
 
+    /**
+     * 根据优惠券id删除优惠活动关联信息项
+     *
+     * @param couponIds 优惠券id集合
+     */
+    @Override
+    public void removeByCouponId(List<String> couponIds) {
+        this.remove(new LambdaQueryWrapper<CouponActivityItem>()
+                .in(CouponActivityItem::getCouponId, couponIds));
+    }
 }

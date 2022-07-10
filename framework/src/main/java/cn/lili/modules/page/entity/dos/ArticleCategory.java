@@ -9,9 +9,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
  * 文章分类
@@ -21,8 +22,6 @@ import javax.validation.constraints.NotEmpty;
  * @since 2020/12/10 17:42
  */
 @Data
-@Entity
-@Table(name = "li_article_category")
 @TableName("li_article_category")
 @ApiModel(value = "文章分类")
 @NoArgsConstructor
@@ -39,10 +38,15 @@ public class ArticleCategory extends BaseEntity {
     @ApiModelProperty(value = "父分类ID")
     private String parentId;
 
-    @ApiModelProperty(value = "排序，正序123")
+    @ApiModelProperty(value = "排序")
+    @Min(value = 0,message = "排序值最小0，最大9999999999")
+    @Max(value = 999999999,message = "排序值最小0，最大9999999999")
+    @NotNull(message = "排序值不能为空")
     private Integer sort;
 
     @ApiModelProperty(value = "层级")
+    @Min(value = 0,message = "层级最小为0")
+    @Max(value = 3,message = "层级最大为3")
     private Integer level;
 
     /**

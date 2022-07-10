@@ -1,7 +1,7 @@
 package cn.lili.controller.goods;
 
-import cn.lili.common.security.context.UserContext;
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.security.context.UserContext;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.goods.entity.vos.CategoryBrandVO;
 import cn.lili.modules.goods.entity.vos.CategoryVO;
@@ -14,13 +14,13 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 店铺端,商品分类接口
@@ -32,7 +32,6 @@ import java.util.List;
 @Api(tags = "店铺端,商品分类接口")
 @RequestMapping("/store/goods/category")
 @CacheConfig(cacheNames = "category")
-@Transactional(rollbackFor = Exception.class)
 public class CategoryStoreController {
 
     /**
@@ -54,8 +53,9 @@ public class CategoryStoreController {
     @ApiOperation(value = "获取店铺经营的分类")
     @GetMapping(value = "/all")
     public ResultMessage<List<CategoryVO>> getListAll() {
+        String storeId = Objects.requireNonNull(UserContext.getCurrentUser()).getStoreId();
         //获取店铺经营范围
-        String goodsManagementCategory = storeDetailService.getStoreDetail(UserContext.getCurrentUser().getStoreId()).getGoodsManagementCategory();
+        String goodsManagementCategory = storeDetailService.getStoreDetail(storeId).getGoodsManagementCategory();
         return ResultUtil.data(this.categoryService.getStoreCategory(goodsManagementCategory.split(",")));
     }
 

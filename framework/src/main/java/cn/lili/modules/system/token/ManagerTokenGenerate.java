@@ -1,6 +1,6 @@
 package cn.lili.modules.system.token;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.security.AuthUser;
@@ -11,7 +11,6 @@ import cn.lili.common.security.token.TokenUtil;
 import cn.lili.common.security.token.base.AbstractTokenGenerate;
 import cn.lili.modules.permission.entity.dos.AdminUser;
 import cn.lili.modules.permission.entity.vo.UserMenuVO;
-import cn.lili.modules.permission.service.AdminUserService;
 import cn.lili.modules.permission.service.RoleMenuService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,10 +28,8 @@ import java.util.Map;
  * @since 2020/11/16 10:51
  */
 @Component
-public class ManagerTokenGenerate extends AbstractTokenGenerate {
+public class ManagerTokenGenerate extends AbstractTokenGenerate<AdminUser> {
 
-    @Autowired
-    private AdminUserService adminUserService;
     @Autowired
     private TokenUtil tokenUtil;
     @Autowired
@@ -42,17 +39,15 @@ public class ManagerTokenGenerate extends AbstractTokenGenerate {
 
 
     @Override
-    public Token createToken(String username, Boolean longTerm) {
-        //生成token
-        AdminUser adminUser = adminUserService.findByUsername(username);
-        AuthUser user = new AuthUser(adminUser.getUsername(), adminUser.getId(), UserEnums.MANAGER, adminUser.getNickName(), adminUser.getIsSuper());
+    public Token createToken(AdminUser adminUser, Boolean longTerm) {
+        AuthUser authUser = new AuthUser(adminUser.getUsername(), adminUser.getId(), adminUser.getAvatar(), UserEnums.MANAGER, adminUser.getNickName(), adminUser.getIsSuper());
 
 
-        List<UserMenuVO> userMenuVOList = roleMenuService.findAllMenu(user.getId());
+        List<UserMenuVO> userMenuVOList = roleMenuService.findAllMenu(authUser.getId());
         //缓存权限列表
-        cache.put(CachePrefix.PERMISSION_LIST.getPrefix(UserEnums.MANAGER) + user.getId(), this.permissionList(userMenuVOList));
+        cache.put(CachePrefix.PERMISSION_LIST.getPrefix(UserEnums.MANAGER) + authUser.getId(), this.permissionList(userMenuVOList));
 
-        return tokenUtil.createToken(username, user, longTerm, UserEnums.MANAGER);
+        return tokenUtil.createToken(adminUser.getUsername(), authUser, longTerm, UserEnums.MANAGER);
     }
 
     @Override
@@ -68,40 +63,40 @@ public class ManagerTokenGenerate extends AbstractTokenGenerate {
      */
     private Map<String, List<String>> permissionList(List<UserMenuVO> userMenuVOList) {
         Map<String, List<String>> permission = new HashMap<>(2);
-        if (userMenuVOList == null || userMenuVOList.size() == 0) {
-            return permission;
-        }
+
         List<String> superPermissions = new ArrayList<>();
         List<String> queryPermissions = new ArrayList<>();
         initPermission(superPermissions, queryPermissions);
 
         //循环权限菜单
-        userMenuVOList.forEach(menu -> {
-            //循环菜单，赋予用户权限
-            if (StrUtil.isNotEmpty(menu.getPermission())) {
-                //获取路径集合
-                String[] permissionUrl = menu.getPermission().split(",");
-                //for循环路径集合
-                for (String url : permissionUrl) {
-                    //如果是超级权限 则计入超级权限
-                    if (menu.getSuper()) {
-                        //如果已有超级权限，则这里就不做权限的累加
-                        if (!superPermissions.contains(url)) {
-                            superPermissions.add(url);
+        if (userMenuVOList != null && !userMenuVOList.isEmpty()) {
+            userMenuVOList.forEach(menu -> {
+                //循环菜单，赋予用户权限
+                if (CharSequenceUtil.isNotEmpty(menu.getPermission())) {
+                    //获取路径集合
+                    String[] permissionUrl = menu.getPermission().split(",");
+                    //for循环路径集合
+                    for (String url : permissionUrl) {
+                        //如果是超级权限 则计入超级权限
+                        if (Boolean.TRUE.equals(menu.getSuper())) {
+                            //如果已有超级权限，则这里就不做权限的累加
+                            if (!superPermissions.contains(url)) {
+                                superPermissions.add(url);
+                            }
                         }
-                    }
-                    //否则计入浏览权限
-                    else {
-                        //没有权限，则累加。
-                        if (!queryPermissions.contains(url)) {
-                            queryPermissions.add(url);
+                        //否则计入浏览权限
+                        else {
+                            //没有权限，则累加。
+                            if (!queryPermissions.contains(url)) {
+                                queryPermissions.add(url);
+                            }
                         }
                     }
                 }
-            }
-            //去除重复的权限
-            queryPermissions.removeAll(superPermissions);
-        });
+                //去除重复的权限
+                queryPermissions.removeAll(superPermissions);
+            });
+        }
         permission.put(PermissionEnum.SUPER.name(), superPermissions);
         permission.put(PermissionEnum.QUERY.name(), queryPermissions);
         return permission;
@@ -115,19 +110,24 @@ public class ManagerTokenGenerate extends AbstractTokenGenerate {
      * @param queryPermissions 查询权限
      */
     void initPermission(List<String> superPermissions, List<String> queryPermissions) {
-        //用户信息维护
-        superPermissions.add("/manager/user/info*");
-        superPermissions.add("/manager/user/edit*");
-        superPermissions.add("/manager/user/editPassword*");
+        //TODO 用户信息维护--操作权限
+        //获取当前登录用户
+        superPermissions.add("/manager/passport/user/info*");
+        //修改用户资料
+        superPermissions.add("/manager/passport/user/edit*");
+        //修改密码
+        superPermissions.add("/manager/passport/user/editPassword*");
+        //退出
+        superPermissions.add("/manager/passport/user/logout*");
 
         //统计查看权限
         queryPermissions.add("/manager/statistics*");
         //菜单查看权限
-        queryPermissions.add("/manager/menu*");
+        queryPermissions.add("/manager/permission/menu*");
         //商品分类查看权限
         queryPermissions.add("/manager/goods/category*");
         //查看地区接口
-        queryPermissions.add("/manager/region*");
+        queryPermissions.add("/manager/setting/region*");
 
     }
 

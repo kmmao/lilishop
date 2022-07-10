@@ -3,7 +3,6 @@ package cn.lili.elasticsearch;
 import cn.hutool.core.bean.BeanUtil;
 import cn.lili.elasticsearch.config.ElasticsearchProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -30,7 +29,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author paulG
@@ -89,14 +87,16 @@ public abstract class BaseElasticsearchService {
         try {
             CreateIndexRequest request = new CreateIndexRequest(index);
             //Settings for this index
-            request.settings(Settings.builder().put("index.number_of_shards", elasticsearchProperties.getIndex().getNumberOfShards()).put("index.number_of_replicas", elasticsearchProperties.getIndex().getNumberOfReplicas()));
+            request.settings(Settings.builder()
+                    .put("index.number_of_shards", elasticsearchProperties.getIndex().getNumberOfShards())
+                    .put("index.number_of_replicas", elasticsearchProperties.getIndex().getNumberOfReplicas())
+                    .put("index.mapping.total_fields.limit", 2000));
 
             //创建索引
             CreateIndexResponse createIndexResponse = client.indices().create(request, COMMON_OPTIONS);
             createMapping(index);
             log.info(" whether all of the nodes have acknowledged the request : {}", createIndexResponse.isAcknowledged());
             log.info(" Indicates whether the requisite number of shard copies were started for each shard in the index before timing out :{}", createIndexResponse.isShardsAcknowledged());
-            return;
         } catch (Exception e) {
             log.error("创建索引错误",e);
             throw new ElasticsearchException("创建索引 {" + index + "} 失败：" + e.getMessage());
@@ -123,7 +123,7 @@ public abstract class BaseElasticsearchService {
                         "            \"type\": \"keyword\"\n" +
                         "          },\n" +
                         "          \"type\": {\n" +
-                        "            \"type\": \"long\"\n" +
+                        "            \"type\": \"integer\"\n" +
                         "          },\n" +
                         "          \"value\": {\n" +
                         "            \"type\": \"keyword\"\n" +
@@ -140,18 +140,32 @@ public abstract class BaseElasticsearchService {
                         "          }\n" +
                         "        }\n" +
                         "      },\n" +
-                        "      \"buyCount\": {\n" +
-                        "        \"type\": \"long\"\n" +
-                        "      },\n" +
-                        "      \"releaseTime\": {\n" +
+                        "      \"brandName\": {\n" +
                         "        \"type\": \"text\",\n" +
-                        "        \"fielddata\": true, \n" +
+                        "        \"fielddata\": true,\n" +
                         "        \"fields\": {\n" +
                         "          \"keyword\": {\n" +
                         "            \"type\": \"keyword\",\n" +
                         "            \"ignore_above\": 256\n" +
                         "          }\n" +
                         "        }\n" +
+                        "      },\n" +
+                        "      \"brandUrl\": {\n" +
+                        "        \"type\": \"text\",\n" +
+                        "        \"fielddata\": true,\n" +
+                        "        \"fields\": {\n" +
+                        "          \"keyword\": {\n" +
+                        "            \"type\": \"keyword\",\n" +
+                        "            \"ignore_above\": 256\n" +
+                        "          }\n" +
+                        "        }\n" +
+                        "      },\n" +
+                        "      \"buyCount\": {\n" +
+                        "        \"type\": \"long\"\n" +
+                        "      },\n" +
+                        "      \"releaseTime\": {\n" +
+                        "        \"type\": \"date\",\n" +
+                        "        \"format\": \"yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis\"\n" +
                         "      },\n" +
                         "      \"categoryPath\": {\n" +
                         "        \"type\": \"text\",\n" +
@@ -163,7 +177,20 @@ public abstract class BaseElasticsearchService {
                         "          }\n" +
                         "        }\n" +
                         "      },\n" +
+                        "      \"categoryNamePath\": {\n" +
+                        "        \"type\": \"text\",\n" +
+                        "        \"fielddata\": true,\n" +
+                        "        \"fields\": {\n" +
+                        "          \"keyword\": {\n" +
+                        "            \"type\": \"keyword\",\n" +
+                        "            \"ignore_above\": 256\n" +
+                        "          }\n" +
+                        "        }\n" +
+                        "      },\n" +
                         "      \"commentNum\": {\n" +
+                        "        \"type\": \"long\"\n" +
+                        "      },\n" +
+                        "      \"skuSource\": {\n" +
                         "        \"type\": \"long\"\n" +
                         "      },\n" +
                         "      \"goodsId\": {\n" +
@@ -210,7 +237,7 @@ public abstract class BaseElasticsearchService {
                         "          }\n" +
                         "        }\n" +
                         "      },\n" +
-                        "      \"isAuth\": {\n" +
+                        "      \"authFlag\": {\n" +
                         "        \"type\": \"text\",\n" +
                         "        \"fields\": {\n" +
                         "          \"keyword\": {\n" +
@@ -297,6 +324,9 @@ public abstract class BaseElasticsearchService {
                         "          }\n" +
                         "        }\n" +
                         "      },\n" +
+                        "      \"promotionMapJson\": {\n" +
+                        "        \"type\": \"text\"\n" +
+                        "      },\n" +
                         "      \"thumbnail\": {\n" +
                         "        \"type\": \"text\",\n" +
                         "        \"fields\": {\n" +
@@ -312,24 +342,23 @@ public abstract class BaseElasticsearchService {
         PutMappingRequest request = new PutMappingRequest(index)
                         .source(source, XContentType.JSON);
         CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference response = new AtomicReference<AcknowledgedResponse>();
         client.indices().putMappingAsync(
                 request,
                 RequestOptions.DEFAULT,
                 new ActionListener<AcknowledgedResponse>() {
                     @Override
                     public void onResponse(AcknowledgedResponse r) {
-                        response.set(r);
                         latch.countDown();
+                        log.info("创建索引mapping成功：{}", r);
                     }
 
                     @Override
                     public void onFailure(Exception e) {
                         latch.countDown();
+                        log.error("创建索引mapping失败", e);
                     }
                 });
         latch.await(10, TimeUnit.SECONDS);
-        Assertions.assertThat(((AcknowledgedResponse) response.get()).isAcknowledged()).isTrue();
     }
 
     /**
