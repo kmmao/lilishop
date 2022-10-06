@@ -1,5 +1,6 @@
 package cn.lili.modules.promotion.serviceimpl;
 
+import cn.hutool.json.JSONUtil;
 import cn.lili.common.enums.PromotionTypeEnum;
 import cn.lili.modules.promotion.entity.dos.*;
 import cn.lili.modules.promotion.entity.dto.search.PromotionGoodsSearchParams;
@@ -62,6 +63,9 @@ public class PromotionServiceImpl implements PromotionService {
     @Autowired
     private PointsGoodsService pointsGoodsService;
 
+    @Autowired
+    private KanjiaActivityGoodsService kanjiaActivityGoodsService;
+
 
     /**
      * 获取当前进行的所有促销活动信息
@@ -116,6 +120,12 @@ public class PromotionServiceImpl implements PromotionService {
         return promotionMap;
     }
 
+    @Override
+    public void removeByGoodsIds(String goodsIdsJsonStr) {
+        List<String> goodsIds = JSONUtil.toList(goodsIdsJsonStr, String.class);
+        promotionGoodsService.deletePromotionGoodsByGoods(goodsIds);
+        kanjiaActivityGoodsService.deleteByGoodsIds(goodsIds);
+    }
 
     private void getGoodsCurrentSeckill(String esPromotionKey, PromotionGoods promotionGoods, Map<String, Object> promotionMap) {
         Seckill seckill = seckillService.getById(promotionGoods.getPromotionId());
