@@ -267,6 +267,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
     public Token mobilePhoneLogin(String mobilePhone) {
         QueryWrapper<Member> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("mobile", mobilePhone);
+        queryWrapper.eq("delete_flag", false);
         Member member = this.baseMapper.selectOne(queryWrapper);
         //如果手机号不存在则自动注册用户
         if (member == null) {
@@ -277,18 +278,58 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
         return memberTokenGenerate.createToken(member, false);
     }
 
+    @Override
+    @Transactional
+    public String mobilePhoneLoginByDdgId(String mobilePhone, String ddgId) {
+        QueryWrapper<Member> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("mobile", mobilePhone);
+        queryWrapper.eq("delete_flag", false);
+        Member member = this.baseMapper.selectOne(queryWrapper);
+        //如果手机号不存在则自动注册用户
+        if (member == null) {
+            member = new Member(mobilePhone, UuidUtils.getUUID(), mobilePhone, ddgId);
+            return registerHandler(member);
+        }
+        //TODO 当前不考虑从商城注册过来的用户用嘟嘟罐
+        return null;
+    }
+
+    @Override
+    @Transactional
+    public String memberDeleteByDdgId(String ddgId) {
+        QueryWrapper<Member> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("ddg_id", ddgId);
+        Member member = this.baseMapper.selectOne(queryWrapper);
+        //删除联合登录
+        connectService.deleteByMemberId(member.getId());
+        //混淆用户信息
+        this.confusionMember(member);
+        return member.getId();
+    }
+
+    @Override
+    public String getMemberIdByDdgId(String ddgId) {
+        QueryWrapper<Member> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("ddg_id", ddgId);
+        Member member = this.baseMapper.selectOne(queryWrapper);
+        return member.getId();
+    }
+
+
     /**
      * 注册方法抽象
      *
      * @param member
+     * @return
      */
     @Transactional
-    public void registerHandler(Member member) {
+    public String registerHandler(Member member) {
         member.setId(SnowFlake.getIdStr());
         //保存会员
         this.save(member);
         // 发送会员注册信息
         applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("new member register", rocketmqCustomProperties.getMemberTopic(), MemberTagsEnum.MEMBER_REGISTER.name(), member));
+        return member.getId();
     }
 
     @Override

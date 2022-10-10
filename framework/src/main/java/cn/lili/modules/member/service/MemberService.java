@@ -83,6 +83,29 @@ public interface MemberService extends IService<Member> {
     Token mobilePhoneLogin(String mobilePhone);
 
     /**
+     * 注册：手机号、验证码登录
+     *
+     * @param mobilePhone 手机号
+     * @param ddgId 嘟嘟罐ID
+     * @return ddgId
+     */
+    String mobilePhoneLoginByDdgId(String mobilePhone,String ddgId);
+
+    /**
+     *
+     * @param ddgId 嘟嘟罐ID
+     * @return ddgId
+     */
+    String memberDeleteByDdgId(String ddgId);
+
+    /**
+     *
+     * @param ddgId 嘟嘟罐ID
+     * @return memberId
+     */
+    String getMemberIdByDdgId(String ddgId);
+
+    /**
      * 修改会员信息
      *
      * @param memberEditDTO 会员修改信息

@@ -113,6 +113,20 @@ public class Member extends BaseEntity {
         this.lastLoginDate = new Date();
     }
 
+    public Member(String username, String password, String mobile,String ddgId) {
+        this.username = username;
+        this.password = password;
+        this.mobile = mobile;
+        this.nickName = mobile;
+        this.disabled = true;
+        this.haveStore = false;
+        this.sex = 0;
+        this.point = 0L;
+        this.totalPoint = 0L;
+        this.lastLoginDate = new Date();
+        this.ddgId = ddgId;
+    }
+
     public Member(String username, String password, String mobile, String nickName, String face) {
         this.username = username;
         this.password = password;
