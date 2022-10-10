@@ -33,9 +33,9 @@ spring:
     type: redis
   # Redis
   redis:
-    host: 127.0.0.1
-    port: 6379
-    password: lilishop
+    host: ${REDIS-HOST:lilishop-redis}
+    port: ${REDIS-PORT:6379}
+    password: ${REDIS-PWD:lilishop}
     lettuce:
       pool:
         # 连接池最大连接数（使用负值表示没有限制） 默认 8
@@ -64,9 +64,9 @@ spring:
       default-datasource:
         type: com.alibaba.druid.pool.DruidDataSource
         driverClassName: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://127.0.0.1:3306/lilishop?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
-        username: root
-        password: lilishop
+        url: jdbc:mysql://${MYSQL-HOST:lilishop-mysql}:${MYSQL-PORT:3306}/${MYSQL-DB:lilishop}?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+        username: ${MYSQL-USER:root}
+        password: ${MYSQL-PWD:lilishop}
         maxActive: 20
         initialSize: 5
         maxWait: 60000
@@ -191,16 +191,16 @@ lili:
     sk: zhNKVrJK6UPOhqIjn8AQvG37b9sz6
   #域名
   domain:
-    pc: https://pc.b2b2c.pickmall.cn
-    wap: https://m.b2b2c.pickmall.cn
-    store: https://store.b2b2c.pickmall.cn
-    admin: https://admin.b2b2c.pickmall.cn
+    pc: https://buyer.zmshops.xycloud.info
+    wap: https://h5.zmshops.xycloud.info
+    store: https://seller.zmshops.xycloud.info
+    admin: https://manager.zmshops.xycloud.info
   #api地址
   api:
-    buyer: https://buyer-api.pickmall.cn
-    common: https://common-api.pickmall.cn
-    manager: https://admin-api.pickmall.cn
-    store: https://store-api.pickmall.cn
+    buyer: https://buyer-api.zmshops.xycloud.info
+    common: https://common-api.zmshops.xycloud.info
+    manager: https://admin-api.zmshops.xycloud.info
+    store: https://store-api.zmshops.xycloud.info
 
   # jwt 细节设定
   jwt-setting:
@@ -219,7 +219,7 @@ lili:
   data:
     elasticsearch:
       cluster-name: elasticsearch
-      cluster-nodes: 127.0.0.1:9200
+      cluster-nodes: ${ES-HOST:lilishop-es}:${ES-PORT:9200}
       index:
         number-of-replicas: 0
         number-of-shards: 3
@@ -229,7 +229,7 @@ lili:
     #        username: elastic
     #        password: LiLiShopES
     logstash:
-      server: 127.0.0.1:4560
+      server: ${ES-HOST:lilishop-es}:4560
     rocketmq:
       promotion-topic: lili_promotion_topic
       promotion-group: lili_promotion_group
@@ -250,7 +250,7 @@ lili:
       after-sale-topic: lili_after_sale_topic
       after-sale-group: lili_after_sale_group
 rocketmq:
-  name-server: 127.0.0.1:9876
+  name-server: ${ROCKETMQ-HOST:lilishop-rocketmq}:${ROCKETMQ-PORT:9876}
   producer:
     group: lili_group
     send-message-timeout: 30000
@@ -258,7 +258,7 @@ rocketmq:
 xxl:
   job:
     admin:
-      addresses: http://127.0.0.1:9001/xxl-job-admin
+      addresses: http://${XXLJOB-HOST:lilishop-xxljob}:${XXLJOB-PORT:9001}/xxl-job-admin
     executor:
       appname: xxl-job-executor-lilishop
       address:
