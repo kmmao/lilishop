@@ -96,6 +96,9 @@ public class Member extends BaseEntity {
     @ApiModelProperty(value = "经验值数量")
     private Long experience;
 
+    @ApiModelProperty(value = "嘟嘟罐ID")
+    private String ddgId;
+
 
     public Member(String username, String password, String mobile) {
         this.username = username;
