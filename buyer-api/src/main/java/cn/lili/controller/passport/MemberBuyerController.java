@@ -153,6 +153,35 @@ public class MemberBuyerController {
         }
     }
 
+    @ApiOperation(value = "嘟嘟罐注册接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "mobile", value = "手机号", required = true, paramType = "query"),
+            @ApiImplicitParam(name = "ddgId", value = "嘟嘟罐ID", required = true, paramType = "query")
+    })
+    @PostMapping("/ddgLogin")
+    public ResultMessage<Object> ddgLogin(@NotNull(message = "手机号为空") @RequestParam String mobile,
+                                          @NotNull(message = "嘟嘟罐ID") @RequestParam String ddgId) {
+        return ResultUtil.data(memberService.mobilePhoneLoginByDdgId(mobile, ddgId));
+    }
+
+    @ApiOperation(value = "嘟嘟罐用户删除")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "ddgId", value = "嘟嘟罐ID", required = true, paramType = "query")
+    })
+    @PostMapping("/ddgDelete")
+    public ResultMessage<Object> ddgDelete(@NotNull(message = "嘟嘟罐ID") @RequestParam String ddgId) {
+        return ResultUtil.data(memberService.memberDeleteByDdgId(ddgId));
+    }
+
+    @ApiOperation(value = "通过嘟嘟罐id获取用户id")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "ddgId", value = "嘟嘟罐ID", required = true, paramType = "query")
+    })
+    @PostMapping("/getMemberIdByDdgId")
+    public ResultMessage<Object> getMemberIdByDdgId(@NotNull(message = "嘟嘟罐ID") @RequestParam String ddgId) {
+        return ResultUtil.data(memberService.getMemberIdByDdgId(ddgId));
+    }
+
     @ApiOperation(value = "注册用户")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "username", value = "用户名", required = true, paramType = "query"),
