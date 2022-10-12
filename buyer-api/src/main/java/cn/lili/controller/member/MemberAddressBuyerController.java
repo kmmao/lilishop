@@ -41,6 +41,12 @@ public class MemberAddressBuyerController {
         return ResultUtil.data(memberAddressService.getAddressByMember(page, UserContext.getCurrentUser().getId()));
     }
 
+    @ApiOperation(value = "获取会员收件地址分页列表-嘟嘟罐使用")
+    @GetMapping(value = "/ddgUserAddress")
+    public ResultMessage<IPage<MemberAddress>> ddgUserAddress(String storeUserId,PageVO page) {
+        return ResultUtil.data(memberAddressService.getAddressByMember(page, storeUserId));
+    }
+
     @ApiOperation(value = "根据ID获取会员收件地址")
     @ApiImplicitParam(name = "id", value = "会员地址ID", dataType = "String", paramType = "path")
     @GetMapping(value = "/get/{id}")
