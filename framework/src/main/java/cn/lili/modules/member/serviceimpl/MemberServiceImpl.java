@@ -284,14 +284,15 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
         QueryWrapper<Member> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("mobile", mobilePhone);
         queryWrapper.eq("delete_flag", false);
-        Member member = this.baseMapper.selectOne(queryWrapper);
+        queryWrapper.last(" limit 1");
+        Member menber = this.baseMapper.selectOne(queryWrapper);
         //如果手机号不存在则自动注册用户
-        if (member == null) {
-            member = new Member(mobilePhone, UuidUtils.getUUID(), mobilePhone, ddgId);
-            return registerHandler(member);
+        if (menber == null) {
+            menber = new Member(mobilePhone, UuidUtils.getUUID(), mobilePhone, ddgId);
+            return registerHandler(menber);
+        } else {
+            return menber.getId();
         }
-        //TODO 当前不考虑从商城注册过来的用户用嘟嘟罐
-        return null;
     }
 
     @Override
