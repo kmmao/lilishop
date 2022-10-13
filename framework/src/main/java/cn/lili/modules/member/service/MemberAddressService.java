@@ -31,11 +31,26 @@ public interface MemberAddressService extends IService<MemberAddress> {
     MemberAddress getMemberAddress(String id);
 
     /**
-     * 根据地址ID获取当前会员地址信息
+     * 根据地址ID获取当前会员地址信息-嘟嘟罐使用
+     *
+     * @param id 地址ID
+     * @return 当前会员的地址信息
+     */
+    MemberAddress getMemberAddressDDG(String id,String memberId);
+
+    /**
+     * 获取会员当前默认收货地址
      *
      * @return 当前会员的地址信息
      */
     MemberAddress getDefaultMemberAddress();
+
+    /**
+     * 获取会员当前默认收货地址-嘟嘟罐使用
+     *
+     * @return 当前会员的地址信息
+     */
+    MemberAddress getDefaultMemberAddressDDG(String memberId);
 
     /**
      * 添加会员收货地址
@@ -52,6 +67,14 @@ public interface MemberAddressService extends IService<MemberAddress> {
      * @return 操作状态
      */
     MemberAddress updateMemberAddress(MemberAddress memberAddress);
+
+    /**
+     * 修改会员收货地址信息-嘟嘟罐使用
+     *
+     * @param memberAddress 收货地址
+     * @return 操作状态
+     */
+    MemberAddress updateMemberAddressDDG(MemberAddress memberAddress);
 
     /**
      * 删除会员收货地址信息
