@@ -42,7 +42,22 @@ public class MemberAddressServiceImpl extends ServiceImpl<MemberAddressMapper, M
     }
 
     /**
-     * 根据地址ID获取当前会员地址信息
+     * 根据地址ID获取当前会员地址信息-嘟嘟罐使用
+     *
+     * @param id       地址ID
+     * @param memberId
+     * @return 当前会员的地址信息
+     */
+    @Override
+    public MemberAddress getMemberAddressDDG(String id, String memberId) {
+        return this.getOne(
+                new QueryWrapper<MemberAddress>()
+                        .eq("member_id", Objects.requireNonNull(memberId))
+                        .eq("id", id));
+    }
+
+    /**
+     * 获取会员当前默认收货地址
      *
      * @return 当前会员的地址信息
      */
@@ -51,6 +66,20 @@ public class MemberAddressServiceImpl extends ServiceImpl<MemberAddressMapper, M
         return this.getOne(
                 new QueryWrapper<MemberAddress>()
                         .eq("member_id", Objects.requireNonNull(UserContext.getCurrentUser()).getId())
+                        .eq("is_default", true));
+    }
+
+    /**
+     * 获取会员当前默认收货地址-嘟嘟罐使用
+     *
+     * @param memberId
+     * @return 当前会员的地址信息
+     */
+    @Override
+    public MemberAddress getDefaultMemberAddressDDG(String memberId) {
+        return this.getOne(
+                new QueryWrapper<MemberAddress>()
+                        .eq("member_id", Objects.requireNonNull(memberId))
                         .eq("is_default", true));
     }
 
@@ -71,6 +100,28 @@ public class MemberAddressServiceImpl extends ServiceImpl<MemberAddressMapper, M
         MemberAddress originalMemberAddress = this.getMemberAddress(memberAddress.getId());
         if (originalMemberAddress != null &&
                 originalMemberAddress.getMemberId().equals(Objects.requireNonNull(UserContext.getCurrentUser()).getId())) {
+
+            if (memberAddress.getIsDefault() == null) {
+                memberAddress.setIsDefault(false);
+            }
+            //判断当前地址是否为默认地址，如果为默认需要将其他的地址修改为非默认
+            removeDefaultAddress(memberAddress);
+            this.saveOrUpdate(memberAddress);
+        }
+
+        return memberAddress;
+    }
+
+    /**
+     * 修改会员收货地址信息-嘟嘟罐使用
+     *
+     * @param memberAddress 收货地址
+     * @return 操作状态
+     */
+    @Override
+    public MemberAddress updateMemberAddressDDG(MemberAddress memberAddress) {
+        MemberAddress originalMemberAddress = this.getMemberAddress(memberAddress.getId());
+        if (originalMemberAddress != null) {
 
             if (memberAddress.getIsDefault() == null) {
                 memberAddress.setIsDefault(false);

@@ -54,10 +54,23 @@ public class MemberAddressBuyerController {
         return ResultUtil.data(memberAddressService.getMemberAddress(id));
     }
 
+    @ApiOperation(value = "根据ID获取会员收件地址-嘟嘟罐使用")
+    @ApiImplicitParam(name = "id", value = "会员地址ID", dataType = "String", paramType = "path")
+    @GetMapping(value = "/getDDG/{id}/{memberId}")
+    public ResultMessage<MemberAddress> getShippingAddress(@PathVariable String id,@PathVariable String memberId) {
+        return ResultUtil.data(memberAddressService.getMemberAddressDDG(id,memberId));
+    }
+
     @ApiOperation(value = "获取当前会员默认收件地址")
     @GetMapping(value = "/get/default")
     public ResultMessage<MemberAddress> getDefaultShippingAddress() {
         return ResultUtil.data(memberAddressService.getDefaultMemberAddress());
+    }
+
+    @ApiOperation(value = "获取当前会员默认收件地址-嘟嘟罐使用")
+    @GetMapping(value = "/get/defaultDDG/{id}")
+    public ResultMessage<MemberAddress> getDefaultShippingAddressDDG(@PathVariable String id) {
+        return ResultUtil.data(memberAddressService.getDefaultMemberAddressDDG(id));
     }
 
     @ApiOperation(value = "新增会员收件地址")
@@ -71,10 +84,26 @@ public class MemberAddressBuyerController {
         return ResultUtil.data(memberAddressService.saveMemberAddress(shippingAddress));
     }
 
+    @ApiOperation(value = "新增会员收件地址-嘟嘟罐使用")
+    @PostMapping(value = "/add")
+    public ResultMessage<MemberAddress> addShippingAddressDDG(@Valid MemberAddress shippingAddress) {
+        //添加会员地址
+        if(shippingAddress.getIsDefault()==null){
+            shippingAddress.setIsDefault(false);
+        }
+        return ResultUtil.data(memberAddressService.saveMemberAddress(shippingAddress));
+    }
+
     @ApiOperation(value = "修改会员收件地址")
     @PutMapping
     public ResultMessage<MemberAddress> editShippingAddress(@Valid MemberAddress shippingAddress) {
         return ResultUtil.data(memberAddressService.updateMemberAddress(shippingAddress));
+    }
+
+    @ApiOperation(value = "修改会员收件地址-嘟嘟罐使用")
+    @PutMapping(value = "/edit")
+    public ResultMessage<MemberAddress> editShippingAddressDDG(@Valid MemberAddress shippingAddress) {
+        return ResultUtil.data(memberAddressService.updateMemberAddressDDG(shippingAddress));
     }
 
     @ApiOperation(value = "删除会员收件地址")
