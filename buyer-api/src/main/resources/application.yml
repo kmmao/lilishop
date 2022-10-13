@@ -142,6 +142,8 @@ ignored:
     - /buyer/promotion/seckill/**
     - /buyer/promotion/pointsGoods/**
     - /buyer/promotion/coupon
+    - /buyer/member/address
+    - /buyer/member/address/**
     - /buyer/member/evaluation/**/goodsEvaluation
     - /buyer/member/evaluation/**/evaluationNumber
     - /buyer/other/appVersion/**

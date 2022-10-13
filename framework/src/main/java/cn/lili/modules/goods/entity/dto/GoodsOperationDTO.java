@@ -89,7 +89,7 @@ public class GoodsOperationDTO implements Serializable {
     @ApiModelProperty(value = "是否有规格", hidden = true)
     private String haveSpec;
 
-    @ApiModelProperty(value = "销售模式", required = true)
+    @ApiModelProperty(value = "计量单位", required = true)
     private String goodsUnit;
 
     @ApiModelProperty(value = "商品描述")
@@ -111,6 +111,11 @@ public class GoodsOperationDTO implements Serializable {
     @ApiModelProperty(value = "商品视频")
     private String goodsVideo;
 
+    /**
+     * sn码，商品供应商ID
+     */
+    @ApiModelProperty(value = "sn码")
+    private String sn;
 
     @ApiModelProperty(value = "sku列表")
     @Valid
