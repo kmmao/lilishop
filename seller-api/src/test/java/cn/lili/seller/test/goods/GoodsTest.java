@@ -1,24 +1,22 @@
 package cn.lili.seller.test.goods;
 
+import cn.hutool.http.HttpRequest;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import cn.lili.common.utils.SnowFlake;
+import cn.lili.common.utils.StringUtils;
 import cn.lili.modules.goods.entity.dto.GoodsOperationDTO;
-import cn.lili.modules.goods.entity.vos.CategoryVO;
-import cn.lili.modules.goods.service.CategoryService;
 import cn.lili.modules.goods.service.GoodsService;
-import cn.lili.modules.goods.service.GoodsSkuService;
-import cn.lili.modules.order.cart.entity.dto.TradeDTO;
-import cn.lili.modules.order.cart.entity.enums.CartTypeEnum;
-import cn.lili.modules.order.cart.entity.vo.TradeParams;
-import cn.lili.modules.order.cart.service.CartService;
-import cn.lili.modules.payment.service.PaymentService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.List;
+import java.util.*;
+
 
 /**
  * @author allen
@@ -33,20 +31,120 @@ class GoodsTest {
      */
     @Autowired
     private GoodsService goodsService;
-    /**
-     * 商品sku
-     */
-    @Autowired
-    private GoodsSkuService goodsSkuService;
 
+    String goods_url = "http://42.192.42.217:9999/api/ddg/font/service/getStoreProductList";
+    String goods_detail_url = "http://42.192.42.217:9999/api/ddg/font/service/getStoreProductDetail";
 
     @Test
     void getOldGoodsImport() {
-        GoodsOperationDTO goodsOperationDTO = new GoodsOperationDTO();
         // 取得旧地址的商品对象，存到新数据库里面
+        SortedMap<Object, Object> sortedMap = new TreeMap<Object, Object>() {
+            private static final long serialVersionUID = 1L;
 
-        // 存放新商品
-        goodsService.addGoods(goodsOperationDTO);
+            {
+                put("page", 1);
+                put("limit", 200000);
+            }
+        };
+        String result1 = HttpRequest.post(goods_url).body(JSONUtil.toJsonStr(sortedMap)).execute().body();
+        System.out.println(result1);
+        JSONObject goodObject = (JSONObject) JSONUtil.parseObj(result1).get("data");
+        JSONArray good_list = goodObject.getJSONArray("list");
+        for (int i = 0; i < good_list.size(); i++) {
+            GoodsOperationDTO goodsOperationDTO = new GoodsOperationDTO();
+            JSONObject good_item = (JSONObject) good_list.get(i);
+            Map paramMap = new HashMap();
+            paramMap.put("goodsId", good_item.getStr("id"));
+            System.out.println(good_item.getStr("id"));
+            String good_detail = HttpRequest.get(goods_detail_url).form(paramMap).execute().body();
+//            System.out.println(good_detail);
+            JSONObject goodDetailObject = (JSONObject) JSONUtil.parseObj(good_detail).get("data");
+            JSONArray productAttrObject = goodDetailObject.getJSONArray("productAttr");
+            JSONObject productValueObject = goodDetailObject.getJSONObject("productValue");
+            JSONObject productInfoObject = goodDetailObject.getJSONObject("productInfo");
+            JSONObject paroductAttr = (JSONObject) productAttrObject.get(0);
+            String[] skuValueList = paroductAttr.getStr("attrValues").split(",");
+            String[] skuAttrList = paroductAttr.getStr("attrName").split("/");
+            List<String> goodsGalleryList = new ArrayList<>();
+            JSONArray sliderImageArray = JSONUtil.parseArray(productInfoObject.getStr("sliderImage"));
+            for (int j = 0; j < sliderImageArray.size(); j++) {
+                goodsGalleryList.add(sliderImageArray.get(j,String.class));
+            }
+            goodsOperationDTO.setGoodsGalleryList(goodsGalleryList);
+            List<Map<String, Object>> skuList = new ArrayList<>();
+            for (int j = 0; j < skuValueList.length; j++) {
+                String s = skuValueList[j];
+//                System.out.println(s);
+                Map<String, Object> sku = new HashMap<>();
+                JSONObject productValue = (JSONObject) productValueObject.get(s);
+                if(productValue==null){
+                    continue;
+                }
+                if (StringUtils.isEmpty(productValue.getStr("barCode"))){
+                    sku.put("sn",String.valueOf(SnowFlake.getId()));
+                }else{
+                    sku.put("sn",productValue.getStr("barCode"));
+                }
+                sku.put("price",productValue.getDouble("price"));
+                sku.put("cost",productValue.getDouble("cost"));
+                sku.put("weight",productValue.getDouble("weight"));
+                sku.put("quantity",productValue.getInt("stock"));
+                JSONArray imagesArray = new JSONArray();
+                JSONObject imagesObject = new JSONObject();
+                imagesObject.set("url",productValue.getStr("image"));
+                imagesObject.set("name",productValue.getStr("barCode"));
+                imagesObject.set("status","finished");
+                imagesArray.add(imagesObject);
+                for (int z = 0; z < sliderImageArray.size(); z++) {
+                    JSONObject image_item = new JSONObject();
+                    image_item.set("url",sliderImageArray.get(z,String.class));
+                    image_item.set("name",productValue.getStr("barCode"));
+                    image_item.set("status","finished");
+                    imagesArray.add(image_item);
+                }
+                sku.put("images",imagesArray);
+                String[] valueArray = s.split("/");
+                for (int k = 0; k < skuAttrList.length; k++) {
+                    sku.put(skuAttrList[k],valueArray[k]);
+                }
+                skuList.add(sku);
+            }
+            goodsOperationDTO.setBrandId("0");
+            goodsOperationDTO.setPrice(good_item.getDouble("price"));
+            goodsOperationDTO.setCategoryPath("1580122559395115010,1580122590302941186,1580122661421559809"); //分类路径
+            goodsOperationDTO.setGoodsName(good_item.getStr("storeName"));
+            JSONArray contentArray = JSONUtil.parseArray(productInfoObject.getStr("content"));
+            StringBuilder contentBuilder = new StringBuilder();
+            contentBuilder.append("<P>");
+            for (int j = 0; j < contentArray.size(); j++) {
+                String imagesVal = contentArray.get(j,String.class);
+                StringBuilder str1 = new StringBuilder();
+                if(imagesVal.contains("crmebimage")){
+                    str1.append("<img src=\"https://buyer.zmshops.xycloud.info/c");
+                    str1.append(imagesVal.substring(imagesVal.substring(0, imagesVal.indexOf("crmebimage")).length()+1, imagesVal.length()));
+                }else {
+                    str1.append("<img src=\"");
+                    str1.append(imagesVal);
+                }
+                str1.append("\" />");
+                contentBuilder.append(str1);
+            }
+            contentBuilder.append("</p>");
+            goodsOperationDTO.setSn(productInfoObject.getStr("supplier"));
+            goodsOperationDTO.setIntro(contentBuilder.toString()); // 详情
+            goodsOperationDTO.setMobileIntro(contentBuilder.toString());
+            goodsOperationDTO.setQuantity(good_item.getInt("stock"));
+            goodsOperationDTO.setRelease(true);
+            goodsOperationDTO.setRecommend(true);
+            goodsOperationDTO.setGoodsUnit("件");
+            goodsOperationDTO.setTemplateId("1579807987375271938");
+            goodsOperationDTO.setSellingPoint(good_item.getStr("storeName"));  //卖点
+            goodsOperationDTO.setSalesModel("RETAIL");
+            goodsOperationDTO.setGoodsType("PHYSICAL_GOODS");
+            goodsOperationDTO.setSkuList(skuList);
+
+            // 存放新商品
+            goodsService.addGoods(goodsOperationDTO);
+        }
     }
-
 }

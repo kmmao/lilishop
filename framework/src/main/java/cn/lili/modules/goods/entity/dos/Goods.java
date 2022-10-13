@@ -55,6 +55,9 @@ public class Goods extends BaseEntity {
     @ApiModelProperty(value = "品牌id")
     private String brandId;
 
+    @ApiModelProperty(value = "sn")
+    private String sn;
+
     @ApiModelProperty(value = "分类path")
     private String categoryPath;
 
@@ -165,6 +168,7 @@ public class Goods extends BaseEntity {
         this.salesModel = goodsOperationDTO.getSalesModel();
         this.goodsUnit = goodsOperationDTO.getGoodsUnit();
         this.intro = goodsOperationDTO.getIntro();
+        this.sn = goodsOperationDTO.getSn();
         this.mobileIntro = goodsOperationDTO.getMobileIntro();
         this.goodsVideo = goodsOperationDTO.getGoodsVideo();
         this.price = goodsOperationDTO.getPrice();
