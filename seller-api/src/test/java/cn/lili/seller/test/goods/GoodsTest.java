@@ -68,7 +68,14 @@ class GoodsTest {
             List<String> goodsGalleryList = new ArrayList<>();
             JSONArray sliderImageArray = JSONUtil.parseArray(productInfoObject.getStr("sliderImage"));
             for (int j = 0; j < sliderImageArray.size(); j++) {
-                goodsGalleryList.add(sliderImageArray.get(j,String.class));
+                String aliderImage = sliderImageArray.get(j,String.class);
+                if(aliderImage.contains("crmebimage")){
+                    String stringBuilder = "<img src=\"https://buyer.zmshops.xycloud.info/c" +
+                            aliderImage.substring(aliderImage.substring(0, aliderImage.indexOf("crmebimage")).length() + 1, aliderImage.length());
+                    goodsGalleryList.add(stringBuilder);
+                }else{
+                    goodsGalleryList.add(aliderImage);
+                }
             }
             goodsOperationDTO.setGoodsGalleryList(goodsGalleryList);
             List<Map<String, Object>> skuList = new ArrayList<>();
@@ -97,7 +104,14 @@ class GoodsTest {
                 imagesArray.add(imagesObject);
                 for (int z = 0; z < sliderImageArray.size(); z++) {
                     JSONObject image_item = new JSONObject();
-                    image_item.set("url",sliderImageArray.get(z,String.class));
+                    String imageStr = sliderImageArray.get(z,String.class);
+                    if(imageStr.contains("crmebimage")){
+                        String stringBuilder = "<img src=\"https://buyer.zmshops.xycloud.info/c" +
+                                imageStr.substring(imageStr.substring(0, imageStr.indexOf("crmebimage")).length() + 1, imageStr.length());
+                        image_item.set("url", stringBuilder);
+                    }else{
+                        image_item.set("url",imageStr);
+                    }
                     image_item.set("name",productValue.getStr("barCode"));
                     image_item.set("status","finished");
                     imagesArray.add(image_item);
