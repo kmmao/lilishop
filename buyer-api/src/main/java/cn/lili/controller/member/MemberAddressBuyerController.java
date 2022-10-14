@@ -101,7 +101,7 @@ public class MemberAddressBuyerController {
     }
 
     @ApiOperation(value = "修改会员收件地址-嘟嘟罐使用")
-    @PutMapping(value = "/edit")
+    @PostMapping(value = "/edit")
     public ResultMessage<MemberAddress> editShippingAddressDDG(@Valid MemberAddress shippingAddress) {
         return ResultUtil.data(memberAddressService.updateMemberAddressDDG(shippingAddress));
     }
@@ -111,6 +111,14 @@ public class MemberAddressBuyerController {
     @DeleteMapping(value = "/delById/{id}")
     public ResultMessage<Object> delShippingAddressById(@PathVariable String id) {
         OperationalJudgment.judgment(memberAddressService.getById(id));
+        memberAddressService.removeMemberAddress(id);
+        return ResultUtil.success();
+    }
+
+    @ApiOperation(value = "删除会员收件地址-嘟嘟罐使用")
+    @ApiImplicitParam(name = "id", value = "会员地址ID", dataType = "String", paramType = "path")
+    @GetMapping(value = "/delByIdDDG/{id}")
+    public ResultMessage<Object> delShippingAddressByIdDDG(@PathVariable String id) {
         memberAddressService.removeMemberAddress(id);
         return ResultUtil.success();
     }

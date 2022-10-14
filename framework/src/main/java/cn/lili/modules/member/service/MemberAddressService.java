@@ -36,6 +36,14 @@ public interface MemberAddressService extends IService<MemberAddress> {
      * @param id 地址ID
      * @return 当前会员的地址信息
      */
+    MemberAddress getMemberAddressDDG(String id);
+
+    /**
+     * 根据地址ID获取当前会员地址信息-嘟嘟罐使用
+     *
+     * @param id 地址ID
+     * @return 当前会员的地址信息
+     */
     MemberAddress getMemberAddressDDG(String id,String memberId);
 
     /**

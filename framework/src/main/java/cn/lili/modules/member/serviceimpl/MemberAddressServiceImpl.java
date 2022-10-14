@@ -44,6 +44,19 @@ public class MemberAddressServiceImpl extends ServiceImpl<MemberAddressMapper, M
     /**
      * 根据地址ID获取当前会员地址信息-嘟嘟罐使用
      *
+     * @param id 地址ID
+     * @return 当前会员的地址信息
+     */
+    @Override
+    public MemberAddress getMemberAddressDDG(String id) {
+        return this.getOne(
+                new QueryWrapper<MemberAddress>()
+                        .eq("id", id));
+    }
+
+    /**
+     * 根据地址ID获取当前会员地址信息-嘟嘟罐使用
+     *
      * @param id       地址ID
      * @param memberId
      * @return 当前会员的地址信息
@@ -120,7 +133,7 @@ public class MemberAddressServiceImpl extends ServiceImpl<MemberAddressMapper, M
      */
     @Override
     public MemberAddress updateMemberAddressDDG(MemberAddress memberAddress) {
-        MemberAddress originalMemberAddress = this.getMemberAddress(memberAddress.getId());
+        MemberAddress originalMemberAddress = this.getMemberAddressDDG(memberAddress.getId());
         if (originalMemberAddress != null) {
 
             if (memberAddress.getIsDefault() == null) {
