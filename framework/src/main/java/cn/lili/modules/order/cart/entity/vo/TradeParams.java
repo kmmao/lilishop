@@ -34,5 +34,7 @@ public class TradeParams implements Serializable {
     @ApiModelProperty(value = "是否为其他订单下的订单，如果是则为依赖订单的sn，否则为空")
     private String parentOrderSn;
 
+    @ApiModelProperty(value = "会员ID")
+    private String ddgMemberId;
 
 }

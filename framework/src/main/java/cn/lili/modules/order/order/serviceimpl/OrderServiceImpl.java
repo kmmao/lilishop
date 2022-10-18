@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
@@ -18,7 +19,9 @@ import cn.lili.common.security.context.UserContext;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.utils.SnowFlake;
 import cn.lili.modules.goods.entity.dto.GoodsCompleteMessage;
+import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.entity.dto.MemberAddressDTO;
+import cn.lili.modules.member.service.MemberService;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.order.aop.OrderLogPoint;
 import cn.lili.modules.order.order.entity.dos.*;
@@ -142,7 +145,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private TradeService tradeService;
-
+    /**
+     * 会员
+     */
+    @Autowired
+    private MemberService memberService;
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -170,7 +177,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             orders.add(order);
             String message = "订单[" + item.getSn() + "]创建";
             //记录日志
-            orderLogs.add(new OrderLog(item.getSn(), UserContext.getCurrentUser().getId(), UserContext.getCurrentUser().getRole().getRole(), UserContext.getCurrentUser().getUsername(), message));
+            if (ObjectUtil.isNotEmpty(tradeDTO.getMemberId())) {
+                Member member = memberService.getById(tradeDTO.getMemberId());
+                orderLogs.add(new OrderLog(item.getSn(), member.getId(), "MEMBER", member.getUsername(), message));
+            } else {
+                orderLogs.add(new OrderLog(item.getSn(), UserContext.getCurrentUser().getId(), UserContext.getCurrentUser().getRole().getRole(), UserContext.getCurrentUser().getUsername(), message));
+            }
             item.getCheckedSkuList().forEach(
                     sku -> orderItems.add(new OrderItem(sku, item, tradeDTO))
             );

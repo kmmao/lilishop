@@ -68,6 +68,14 @@ public interface MemberCouponService extends IService<MemberCoupon> {
     List<MemberCoupon> getMemberCoupons(String memberId);
 
     /**
+     * 获取当前用户的优惠券列表（优先读取缓存）-嘟嘟罐使用
+     *
+     * @param memberId 会员id
+     * @return 会员优惠券列表
+     */
+    List<MemberCoupon> getMemberCouponsDDG(String memberId);
+
+    /**
      * 获取会员优惠券列表
      *
      * @param param      查询参数

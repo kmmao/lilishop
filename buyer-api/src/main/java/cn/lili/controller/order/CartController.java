@@ -64,6 +64,30 @@ public class CartController {
         }
     }
 
+    @ApiOperation(value = "向购物车中添加一个产品-嘟嘟罐使用")
+    @PostMapping("/addCarDDG")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "skuId", value = "产品ID", required = true, dataType = "Long", paramType = "query"),
+            @ApiImplicitParam(name = "num", value = "此产品的购买数量", required = true, dataType = "int", paramType = "query"),
+            @ApiImplicitParam(name = "cartType", value = "购物车类型，默认加入购物车", paramType = "query"),
+            @ApiImplicitParam(name = "memberId", value = "会员ID", paramType = "query")
+    })
+    public ResultMessage<Object> addCarDDG(@NotNull(message = "产品id不能为空") String skuId,
+                                     @NotNull(message = "购买数量不能为空") @Min(value = 1, message = "加入购物车数量必须大于0") Integer num,
+                                     String cartType,@NotNull(message = "会员ID不能为空")String memberId) {
+        try {
+            //读取选中的列表
+            cartService.addCarDDG(skuId, num, cartType, false,memberId);
+            return ResultUtil.success();
+        } catch (ServiceException se) {
+            log.info(se.getMsg(), se);
+            throw se;
+        } catch (Exception e) {
+            log.error(ResultCode.CART_ERROR.message(), e);
+            throw new ServiceException(ResultCode.CART_ERROR);
+        }
+    }
+
 
     @ApiOperation(value = "获取购物车页面购物车详情")
     @GetMapping("/all")
@@ -169,6 +193,25 @@ public class CartController {
         }
     }
 
+    @ApiOperation(value = "获取结算页面购物车详情-嘟嘟罐使用")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "way", value = "购物车购买：CART/立即购买：BUY_NOW/拼团购买：PINTUAN / 积分购买：POINT ", required = true, paramType = "query")
+    })
+    @GetMapping("/checkedDDG")
+    public ResultMessage<TradeDTO> cartCheckedDDG(@NotNull(message = "读取选中列表") String way,@NotNull(message = "会员ID") String memberId) {
+        try {
+            //读取选中的列表
+            return ResultUtil.data(this.cartService.getCheckedTradeDTODDG(CartTypeEnum.valueOf(way),memberId));
+        } catch (ServiceException se) {
+            log.error(se.getMsg(), se);
+            throw se;
+        } catch (Exception e) {
+            log.error(ResultCode.CART_ERROR.message(), e);
+            throw new ServiceException(ResultCode.CART_ERROR);
+        }
+    }
+
+
     @ApiOperation(value = "选择收货地址")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "shippingAddressId", value = "收货地址id ", required = true, paramType = "query"),
@@ -240,6 +283,21 @@ public class CartController {
     @ApiOperation(value = "创建交易")
     @PostMapping(value = "/create/trade", consumes = "application/json", produces = "application/json")
     public ResultMessage<Object> crateTrade(@RequestBody TradeParams tradeParams) {
+        try {
+            //读取选中的列表
+            return ResultUtil.data(this.cartService.createTrade(tradeParams));
+        } catch (ServiceException se) {
+            log.info(se.getMsg(), se);
+            throw se;
+        } catch (Exception e) {
+            log.error(ResultCode.ORDER_ERROR.message(), e);
+            throw e;
+        }
+    }
+
+    @ApiOperation(value = "创建交易-嘟嘟罐使用")
+    @PostMapping(value = "/create/tradeDDG")
+    public ResultMessage<Object> crateTradeDDG(TradeParams tradeParams) {
         try {
             //读取选中的列表
             return ResultUtil.data(this.cartService.createTrade(tradeParams));

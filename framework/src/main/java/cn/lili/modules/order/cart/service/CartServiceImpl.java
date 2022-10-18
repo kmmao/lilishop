@@ -200,6 +200,98 @@ public class CartServiceImpl implements CartService {
     }
 
     /**
+     * 购物车加入一个商品-嘟嘟罐使用
+     *
+     * @param skuId    要写入的skuId
+     * @param num      要加入购物车的数量
+     * @param cartType 购物车类型
+     * @param cover    是否覆盖购物车的数量，如果为否则累加，否则直接覆盖
+     * @param memberId 会员ID
+     */
+    @Override
+    public void addCarDDG(String skuId, Integer num, String cartType, Boolean cover, String memberId) {
+        Member member = memberService.getById(memberId);
+        if (num <= 0) {
+            throw new ServiceException(ResultCode.CART_NUM_ERROR);
+        }
+        CartTypeEnum cartTypeEnum = getCartType(cartType);
+        GoodsSku dataSku = checkGoods(skuId);
+        Map<String, Object> promotionMap = promotionGoodsService.getCurrentGoodsPromotion(dataSku, cartTypeEnum.name());
+
+        try {
+            //购物车方式购买需要保存之前的选择，其他方式购买，则直接抹除掉之前的记录
+            TradeDTO tradeDTO;
+            if (cartTypeEnum.equals(CartTypeEnum.CART)) {
+
+                //如果存在，则变更数量不做新增，否则新增一个商品进入集合
+                tradeDTO = this.readDTO(cartTypeEnum);
+                List<CartSkuVO> cartSkuVOS = tradeDTO.getSkuList();
+                CartSkuVO cartSkuVO = cartSkuVOS.stream().filter(i -> i.getGoodsSku().getId().equals(skuId)).findFirst().orElse(null);
+
+
+                //购物车中已经存在，更新数量
+                if (cartSkuVO != null && dataSku.getCreateTime().equals(cartSkuVO.getGoodsSku().getCreateTime())) {
+
+                    //如果覆盖购物车中商品数量
+                    if (Boolean.TRUE.equals(cover)) {
+                        cartSkuVO.setNum(num);
+                        this.checkSetGoodsQuantity(cartSkuVO, skuId, num);
+                    } else {
+                        int oldNum = cartSkuVO.getNum();
+                        int newNum = oldNum + num;
+                        this.checkSetGoodsQuantity(cartSkuVO, skuId, newNum);
+                    }
+                    cartSkuVO.setPromotionMap(promotionMap);
+                    //计算购物车小计
+                    cartSkuVO.setSubTotal(CurrencyUtil.mul(cartSkuVO.getPurchasePrice(), cartSkuVO.getNum()));
+                } else {
+
+                    //先清理一下 如果商品无效的话
+                    cartSkuVOS.remove(cartSkuVO);
+                    //购物车中不存在此商品，则新建立一个
+                    cartSkuVO = new CartSkuVO(dataSku, promotionMap);
+
+                    cartSkuVO.setCartType(cartTypeEnum);
+                    //再设置加入购物车的数量
+                    this.checkSetGoodsQuantity(cartSkuVO, skuId, num);
+                    //计算购物车小计
+                    cartSkuVO.setSubTotal(CurrencyUtil.mul(cartSkuVO.getPurchasePrice(), cartSkuVO.getNum()));
+                    cartSkuVOS.add(cartSkuVO);
+                }
+
+                //新加入的商品都是选中的
+                cartSkuVO.setChecked(true);
+            } else {
+                tradeDTO = new TradeDTO(cartTypeEnum);
+                tradeDTO.setMemberId(member.getId());
+                tradeDTO.setMemberName(member.getUsername());
+                List<CartSkuVO> cartSkuVOS = tradeDTO.getSkuList();
+
+                //购物车中不存在此商品，则新建立一个
+                CartSkuVO cartSkuVO = new CartSkuVO(dataSku, promotionMap);
+                cartSkuVO.setCartType(cartTypeEnum);
+                //检测购物车数据
+                checkCart(cartTypeEnum, cartSkuVO, skuId, num);
+                //计算购物车小计
+                cartSkuVO.setSubTotal(CurrencyUtil.mul(cartSkuVO.getPurchasePrice(), cartSkuVO.getNum()));
+                cartSkuVOS.add(cartSkuVO);
+            }
+
+            this.checkGoodsSaleModel(dataSku, tradeDTO.getSkuList());
+            tradeDTO.setCartTypeEnum(cartTypeEnum);
+
+            remoteCoupon(tradeDTO);
+
+            this.resetTradeDTODDG(tradeDTO,memberId);
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception e) {
+            log.error("购物车渲染异常", e);
+            throw new ServiceException(errorMessage);
+        }
+    }
+
+    /**
      * 读取当前会员购物原始数据key
      *
      * @param cartTypeEnum 获取方式
@@ -215,6 +307,21 @@ public class CartServiceImpl implements CartService {
         throw new ServiceException(ResultCode.ERROR);
     }
 
+    /**
+     * 读取当前会员购物原始数据key-嘟嘟罐使用
+     *
+     * @param cartTypeEnum 获取方式
+     * @return 当前会员购物原始数据key
+     */
+    private String getOriginKeyDDG(CartTypeEnum cartTypeEnum,String memberId) {
+
+        //缓存key，默认使用购物车
+        if (cartTypeEnum != null) {
+            return cartTypeEnum.getPrefix() + memberId;
+        }
+        throw new ServiceException(ResultCode.ERROR);
+    }
+
     @Override
     public TradeDTO readDTO(CartTypeEnum checkedWay) {
         TradeDTO tradeDTO = (TradeDTO) cache.get(this.getOriginKey(checkedWay));
@@ -226,6 +333,27 @@ public class CartServiceImpl implements CartService {
         }
         if (tradeDTO.getMemberAddress() == null) {
             tradeDTO.setMemberAddress(this.memberAddressService.getDefaultMemberAddress());
+        }
+        return tradeDTO;
+    }
+
+    /**
+     * 获取整笔交易-嘟嘟罐使用
+     *
+     * @param checkedWay 购物车类型
+     * @return 购物车视图
+     */
+    @Override
+    public TradeDTO readDTODDG(CartTypeEnum checkedWay,String memberId) {
+        Member member = memberService.getById(memberId);
+        TradeDTO tradeDTO = (TradeDTO) cache.get(this.getOriginKeyDDG(checkedWay,memberId));
+        if (tradeDTO == null) {
+            tradeDTO = new TradeDTO(checkedWay);
+            tradeDTO.setMemberId(member.getId());
+            tradeDTO.setMemberName(member.getUsername());
+        }
+        if (tradeDTO.getMemberAddress() == null) {
+            tradeDTO.setMemberAddress(this.memberAddressService.getDefaultMemberAddressDDG(memberId));
         }
         return tradeDTO;
     }
@@ -329,9 +457,31 @@ public class CartServiceImpl implements CartService {
         cache.put(this.getOriginKey(tradeDTO.getCartTypeEnum()), tradeDTO);
     }
 
+    /**
+     * 重新写入-嘟嘟罐使用
+     *
+     * @param tradeDTO 购物车构建器最终要构建的成品
+     * @param memberId
+     */
+    @Override
+    public void resetTradeDTODDG(TradeDTO tradeDTO, String memberId) {
+        cache.put(this.getOriginKeyDDG(tradeDTO.getCartTypeEnum(),memberId), tradeDTO);
+    }
+
     @Override
     public TradeDTO getCheckedTradeDTO(CartTypeEnum way) {
         return tradeBuilder.buildChecked(way);
+    }
+
+    /**
+     * 获取整个交易中勾选的购物车和商品-嘟嘟罐使用
+     *
+     * @param way 获取方式
+     * @return 交易信息
+     */
+    @Override
+    public TradeDTO getCheckedTradeDTODDG(CartTypeEnum way,String memberId) {
+        return tradeBuilder.buildCheckedDDG(way,memberId);
     }
 
     /**
@@ -542,6 +692,38 @@ public class CartServiceImpl implements CartService {
         //获取购物车
         CartTypeEnum cartTypeEnum = getCartType(tradeParams.getWay());
         TradeDTO tradeDTO = this.readDTO(cartTypeEnum);
+        //设置基础属性
+        tradeDTO.setClientType(tradeParams.getClient());
+        tradeDTO.setStoreRemark(tradeParams.getRemark());
+        tradeDTO.setParentOrderSn(tradeParams.getParentOrderSn());
+        //订单无收货地址校验
+        if (tradeDTO.getMemberAddress() == null) {
+            throw new ServiceException(ResultCode.MEMBER_ADDRESS_NOT_EXIST);
+        }
+        //构建交易
+        Trade trade = tradeBuilder.createTrade(tradeDTO);
+        this.cleanChecked(this.readDTO(cartTypeEnum));
+        return trade;
+    }
+
+    /**
+     * 创建交易-嘟嘟罐使用
+     * 1.获取购物车类型，不同的购物车类型有不同的订单逻辑
+     * 购物车类型：购物车、立即购买、虚拟商品、拼团、积分
+     * 2.校验用户的收件人信息
+     * 3.设置交易的基础参数
+     * 4.交易信息存储到缓存中
+     * 5.创建交易
+     * 6.清除购物车选择数据
+     *
+     * @param tradeParams 创建交易参数
+     * @return 交易信息
+     */
+    @Override
+    public Trade createTradeDDG(TradeParams tradeParams) {
+        //获取购物车
+        CartTypeEnum cartTypeEnum = getCartType(tradeParams.getWay());
+        TradeDTO tradeDTO = this.readDTODDG(cartTypeEnum,tradeParams.getDdgMemberId());
         //设置基础属性
         tradeDTO.setClientType(tradeParams.getClient());
         tradeDTO.setStoreRemark(tradeParams.getRemark());

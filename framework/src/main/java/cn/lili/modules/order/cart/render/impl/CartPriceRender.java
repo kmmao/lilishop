@@ -39,6 +39,17 @@ public class CartPriceRender implements CartRenderStep {
     }
 
     /**
+     * 渲染一笔交易-嘟嘟罐使用
+     *
+     * @param tradeDTO 交易DTO
+     * @param memberId
+     */
+    @Override
+    public void renderDDG(TradeDTO tradeDTO, String memberId) {
+
+    }
+
+    /**
      * 特殊情况下对购物车金额进行护理
      *
      * @param tradeDTO

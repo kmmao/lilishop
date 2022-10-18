@@ -7,6 +7,8 @@ import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.utils.SpringContextUtil;
 import cn.lili.common.vo.ResultMessage;
+import cn.lili.modules.member.entity.dos.Member;
+import cn.lili.modules.member.service.MemberService;
 import cn.lili.modules.payment.entity.enums.PaymentClientEnum;
 import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
 import cn.lili.modules.payment.kit.dto.PayParam;
@@ -46,6 +48,11 @@ public class CashierSupport {
      */
     @Autowired
     private MemberWalletService memberWalletService;
+    /**
+     * 会员
+     */
+    @Autowired
+    private MemberService memberService;
     /**
      * 配置
      */
@@ -170,6 +177,34 @@ public class CashierSupport {
         throw new ServiceException(ResultCode.PAY_CASHIER_ERROR);
     }
 
+//    /**
+//     * 获取收银台参数-嘟嘟罐使用
+//     *
+//     * @param payParam 支付请求参数
+//     * @return 收银台参数
+//     */
+//    public CashierParam cashierParamDDG(PayParam payParam) {
+//        Member member = memberService.getById(payParam.getMemberId());
+//        for (CashierExecute paramInterface : cashierExecuteList) {
+//            CashierParam cashierParam = paramInterface.getPaymentParams(payParam);
+//            //如果为空，则表示收银台参数初始化不匹配，继续匹配下一条
+//            if (cashierParam == null) {
+//                continue;
+//            }
+//            //如果订单不需要付款，则抛出异常，直接返回
+//            if (cashierParam.getPrice() <= 0) {
+//                throw new ServiceException(ResultCode.PAY_UN_WANTED);
+//            }
+//            cashierParam.setSupport(support(payParam.getClientType()));
+//            cashierParam.setWalletValue(memberWalletService.getMemberWallet(member.getId()).getMemberWallet());
+//            OrderSetting orderSetting = JSONUtil.toBean(settingService.get(SettingEnum.ORDER_SETTING.name()).getSettingValue(), OrderSetting.class);
+//            Integer minute = orderSetting.getAutoCancel();
+//            cashierParam.setAutoCancel(cashierParam.getCreateTime().getTime() + minute * 1000 * 60);
+//            return cashierParam;
+//        }
+//        log.error("错误的支付请求:{}", payParam.toString());
+//        throw new ServiceException(ResultCode.PAY_CASHIER_ERROR);
+//    }
 
     /**
      * 支付结果

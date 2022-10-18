@@ -144,7 +144,23 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     @Cacheable(key = "#memberId")
     public List<MemberCoupon> getMemberCoupons(String memberId) {
         MemberCouponSearchParams searchParams = new MemberCouponSearchParams();
-        searchParams.setMemberId(Objects.requireNonNull(UserContext.getCurrentUser()).getId());
+//        searchParams.setMemberId(Objects.requireNonNull(UserContext.getCurrentUser()).getId());
+        searchParams.setMemberId(memberId);
+        searchParams.setMemberCouponStatus(MemberCouponStatusEnum.NEW.name());
+        searchParams.setPromotionStatus(PromotionsStatusEnum.START.name());
+        return this.getMemberCoupons(searchParams);
+    }
+
+    /**
+     * 获取当前用户的优惠券列表-嘟嘟罐使用
+     *
+     * @param memberId 会员id
+     * @return 会员优惠券列表
+     */
+    @Override
+    public List<MemberCoupon> getMemberCouponsDDG(String memberId) {
+        MemberCouponSearchParams searchParams = new MemberCouponSearchParams();
+        searchParams.setMemberId(Objects.requireNonNull(memberId));
         searchParams.setMemberCouponStatus(MemberCouponStatusEnum.NEW.name());
         searchParams.setPromotionStatus(PromotionsStatusEnum.START.name());
         return this.getMemberCoupons(searchParams);

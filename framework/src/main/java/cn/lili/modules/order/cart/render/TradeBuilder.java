@@ -81,6 +81,24 @@ public class TradeBuilder {
     }
 
     /**
+     * 构造结算页面-嘟嘟罐使用
+     */
+    public TradeDTO buildCheckedDDG(CartTypeEnum checkedWay,String memberId) {
+        //读取对应购物车的商品信息
+        TradeDTO tradeDTO = cartService.readDTODDG(checkedWay,memberId);
+        //需要对购物车渲染
+        if (isSingle(checkedWay)) {
+            renderCartByStepsDDG(tradeDTO, RenderStepStatement.checkedSingleRender,memberId);
+        } else if (checkedWay.equals(CartTypeEnum.PINTUAN)) {
+            renderCartByStepsDDG(tradeDTO, RenderStepStatement.pintuanTradeRender,memberId);
+        } else {
+            renderCartByStepsDDG(tradeDTO, RenderStepStatement.checkedRender,memberId);
+        }
+
+        return tradeDTO;
+    }
+
+    /**
      * 创建一笔交易
      * 1.构造交易
      * 2.创建交易
@@ -122,6 +140,28 @@ public class TradeBuilder {
      * @param defaultRender 渲染枚举
      */
     private void renderCartBySteps(TradeDTO tradeDTO, RenderStepEnums[] defaultRender) {
+        for (RenderStepEnums step : defaultRender) {
+            for (CartRenderStep render : cartRenderSteps) {
+                try {
+                    if (render.step().equals(step)) {
+                        render.render(tradeDTO);
+                    }
+                } catch (ServiceException e) {
+                    throw e;
+                } catch (Exception e) {
+                    log.error("购物车{}渲染异常：", render.getClass(), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * 根据渲染步骤，渲染购物车信息-嘟嘟罐使用
+     *
+     * @param tradeDTO      交易DTO
+     * @param defaultRender 渲染枚举
+     */
+    private void renderCartByStepsDDG(TradeDTO tradeDTO, RenderStepEnums[] defaultRender,String memberId) {
         for (RenderStepEnums step : defaultRender) {
             for (CartRenderStep render : cartRenderSteps) {
                 try {

@@ -24,12 +24,28 @@ public interface CartService {
     TradeDTO readDTO(CartTypeEnum checkedWay);
 
     /**
+     * 获取整笔交易-嘟嘟罐使用
+     *
+     * @param checkedWay 购物车类型
+     * @return 购物车视图
+     */
+    TradeDTO readDTODDG(CartTypeEnum checkedWay,String memberId);
+
+    /**
      * 获取整个交易中勾选的购物车和商品
      *
      * @param way 获取方式
      * @return 交易信息
      */
     TradeDTO getCheckedTradeDTO(CartTypeEnum way);
+
+    /**
+     * 获取整个交易中勾选的购物车和商品-嘟嘟罐使用
+     *
+     * @param way 获取方式
+     * @return 交易信息
+     */
+    TradeDTO getCheckedTradeDTODDG(CartTypeEnum way,String memberId);
 
     /**
      * 获取可使用的优惠券数量
@@ -55,6 +71,17 @@ public interface CartService {
      * @param cover    是否覆盖购物车的数量，如果为否则累加，否则直接覆盖
      */
     void add(String skuId, Integer num, String cartType, Boolean cover);
+
+    /**
+     * 购物车加入一个商品-嘟嘟罐使用
+     *
+     * @param skuId    要写入的skuId
+     * @param num      要加入购物车的数量
+     * @param cartType 购物车类型
+     * @param cover    是否覆盖购物车的数量，如果为否则累加，否则直接覆盖
+     * @param memberId 会员ID
+     */
+    void addCarDDG(String skuId, Integer num, String cartType, Boolean cover,String memberId);
 
 
     /**
@@ -101,6 +128,13 @@ public interface CartService {
      * @param tradeDTO 购物车构建器最终要构建的成品
      */
     void resetTradeDTO(TradeDTO tradeDTO);
+
+    /**
+     * 重新写入-嘟嘟罐使用
+     *
+     * @param tradeDTO 购物车构建器最终要构建的成品
+     */
+    void resetTradeDTODDG(TradeDTO tradeDTO,String memberId);
 
 
     /**
@@ -160,4 +194,19 @@ public interface CartService {
      * @return 交易信息
      */
     Trade createTrade(TradeParams tradeParams);
+
+    /**
+     * 创建交易-嘟嘟罐使用
+     * 1.获取购物车类型，不同的购物车类型有不同的订单逻辑
+     * 购物车类型：购物车、立即购买、虚拟商品、拼团、积分
+     * 2.校验用户的收件人信息
+     * 3.设置交易的基础参数
+     * 4.交易信息存储到缓存中
+     * 5.创建交易
+     * 6.清除购物车选择数据
+     *
+     * @param tradeParams 创建交易参数
+     * @return 交易信息
+     */
+    Trade createTradeDDG(TradeParams tradeParams);
 }

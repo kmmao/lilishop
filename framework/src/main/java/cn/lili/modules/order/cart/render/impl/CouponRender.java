@@ -50,6 +50,14 @@ public class CouponRender implements CartRenderStep {
         this.renderCoupon(tradeDTO);
     }
 
+    @Override
+    public void renderDDG(TradeDTO tradeDTO,String memberId) {
+
+        //优惠券列表
+        this.renderCouponRuleDDG(tradeDTO,memberId);
+        //主要渲染各个优惠的价格
+        this.renderCouponDDG(tradeDTO,memberId);
+    }
 
     /**
      * 渲染优惠券规则
@@ -75,6 +83,32 @@ public class CouponRender implements CartRenderStep {
         }
         memberCouponList.forEach(memberCoupon -> available(tradeDTO, memberCoupon));
     }
+
+    /**
+     * 渲染优惠券规则-嘟嘟罐使用
+     *
+     * @param tradeDTO 交易dto
+     */
+    private void renderCouponRuleDDG(TradeDTO tradeDTO,String memberId) {
+        // 清除之前的优惠券
+        tradeDTO.removeCoupon();
+
+        List<MemberCoupon> memberCouponList = memberCouponService.getMemberCouponsDDG(tradeDTO.getMemberId());
+
+        //获取最新优惠券
+        memberCouponList = memberCouponList.stream()
+                .filter(item -> item.getStartTime().before(new Date()) && item.getEndTime().after(new Date()))
+                .collect(Collectors.toList());
+
+        if (!memberCouponList.isEmpty()) {
+            this.checkMemberExistCoupon(tradeDTO, memberCouponList);
+        } else {
+            tradeDTO.setPlatformCoupon(null);
+            tradeDTO.setStoreCoupons(new HashMap<>());
+        }
+        memberCouponList.forEach(memberCoupon -> available(tradeDTO, memberCoupon));
+    }
+
 
     /**
      * 检查使用中的优惠券是否存在与用户的优惠券中
@@ -211,6 +245,26 @@ public class CouponRender implements CartRenderStep {
      * @param tradeDTO 购物车展示信息
      */
     private void renderCoupon(TradeDTO tradeDTO) {
+        MemberCouponDTO platformCoupon = tradeDTO.getPlatformCoupon();
+        //如果有勾选平台优惠券
+        if (platformCoupon != null) {
+            renderSku(tradeDTO, platformCoupon);
+        }
+        //计算商家优惠券
+        Map<String, MemberCouponDTO> map = tradeDTO.getStoreCoupons();
+        if (map != null && map.size() > 0) {
+            for (MemberCouponDTO memberCouponDTO : map.values()) {
+                renderSku(tradeDTO, memberCouponDTO);
+            }
+        }
+    }
+
+    /**
+     * 渲染优惠券-嘟嘟罐使用
+     *
+     * @param tradeDTO 购物车展示信息
+     */
+    private void renderCouponDDG(TradeDTO tradeDTO,String memberId) {
         MemberCouponDTO platformCoupon = tradeDTO.getPlatformCoupon();
         //如果有勾选平台优惠券
         if (platformCoupon != null) {
