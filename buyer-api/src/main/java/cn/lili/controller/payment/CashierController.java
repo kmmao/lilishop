@@ -47,6 +47,16 @@ public class CashierController {
         return ResultUtil.data(cashierParam);
     }
 
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "client", value = "客户端类型", paramType = "path", allowableValues = "PC,H5,WECHAT_MP,APP")
+    })
+    @GetMapping(value = "/tradeDetailDDG")
+    @ApiOperation(value = "获取支付详情-嘟嘟罐使用")
+    public ResultMessage paymentParamsDDG(@Validated PayParam payParam) {
+        CashierParam cashierParam = cashierSupport.cashierParam(payParam);
+        return ResultUtil.data(cashierParam);
+    }
+
 
     @ApiImplicitParams({
             @ApiImplicitParam(name = "paymentMethod", value = "支付方式", paramType = "path", allowableValues = "WECHAT,ALIPAY"),

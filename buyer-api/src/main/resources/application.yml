@@ -144,6 +144,8 @@ ignored:
     - /buyer/promotion/coupon
     - /buyer/member/address
     - /buyer/member/address/**
+    - /buyer/trade/carts
+    - /buyer/trade/carts/**
     - /buyer/member/evaluation/**/goodsEvaluation
     - /buyer/member/evaluation/**/evaluationNumber
     - /buyer/other/appVersion/**

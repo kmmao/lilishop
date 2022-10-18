@@ -44,6 +44,17 @@ public class DistributionPriceRender implements CartRenderStep {
     }
 
     /**
+     * 渲染一笔交易-嘟嘟罐使用
+     *
+     * @param tradeDTO 交易DTO
+     * @param memberId
+     */
+    @Override
+    public void renderDDG(TradeDTO tradeDTO, String memberId) {
+
+    }
+
+    /**
      * 渲染分销佣金
      *
      * @param tradeDTO

@@ -42,5 +42,16 @@ public class CheckedFilterRender implements CartRenderStep {
         tradeDTO.setCartList(cartVOList);
     }
 
+    /**
+     * 渲染一笔交易-嘟嘟罐使用
+     *
+     * @param tradeDTO 交易DTO
+     * @param memberId
+     */
+    @Override
+    public void renderDDG(TradeDTO tradeDTO, String memberId) {
+
+    }
+
 
 }

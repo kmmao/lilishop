@@ -1,19 +1,29 @@
 package cn.lili.common.security.context;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.enums.SecurityEnum;
+import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.security.token.SecretKeyUtil;
+import cn.lili.modules.member.entity.dos.Member;
+import cn.lili.modules.member.service.MemberService;
+import com.beust.ah.A;
 import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import org.simpleframework.xml.core.Complete;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * 用户上下文
@@ -22,7 +32,19 @@ import javax.servlet.http.HttpServletRequest;
  * @version v4.0
  * @since 2020/11/14 20:27
  */
+@Component
 public class UserContext {
+
+    @Autowired
+    private MemberService memberService;
+    public static MemberService staticMemberService;
+    /**
+     * 解决 static方法调用  注入的service为null
+     */
+    @PostConstruct
+    public void init(){
+        staticMemberService = memberService;
+    }
 
     /**
      * 根据request获取用户信息
@@ -33,7 +55,19 @@ public class UserContext {
         if (RequestContextHolder.getRequestAttributes() != null) {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             String accessToken = request.getHeader(SecurityEnum.HEADER_TOKEN.getValue());
-            return getAuthUser(accessToken);
+            if (ObjectUtil.isNotEmpty(accessToken)) {
+                return getAuthUser(accessToken);
+            } else {
+                Map requestMqp = request.getParameterMap();
+                if (requestMqp.containsKey("ddgMemberId") && ObjectUtil.isNotEmpty(requestMqp.get("ddgMemberId"))) {
+                    String memberId = ((String[])requestMqp.get("ddgMemberId"))[0];
+                    Member member = staticMemberService.getById(memberId.toString());
+                    if (ObjectUtil.isNotEmpty(member)) {
+                        AuthUser authUser = new AuthUser(member.getUsername(),member.getId(),member.getNickName(),member.getFace(),null);
+                        return authUser;
+                    }
+                }
+            }
         }
         return null;
     }
