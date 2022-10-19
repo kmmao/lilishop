@@ -1,4 +1,4 @@
-package cn.lili.buyer.test.cart;
+package cn.lili.ddg.test.cart;
 
 import cn.lili.common.utils.DateUtil;
 import cn.lili.timetask.handler.impl.statistics.OnlineMemberStatistics;

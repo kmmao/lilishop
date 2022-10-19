@@ -166,14 +166,14 @@ ignored:
 
 # Swagger界面内容配置
 swagger:
-  title: lili API接口文档
-  description: lili Api Documentation
+  title: zmshops API接口文档
+  description: zm Api Documentation
   version: 1.0.0
-  termsOfServiceUrl: https://pickmall.cn
+  termsOfServiceUrl: https://zmddg.com
   contact:
-    name: lili
-    url: https://pickmall.cn
-    email: admin@pickmall.com
+    name: Allen
+    url: https://zmddg.com
+    email: liukai@quanwu.info
 
 # Mybatis-plus
 mybatis-plus:

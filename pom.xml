@@ -65,6 +65,7 @@
 
     <modules>
         <module>framework</module>
+        <module>ddg-api</module>
         <module>buyer-api</module>
         <module>manager-api</module>
         <module>seller-api</module>

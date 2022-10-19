@@ -238,6 +238,19 @@ public class Swagger2Config {
                 .securityContexts(securityContexts());
     }
 
+    @Bean
+    public Docket ddgRestApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("嘟嘟罐")
+                .apiInfo(apiInfo()).select()
+                //扫描所有有注解的api，用这种方式更灵活
+                .apis(RequestHandlerSelectors.basePackage("cn.lili.controller.ddg"))
+                .paths(PathSelectors.any())
+                .build()
+                .securitySchemes(securitySchemes())
+                .securityContexts(securityContexts());
+    }
+
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
                 .title(title)

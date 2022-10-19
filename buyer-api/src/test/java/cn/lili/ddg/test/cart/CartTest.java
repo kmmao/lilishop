@@ -1,4 +1,4 @@
-package cn.lili.buyer.test.cart;
+package cn.lili.ddg.test.cart;
 
 import cn.hutool.json.JSONUtil;
 import cn.lili.modules.goods.entity.vos.CategoryVO;

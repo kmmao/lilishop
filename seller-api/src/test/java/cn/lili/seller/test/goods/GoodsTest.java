@@ -4,9 +4,11 @@ import cn.hutool.http.HttpRequest;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import cn.lili.common.utils.SnowFlake;
+import cn.hutool.poi.excel.ExcelReader;
+import cn.hutool.poi.excel.ExcelUtil;
 import cn.lili.common.utils.StringUtils;
 import cn.lili.modules.goods.entity.dto.GoodsOperationDTO;
+import cn.lili.modules.goods.service.CategoryService;
 import cn.lili.modules.goods.service.GoodsService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,11 +34,26 @@ class GoodsTest {
     @Autowired
     private GoodsService goodsService;
 
+    @Autowired
+    private CategoryService categoryService;
+
     String goods_url = "http://42.192.42.217:9999/api/ddg/font/service/getStoreProductList";
     String goods_detail_url = "http://42.192.42.217:9999/api/ddg/font/service/getStoreProductDetail";
 
     @Test
+    void readExecl(){
+        ExcelReader reader = ExcelUtil.getReader("/Users/allen/Documents/GitHub/lilishop/seller-api/src/test/java/cn/lili/seller/test/goods/ipmort.xlsx");
+        List<CategoryVo> all = reader.readAll(CategoryVo.class);
+        System.out.println(JSONUtil.toJsonStr(all));
+    }
+
+    @Test
     void getOldGoodsImport() {
+//        List<Category> categories = categoryService.firstCategory();
+//        Category category = new Category();
+//        category.setName("配对/认知玩具");
+//        List<Category> byAllBySortOrder = categoryService.findByAllBySortOrder(category);
+//        System.out.println(JSONUtil.toJsonStr(byAllBySortOrder));
         // 取得旧地址的商品对象，存到新数据库里面
         SortedMap<Object, Object> sortedMap = new TreeMap<Object, Object>() {
             private static final long serialVersionUID = 1L;
@@ -88,7 +105,7 @@ class GoodsTest {
                     continue;
                 }
                 if (StringUtils.isEmpty(productValue.getStr("barCode"))){
-                    sku.put("sn",String.valueOf(SnowFlake.getId()));
+                    sku.put("sn",productInfoObject.getStr("supplier"));
                 }else{
                     sku.put("sn",productValue.getStr("barCode"));
                 }

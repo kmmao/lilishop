@@ -1,4 +1,4 @@
-package cn.lili.buyer.test.cart;
+package cn.lili.ddg.test.cart;
 
 import cn.lili.event.impl.StockUpdateExecute;
 import cn.lili.modules.order.order.entity.dto.OrderMessage;
