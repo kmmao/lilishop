@@ -29,7 +29,5 @@ public class PayParam {
     @ApiModelProperty(value = "客户端类型")
     private String clientType;
 
-    @ApiModelProperty(value = "会员ID")
-    private String ddgMemberId;
 
 }
