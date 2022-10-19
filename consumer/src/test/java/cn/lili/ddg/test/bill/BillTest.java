@@ -1,4 +1,4 @@
-package cn.lili.buyer.test.bill;
+package cn.lili.ddg.test.bill;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;

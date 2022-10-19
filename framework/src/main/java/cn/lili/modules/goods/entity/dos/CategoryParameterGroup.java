@@ -12,7 +12,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 /**
- * 分类参数组关联
+ * 分类绑定参数组
  *
  * @author pikachu
  * @since 2020-02-26 10:34:02

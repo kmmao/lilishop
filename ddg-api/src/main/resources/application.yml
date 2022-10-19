@@ -1,12 +1,21 @@
 server:
+  port: 9999
+
   servlet:
     context-path: /
-
-  tomcat:
-    uri-encoding: UTF-8
-    threads:
-      min-spare: 50
-      max: 1000
+#
+#  tomcat:
+#    #最大链接数，默认不设置，默认是10000
+#    max-connections: 6500
+#    #最大等待队列长度，允许HTTP请求缓存到请求队列的最大个数，默认不限制
+#    accept-count: 1000
+#    threads:
+#      #最少闲置
+#      min-spare: 50
+#      #最大线程数  ，默认是200
+#      max: 800
+  netty:
+    connection-timeout:
 
 # 与Spring Boot 2一样，默认情况下，大多数端点都不通过http公开，我们公开了所有端点。对于生产，您应该仔细选择要公开的端点。
 management:
@@ -20,18 +29,32 @@ management:
       exposure:
         include: '*'
 spring:
+  application:
+    name: ddg-api
   # 要在其中注册的Spring Boot Admin Server的URL。
   boot:
     admin:
       client:
-        url: http://192.168.0.116:8000
+        url: http://127.0.0.1:8000
+  # 文件大小上传配置
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   cache:
     type: redis
+  #jackson json解析
+  jackson:
+    time-zone: GMT+8
+    serialization:
+      #关闭jackson 对json做解析
+      fail-on-empty-beans: false
+
   # Redis
   redis:
-    host: 192.168.0.108
-    port: 30379
-    password: lilishop
+    host: ${REDIS-HOST:lilishop-redis}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS-PWD:lilishop}
     lettuce:
       pool:
         # 连接池最大连接数（使用负值表示没有限制） 默认 8
@@ -42,17 +65,7 @@ spring:
         max-idle: 10
         # 连接池中的最小空闲连接 默认 8
         min-idle: 8
-  # 文件大小上传配置
-  servlet:
-    multipart:
-      max-file-size: 20MB
-      max-request-size: 20MB
-  jackson:
-    time-zone: GMT+8
-    serialization:
-      #关闭jackson 对json做解析
-      fail-on-empty-beans: false
-
+  #mysql
   shardingsphere:
     datasource:
       #  数据库名称，可自定义，可以为多个，以逗号隔开，每个在这里定义的库，都要在下面定义连接属性
@@ -60,13 +73,13 @@ spring:
       default-datasource:
         type: com.alibaba.druid.pool.DruidDataSource
         driverClassName: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://192.168.0.108:30306/lilishop?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
-        username: root
-        password: lilishop
+        url: jdbc:mysql://${MYSQL-HOST:lilishop-mysql}:${MYSQL_PORT:3306}/${MYSQL-DB:lilishop}?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+        username: ${MYSQL-USER:root}
+        password: ${MYSQL-PWD:lilishop}
         maxActive: 50
-        initialSize: 20
+        initialSize: 10
         maxWait: 60000
-        minIdle: 5
+        minIdle: 10
         timeBetweenEvictionRunsMillis: 60000
         minEvictableIdleTimeMillis: 300000
         validationQuery: SELECT 1 FROM DUAL
@@ -104,52 +117,22 @@ spring:
     props:
       #是否打印逻辑SQL语句和实际SQL语句，建议调试时打印，在生产环境关闭
       sql:
-        show: true
+        show: false
 
-# 忽略鉴权url
+# 忽略TOKEN 鉴权 的url
 ignored:
   urls:
-    - /editor-app/**
-    - /actuator**
-    - /actuator/**
     - /MP_verify_qSyvBPhDsPdxvOhC.txt
-    - /weixin/**
-    - /source/**
-    - /store/passport/login/**
-    - /store/passport/login/refresh/**
-    - /common/common/slider/**
-    - /common/common/sms/**
-    - /buyer/payment/cashier/**
-    - /buyer/other/pageData/**
-    - /buyer/other/article/**
-    - /buyer/goods/**
-    - /buyer/store/**
-    - /buyer/passport/connect/**
-    - /buyer/members/**
     - /buyer/passport/member/**
-    - /buyer/passport/member/refresh/**
-    - /buyer/promotion/pintuan/**
-    - /buyer/promotion/seckill/**
-    - /buyer/promotion/pointsGoods/**
-    - /buyer/promotion/coupon
-    - /buyer/member/evaluation/**/goodsEvaluation
-    - /buyer/member/evaluation/**/evaluationNumber
-    - /buyer/other/appVersion/**
-    - /buyer/broadcast/studio/**
-    - /manager/passport/user/login
-    - /manager/passport/user/refresh/**
-    - /manager/other/elasticsearch
-    - /manager/other/customWords
     - /druid/**
     - /swagger-ui.html
     - /doc.html
     - /swagger-resources/**
     - /swagger/**
     - /webjars/**
-    - /v2/api-docs**
+    - /v2/api-docs
     - /configuration/ui
     - /boot-admin
-    - /manager/promotion/seckill/init
     - /**/*.js
     - /**/*.css
     - /**/*.png
@@ -158,8 +141,8 @@ ignored:
 # Swagger界面内容配置
 swagger:
   title: zmshops API接口文档
-  description: lilishop Api Documentation
-  version: 4.2.2
+  description: zm Api Documentation
+  version: 1.0.0
   termsOfServiceUrl: https://zmddg.com
   contact:
     name: Allen
@@ -177,14 +160,14 @@ mybatis-plus:
 
 # 日志
 logging:
+  config: classpath:logback-spring.xml
   # 输出级别
   level:
-    cn.lili: info
-  #    org.hibernate: debug
-  #    org.springframework: debug
+    root: info
+#    org.springframework: debug
   file:
     # 指定路径
-    path: logs
+    path: lili-logs
   logback:
     rollingpolicy:
       # 最大保存天数
@@ -196,39 +179,9 @@ jasypt:
   encryptor:
     password: lili
 
-
 lili:
-  #验证码设置
-  verification-code:
-    #图形验证码有效时间 秒 包含滑块验证码有效时间， 以及验证通过之后，缓存中存储的验证结果有效时间
-    effectiveTime: 300
-    #水印
-    watermark: LILI-SHOP
-    #干扰项数量 最大2 默认0
-    interfereNum: 1
-    #允许误差像素
-    faultTolerant: 3
-  #短信模版配置
-  sms:
-    #登录
-    LOGIN: SMS_205755300
-    #注册
-    REGISTER: SMS_205755298
-    #找回密码
-    FIND_USER: SMS_205755301
-    #设置密码
-    UPDATE_PASSWORD: SMS_205755297
-    #支付密码
-    WALLET_PASSWORD: SMS_205755301
   system:
     isDemoSite: false
-    isTestModel: true
-  #     脱敏级别：
-  #     0：不做脱敏处理
-  #     1：管理端用户手机号等信息脱敏
-  #     2：商家端信息脱敏（为2时，表示管理端，商家端同时脱敏）
-    sensitiveLevel: 1
-
   statistics:
     # 在线人数统计 X 小时。这里设置48，即统计过去48小时每小时在线人数
     onlineMember: 48
@@ -240,21 +193,21 @@ lili:
     sk: zhNKVrJK6UPOhqIjn8AQvG37b9sz6
   #域名
   domain:
-    pc: http://192.168.0.116:8888
-    wap: http://192.168.0.116:8888
-    seller: http://192.168.0.116:8888
-    admin: http://192.168.0.116:8888
+    pc: https://buyer.zmshops.xycloud.info
+    wap: https://h5.zmshops.xycloud.info
+    store: https://seller.zmshops.xycloud.info
+    admin: https://manager.zmshops.xycloud.info
   #api地址
   api:
-    buyer: https://z171l91606.51mypc.cn
-    base: http://192.168.0.116:8888
-    manager: http://192.168.0.116:8888
-    seller: http://192.168.0.116:8888
+    buyer: https://buyer.zmshops.xycloud.info/buyer-api
+    common: https://common-api.zmshops.xycloud.info
+    manager: https://admin-api.zmshops.xycloud.info
+    store: https://store-api.zmshops.xycloud.info
 
   # jwt 细节设定
   jwt-setting:
     # token过期时间（分钟）
-    tokenExpireTime: 30
+    tokenExpireTime: 60
 
   # 使用Spring @Cacheable注解失效时间
   cache:
@@ -268,7 +221,7 @@ lili:
   data:
     elasticsearch:
       cluster-name: elasticsearch
-      cluster-nodes: 192.168.0.108:30920
+      cluster-nodes: ${ES-HOST:lilishop-es}:${ES-PORT:9200}
       index:
         number-of-replicas: 0
         number-of-shards: 3
@@ -277,9 +230,8 @@ lili:
     #      account:
     #        username: elastic
     #        password: LiLiShopES
-
     logstash:
-      server: 192.168.0.108:30560
+      server: ${LS-HOST:lilishop-ls}:4560
     rocketmq:
       promotion-topic: lili_promotion_topic
       promotion-group: lili_promotion_group
@@ -300,8 +252,7 @@ lili:
       after-sale-topic: lili_after_sale_topic
       after-sale-group: lili_after_sale_group
 rocketmq:
-  name-server: 192.168.0.108:30876
-  isVIPChannel: false
+  name-server: ${ROCKETMQ-HOST:lilishop-rocketmq}:${ROCKETMQ-PORT:9876}
   producer:
     group: lili_group
     send-message-timeout: 30000
@@ -309,7 +260,7 @@ rocketmq:
 xxl:
   job:
     admin:
-      addresses: http://192.168.0.108:30001/xxl-job-admin
+      addresses: http://${XXLJOB-HOST:lilishop-xxljob}:${XXLJOB-PORT:9001}/xxl-job-admin
     executor:
       appname: xxl-job-executor-lilishop
       address:
