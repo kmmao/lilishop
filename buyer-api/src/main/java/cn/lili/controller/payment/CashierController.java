@@ -69,7 +69,7 @@ public class CashierController {
             HttpServletResponse response,
             @PathVariable String paymentMethod,
             @PathVariable String paymentClient,
-            @Validated PayParam payParam) {
+            @Validated PayParam payParam,String ddgMemberId) {
         PaymentMethodEnum paymentMethodEnum = PaymentMethodEnum.valueOf(paymentMethod);
         PaymentClientEnum paymentClientEnum = PaymentClientEnum.valueOf(paymentClient);
 
