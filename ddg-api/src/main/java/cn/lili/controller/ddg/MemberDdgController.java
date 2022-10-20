@@ -23,7 +23,7 @@ import javax.validation.constraints.NotNull;
 @Slf4j
 @RestController
 @Api(tags = "嘟嘟罐端,会员接口")
-@RequestMapping("/ddg/passport/member")
+@RequestMapping("/ddg/member")
 public class MemberDdgController {
 
     @Autowired
