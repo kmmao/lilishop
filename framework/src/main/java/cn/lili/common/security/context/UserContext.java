@@ -2,7 +2,6 @@ package cn.lili.common.security.context;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.lili.cache.Cache;
-import cn.lili.cache.CachePrefix;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
@@ -64,6 +63,8 @@ public class UserContext {
                     Member member = staticMemberService.getById(memberId.toString());
                     if (ObjectUtil.isNotEmpty(member)) {
                         AuthUser authUser = new AuthUser(member.getUsername(),member.getId(),member.getNickName(),member.getFace(),null);
+                        // 设置默认为会员角色
+                        authUser.setRole(UserEnums.MEMBER);
                         return authUser;
                     }
                 }
@@ -95,13 +96,10 @@ public class UserContext {
      */
     public static AuthUser getAuthUser(Cache cache, String accessToken) {
         try {
-            AuthUser authUser = getAuthUser(accessToken);
-            assert authUser != null;
-
-            if (!cache.hasKey(CachePrefix.ACCESS_TOKEN.getPrefix(authUser.getRole()) + accessToken)) {
+            if (cache.keys("*" + accessToken).isEmpty()) {
                 throw new ServiceException(ResultCode.USER_AUTHORITY_ERROR);
             }
-            return authUser;
+            return getAuthUser(accessToken);
         } catch (Exception e) {
             return null;
         }
