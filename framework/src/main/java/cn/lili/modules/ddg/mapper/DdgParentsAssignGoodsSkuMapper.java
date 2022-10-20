@@ -24,5 +24,5 @@ public interface DdgParentsAssignGoodsSkuMapper extends BaseMapper<DdgParentsAss
      * @return 直播商品ID列表
      */
     @Select("SELECT gs.* FROM li_goods_sku gs WHERE gs.id IN(SELECT goods_sku_id FROM ddg_parents_assign_goods_sku WHERE child_id=${childId}) ${ew.customSqlSegment}")
-    IPage<GoodsSku> goodsSkuPageByChildId(IPage<GoodsSku> page, @Param(Constants.WRAPPER) Wrapper<GoodsSku> queryWrapper, String childId);
+    IPage<GoodsSku> getGoodsSkuByChildIdFormAssign(IPage<GoodsSku> page, @Param(Constants.WRAPPER) Wrapper<GoodsSku> queryWrapper, String childId);
 }

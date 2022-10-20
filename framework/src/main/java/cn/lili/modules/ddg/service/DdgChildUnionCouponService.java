@@ -22,7 +22,7 @@ public interface DdgChildUnionCouponService extends IService<DdgChildUnionCoupon
      * 添加嘟嘟罐儿童优惠券关系表
      * @return 操作状态
      */
-    Boolean childUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO);
+    Boolean addChildUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO);
 
     /**
      * 通过儿童id获取儿童已领取的优惠券分页列表

@@ -26,14 +26,14 @@ class DdgParentsAssignGoodsSkuServiceImplTest {
         ddgParentsAssignGoodsSkuVO.setDistributionTime(DateUtil.getCurrentDateStr());
         ddgParentsAssignGoodsSkuVO.setIsGoldPay(true);
         ddgParentsAssignGoodsSkuVO.setStatus(true);
-        ddgParentsAssignGoodsSkuService.assignGoodsSku(ddgParentsAssignGoodsSkuVO);
+        ddgParentsAssignGoodsSkuService.addAssignGoodsSku(ddgParentsAssignGoodsSkuVO);
     }
 
     @Test
     void goodsSkuPageByChildId() {
         GoodsDdgSearchParams searchParams = new GoodsDdgSearchParams();
         searchParams.setChildId("123");
-        IPage<GoodsSku> strings = ddgParentsAssignGoodsSkuService.goodsSkuPageByChildId(searchParams);
+        IPage<GoodsSku> strings = ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams);
         System.out.println(strings.toString());
     }
 }
