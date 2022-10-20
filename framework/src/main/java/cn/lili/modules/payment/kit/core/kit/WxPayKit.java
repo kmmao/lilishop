@@ -363,9 +363,10 @@ public class WxPayKit {
      * @param prepayId   预付订单号
      * @param partnerKey API Key
      * @param signType   签名方式
+     * @param clientType   客户端类型
      * @return 再次签名后的 Map
      */
-    public static Map<String, String> appPrepayIdCreateSign(String appId, String partnerId, String prepayId, String partnerKey, SignType signType) {
+    public static Map<String, String> appPrepayIdCreateSign(String appId, String partnerId, String prepayId, String partnerKey, SignType signType,String clientType) {
         Map<String, String> packageParams = new HashMap<>(8);
         packageParams.put("appid", appId);
         packageParams.put("partnerid", partnerId);
@@ -376,9 +377,13 @@ public class WxPayKit {
         if (signType == null) {
             signType = SignType.MD5;
         }
-        String packageSign = createSign(packageParams, partnerKey, signType);
-        // 部分微信APP支付 提示签名错误 解开下方注释 替换上边的代码就好。
-        //        String packageSign = createAppSign(packageParams, partnerKey);
+        String packageSign = "";
+        if ("APP".equals(clientType)) {
+            // 部分微信APP支付 提示签名错误 解开下方注释 替换上边的代码就好。
+            packageSign = createAppSign(packageParams, partnerKey);
+        } else {
+            packageSign = createSign(packageParams, partnerKey, signType);
+        }
         packageParams.put("sign", packageSign);
         return packageParams;
     }
