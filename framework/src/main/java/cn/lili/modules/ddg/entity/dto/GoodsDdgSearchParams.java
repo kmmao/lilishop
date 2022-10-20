@@ -41,5 +41,10 @@ public class GoodsDdgSearchParams extends PageVO {
         return queryWrapper;
     }
 
+    public <T> QueryWrapper<T> queryCouponWrapper() {
+        QueryWrapper<T> queryWrapper = new QueryWrapper<>();
+        return queryWrapper;
+    }
+
 
 }

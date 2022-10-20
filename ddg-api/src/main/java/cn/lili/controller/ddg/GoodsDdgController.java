@@ -5,10 +5,13 @@ import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
+import cn.lili.modules.ddg.entity.vo.DdgChildUnionCouponVO;
 import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
 import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
+import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
 import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import cn.lili.modules.promotion.entity.dos.Coupon;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,6 +35,9 @@ public class GoodsDdgController {
     @Autowired
     private DdgChildApplyBuyService ddgChildApplyBuyService;
 
+    @Autowired
+    private DdgChildUnionCouponService ddgChildUnionCouponService;
+
     @ApiOperation(value = "商品分配接口")
     @PostMapping("/assignGoodsSku")
     public ResultMessage<Object> assignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
@@ -51,9 +57,21 @@ public class GoodsDdgController {
     }
 
     @ApiOperation(value = "通过家长id获取儿童采购申请分页列表")
-    @GetMapping("/getChildApplyBuyByParentID")
-    public ResultMessage<IPage<DdgChildApplyBuy>> getChildApplyBuyByParentID(GoodsDdgSearchParams searchParams) {
-        return ResultUtil.data(ddgChildApplyBuyService.getChildApplyBuyByParentID(searchParams));
+    @GetMapping("/getChildApplyBuyByParentId")
+    public ResultMessage<IPage<DdgChildApplyBuy>> getChildApplyBuyByParentId(GoodsDdgSearchParams searchParams) {
+        return ResultUtil.data(ddgChildApplyBuyService.getChildApplyBuyByParentId(searchParams));
+    }
+
+    @ApiOperation(value = "儿童优惠券关系接口")
+    @PostMapping("/childUnionCoupon")
+    public ResultMessage<Object> childUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
+        return ResultUtil.data(ddgChildUnionCouponService.childUnionCoupon(ddgChildUnionCouponVO));
+    }
+
+    @ApiOperation(value = "通过儿童id获取儿童已领取的优惠券分页列表")
+    @GetMapping("/getCouponByChildId")
+    public ResultMessage<IPage<Coupon>> getCouponByChildId(GoodsDdgSearchParams searchParams) {
+        return ResultUtil.data(ddgChildUnionCouponService.getCouponByChildId(searchParams));
     }
 
 }
