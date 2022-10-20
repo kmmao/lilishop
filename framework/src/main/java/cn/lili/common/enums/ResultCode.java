@@ -474,6 +474,7 @@ public enum ResultCode {
      * 嘟嘟罐
      */
     DDG_GOODS_REPEAT_ERROR(90001,"嘟嘟罐商品关联信息重复"),
+    DDG_CHILD_APPLY_ORDER_REPEAT_ERROR(90002,"嘟嘟罐儿童采购申请订单信息重复"),
 
     /**
      * 其他
