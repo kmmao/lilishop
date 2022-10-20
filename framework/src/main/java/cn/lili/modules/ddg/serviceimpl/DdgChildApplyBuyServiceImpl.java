@@ -33,7 +33,7 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean childApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
+    public Boolean addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
         //校验关联申请订单是否重复
         List<DdgChildApplyBuy> ddgChildApplyBuys = this.baseMapper.selectList(new QueryWrapper<DdgChildApplyBuy>()
                 .eq("order_no", ddgChildApplyBuyVO.getOrderNo())

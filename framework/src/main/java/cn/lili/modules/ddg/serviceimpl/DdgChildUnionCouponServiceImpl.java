@@ -33,7 +33,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean childUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
+    public Boolean addChildUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
         //校验关联优惠券是否重复
         List<DdgChildUnionCoupon> ddgChildUnionCoupons = this.baseMapper.selectList(new QueryWrapper<DdgChildUnionCoupon>()
                 .eq("coupon_id", ddgChildUnionCouponVO.getCouponId())

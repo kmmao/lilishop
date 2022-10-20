@@ -5,9 +5,11 @@ import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
+import cn.lili.modules.ddg.entity.vo.DdgChildCollectVO;
 import cn.lili.modules.ddg.entity.vo.DdgChildUnionCouponVO;
 import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
 import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
+import cn.lili.modules.ddg.service.DdgChildCollectService;
 import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
 import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
@@ -38,22 +40,25 @@ public class GoodsDdgController {
     @Autowired
     private DdgChildUnionCouponService ddgChildUnionCouponService;
 
+    @Autowired
+    private DdgChildCollectService ddgChildCollectService;
+
     @ApiOperation(value = "商品分配接口")
-    @PostMapping("/assignGoodsSku")
-    public ResultMessage<Object> assignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
-        return ResultUtil.data(ddgParentsAssignGoodsSkuService.assignGoodsSku(ddgParentsAssignGoodsSkuVO));
+    @PostMapping("/addAssignGoodsSku")
+    public ResultMessage<Object> addAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
+        return ResultUtil.data(ddgParentsAssignGoodsSkuService.addAssignGoodsSku(ddgParentsAssignGoodsSkuVO));
     }
 
     @ApiOperation(value = "通过儿童id获取商品分页列表")
-    @GetMapping("/getGoodsSkuByChildId")
-    public ResultMessage<IPage<GoodsSku>> getGoodsSkuByChildId(GoodsDdgSearchParams searchParams) {
-        return ResultUtil.data(ddgParentsAssignGoodsSkuService.goodsSkuPageByChildId(searchParams));
+    @GetMapping("/getGoodsSkuByChildIdFormAssign")
+    public ResultMessage<IPage<GoodsSku>> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
+        return ResultUtil.data(ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams));
     }
 
     @ApiOperation(value = "儿童申请采购接口")
-    @PostMapping("/childApplyBuy")
-    public ResultMessage<Object> childApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
-        return ResultUtil.data(ddgChildApplyBuyService.childApplyBuy(ddgChildApplyBuyVO));
+    @PostMapping("/addChildApplyBuy")
+    public ResultMessage<Object> addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
+        return ResultUtil.data(ddgChildApplyBuyService.addChildApplyBuy(ddgChildApplyBuyVO));
     }
 
     @ApiOperation(value = "通过家长id获取儿童采购申请分页列表")
@@ -63,15 +68,27 @@ public class GoodsDdgController {
     }
 
     @ApiOperation(value = "儿童优惠券关系接口")
-    @PostMapping("/childUnionCoupon")
-    public ResultMessage<Object> childUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
-        return ResultUtil.data(ddgChildUnionCouponService.childUnionCoupon(ddgChildUnionCouponVO));
+    @PostMapping("/addChildUnionCoupon")
+    public ResultMessage<Object> addChildUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
+        return ResultUtil.data(ddgChildUnionCouponService.addChildUnionCoupon(ddgChildUnionCouponVO));
     }
 
     @ApiOperation(value = "通过儿童id获取儿童已领取的优惠券分页列表")
     @GetMapping("/getCouponByChildId")
     public ResultMessage<IPage<Coupon>> getCouponByChildId(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgChildUnionCouponService.getCouponByChildId(searchParams));
+    }
+
+    @ApiOperation(value = "儿童收藏信息接口")
+    @PostMapping("/addChildCollect")
+    public ResultMessage<Object> addChildCollect(DdgChildCollectVO ddgChildCollectVO) {
+        return ResultUtil.data(ddgChildCollectService.addChildCollect(ddgChildCollectVO));
+    }
+
+    @ApiOperation(value = "通过儿童id获取儿童收藏信息分页列表")
+    @GetMapping("/getGoodsSkuByChildIdFormCollect")
+    public ResultMessage<IPage<GoodsSku>> getGoodsSkuByChildIdFormCollect(GoodsDdgSearchParams searchParams) {
+        return ResultUtil.data(ddgChildCollectService.getGoodsSkuByChildIdFormCollect(searchParams));
     }
 
 }

@@ -31,7 +31,12 @@ public class GoodsDdgSearchParams extends PageVO {
     @ApiModelProperty(value = "家长ID")
     private String parentId;
 
-    public <T> QueryWrapper<T> queryGoodsSkuWrapper() {
+    public <T> QueryWrapper<T> queryGoodsSkuFromAssignWrapper() {
+        QueryWrapper<T> queryWrapper = new QueryWrapper<>();
+        return queryWrapper;
+    }
+
+    public <T> QueryWrapper<T> queryGoodsSkuFromCollectWrapper() {
         QueryWrapper<T> queryWrapper = new QueryWrapper<>();
         return queryWrapper;
     }

@@ -24,7 +24,7 @@ public class DdgChildCollect extends BaseEntity {
     @ApiModelProperty(value = "儿童id")
     private String childId;
     @ApiModelProperty(value = "商品id")
-    private String goodsId;
+    private String goodsSkuId;
     @ApiModelProperty(value = "商品名称")
     private String goodsName;
 }

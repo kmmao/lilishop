@@ -28,7 +28,7 @@ import java.util.List;
 public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsAssignGoodsSkuMapper, DdgParentsAssignGoodsSku> implements DdgParentsAssignGoodsSkuService {
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean assignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
+    public Boolean addAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
         //校验关联商品是否重复
         List<DdgParentsAssignGoodsSku> ddgParentsAssignGoodsList = this.baseMapper.selectList(new QueryWrapper<DdgParentsAssignGoodsSku>()
                 .eq("child_id", ddgParentsAssignGoodsSkuVO.getChildId())
@@ -45,7 +45,7 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
     }
 
     @Override
-    public IPage<GoodsSku> goodsSkuPageByChildId(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.goodsSkuPageByChildId(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuWrapper(),searchParams.getChildId());
+    public IPage<GoodsSku> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
+        return this.baseMapper.getGoodsSkuByChildIdFormAssign(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromAssignWrapper(),searchParams.getChildId());
     }
 }
