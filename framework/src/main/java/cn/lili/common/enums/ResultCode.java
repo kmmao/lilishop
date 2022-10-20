@@ -482,6 +482,11 @@ public enum ResultCode {
     APP_VERSION_EXIST(80307, "APP版本已存在"),
 
     /**
+     * 嘟嘟罐
+     */
+    DDG_GOODS_REPEAT_ERROR(90001,"嘟嘟罐商品关联信息重复"),
+
+    /**
      * 其他
      */
     CUSTOM_WORDS_EXIST_ERROR(90000, "当前自定义分词已存在！"),

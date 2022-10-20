@@ -123,7 +123,8 @@ spring:
 ignored:
   urls:
     - /MP_verify_qSyvBPhDsPdxvOhC.txt
-    - /buyer/passport/member/**
+    - /ddg/member/**
+    - /ddg/goods/**
     - /druid/**
     - /swagger-ui.html
     - /doc.html
