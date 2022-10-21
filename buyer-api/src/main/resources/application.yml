@@ -146,6 +146,15 @@ ignored:
     - /buyer/member/address/**
     - /buyer/trade/carts
     - /buyer/trade/carts/**
+    - /buyer/member/**
+    - /buyer/trade/**
+    - /buyer/payment/**
+    - /buyer/order/afterSale
+    - /buyer/order/afterSale/**
+    - /buyer/order/afterSale
+    - /buyer/order/afterSale/**
+    - /buyer/order/order
+    - /buyer/order/order/**
     - /buyer/member/evaluation/**/goodsEvaluation
     - /buyer/member/evaluation/**/evaluationNumber
     - /buyer/other/appVersion/**
