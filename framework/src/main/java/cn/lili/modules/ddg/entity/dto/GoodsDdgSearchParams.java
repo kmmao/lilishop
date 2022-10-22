@@ -31,6 +31,12 @@ public class GoodsDdgSearchParams extends PageVO {
     @ApiModelProperty(value = "家长ID")
     private String parentId;
 
+    @ApiModelProperty(value = "商品SKUID")
+    private String goodsSkuId;
+
+    @ApiModelProperty(value = "最终成交金额，未进行优惠券渲染")
+    private Double finalePrice;
+
     public <T> QueryWrapper<T> queryGoodsSkuFromAssignWrapper() {
         QueryWrapper<T> queryWrapper = new QueryWrapper<>();
         return queryWrapper;
