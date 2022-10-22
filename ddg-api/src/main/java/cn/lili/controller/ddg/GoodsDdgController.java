@@ -38,9 +38,6 @@ public class GoodsDdgController {
     private DdgChildApplyBuyService ddgChildApplyBuyService;
 
     @Autowired
-    private DdgChildUnionCouponService ddgChildUnionCouponService;
-
-    @Autowired
     private DdgChildCollectService ddgChildCollectService;
 
     @ApiOperation(value = "商品分配接口")
@@ -65,18 +62,6 @@ public class GoodsDdgController {
     @GetMapping("/getChildApplyBuyByParentId")
     public ResultMessage<IPage<DdgChildApplyBuy>> getChildApplyBuyByParentId(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgChildApplyBuyService.getChildApplyBuyByParentId(searchParams));
-    }
-
-    @ApiOperation(value = "儿童优惠券关系接口")
-    @PostMapping("/addChildUnionCoupon")
-    public ResultMessage<Object> addChildUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
-        return ResultUtil.data(ddgChildUnionCouponService.addChildUnionCoupon(ddgChildUnionCouponVO));
-    }
-
-    @ApiOperation(value = "通过儿童id获取儿童已领取的优惠券分页列表")
-    @GetMapping("/getCouponByChildId")
-    public ResultMessage<IPage<Coupon>> getCouponByChildId(GoodsDdgSearchParams searchParams) {
-        return ResultUtil.data(ddgChildUnionCouponService.getCouponByChildId(searchParams));
     }
 
     @ApiOperation(value = "儿童收藏信息接口")
