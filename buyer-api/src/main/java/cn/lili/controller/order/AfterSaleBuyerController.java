@@ -1,8 +1,12 @@
 package cn.lili.controller.order;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
+import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.OperationalJudgment;
+import cn.lili.common.utils.DateUtil;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.order.aftersale.entity.dos.AfterSale;
 import cn.lili.modules.order.aftersale.entity.dos.AfterSaleLog;
@@ -11,9 +15,11 @@ import cn.lili.modules.order.aftersale.entity.dto.AfterSaleDTO;
 import cn.lili.modules.order.aftersale.entity.vo.AfterSaleApplyVO;
 import cn.lili.modules.order.aftersale.entity.vo.AfterSaleSearchParams;
 import cn.lili.modules.order.aftersale.entity.vo.AfterSaleVO;
+import cn.lili.modules.order.aftersale.entity.vo.DeliveryVO;
 import cn.lili.modules.order.aftersale.service.AfterSaleLogService;
 import cn.lili.modules.order.aftersale.service.AfterSaleReasonService;
 import cn.lili.modules.order.aftersale.service.AfterSaleService;
+import cn.lili.modules.order.cart.entity.vo.TradeParams;
 import cn.lili.modules.store.entity.dto.StoreAfterSaleAddressDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
@@ -103,6 +109,17 @@ public class AfterSaleBuyerController {
         return ResultUtil.data(afterSaleService.buyerDelivery(afterSaleSn, logisticsNo, logisticsId, mDeliverTime));
     }
 
+
+    @ApiOperation(value = "买家 退回 物流信息-嘟嘟罐使用")
+    @PostMapping(value = "/deliveryDDG")
+    public ResultMessage<Object> crateTradeDDG(DeliveryVO vo) {
+        if (ObjectUtil.isNotEmpty(vo.getSendTime())) {
+            vo.setMDeliverTime(DateUtil.toDate(vo.getSendTime(),"yyyy-MM-dd"));
+        }
+        return ResultUtil.data(afterSaleService.buyerDelivery(vo.getAfterSaleSn(), vo.getLogisticsNo(), vo.getLogisticsId(), vo.getMDeliverTime()));
+    }
+
+
     @PreventDuplicateSubmissions
     @ApiOperation(value = "售后，取消售后")
     @ApiImplicitParams({
@@ -112,6 +129,7 @@ public class AfterSaleBuyerController {
     public ResultMessage<AfterSale> cancel(@NotNull(message = "参数非法") @PathVariable("afterSaleSn") String afterSaleSn) {
         return ResultUtil.data(afterSaleService.cancel(afterSaleSn));
     }
+
 
     @ApiOperation(value = "获取商家售后收件地址")
     @ApiImplicitParam(name = "sn", value = "售后单号", required = true, paramType = "path")
