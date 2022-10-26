@@ -45,6 +45,8 @@ public class CouponSearchParams extends BasePromotionsSearchParams implements Se
     private String scopeType;
     @ApiModelProperty(value = "范围关联的id")
     private String scopeId;
+    @ApiModelProperty(value = "商家id，如果是平台，这个值为 0")
+    private String storeId;
     @ApiModelProperty(value = "面额,可以为范围，如10_1000")
     private String price;
     @ApiModelProperty(value = "发行数量,可以为范围，如10_1000")
@@ -75,6 +77,9 @@ public class CouponSearchParams extends BasePromotionsSearchParams implements Se
         }
         if (CharSequenceUtil.isNotEmpty(scopeId)) {
             queryWrapper.eq("scope_id", scopeId);
+        }
+        if (CharSequenceUtil.isNotEmpty(storeId)) {
+            queryWrapper.eq("store_id", storeId);
         }
         if (CharSequenceUtil.isNotEmpty(getType)) {
             queryWrapper.eq("get_type", CouponGetEnum.valueOf(getType).name());

@@ -1,19 +1,17 @@
 package cn.lili.controller.ddg;
 
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
-import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
-import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
-import cn.lili.modules.ddg.entity.vo.DdgChildCollectVO;
 import cn.lili.modules.ddg.entity.vo.DdgChildUnionCouponVO;
-import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
-import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
-import cn.lili.modules.ddg.service.DdgChildCollectService;
 import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
-import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
-import cn.lili.modules.goods.entity.dos.GoodsSku;
 import cn.lili.modules.promotion.entity.dos.Coupon;
+import cn.lili.modules.promotion.entity.dto.search.CouponSearchParams;
+import cn.lili.modules.promotion.entity.enums.CouponGetEnum;
+import cn.lili.modules.promotion.entity.enums.PromotionsStatusEnum;
+import cn.lili.modules.promotion.entity.vos.CouponVO;
+import cn.lili.modules.promotion.service.CouponService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,16 +33,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class CouponDdgController {
 
     @Autowired
-    private DdgParentsAssignGoodsSkuService ddgParentsAssignGoodsSkuService;
-
-    @Autowired
-    private DdgChildApplyBuyService ddgChildApplyBuyService;
-
-    @Autowired
     private DdgChildUnionCouponService ddgChildUnionCouponService;
 
     @Autowired
-    private DdgChildCollectService ddgChildCollectService;
+    private CouponService couponService;
+
+    @GetMapping("/getCouponListByPlatform")
+    @ApiOperation(value = "获取可领取平台优惠券列表（嘟嘟罐）")
+    public ResultMessage<IPage<CouponVO>> getCouponListByPlatform(CouponSearchParams queryParam, PageVO page) {
+        queryParam.setPromotionStatus(PromotionsStatusEnum.START.name());
+        queryParam.setGetType(CouponGetEnum.FREE.name());
+        queryParam.setStoreId("0");
+        IPage<CouponVO> canUseCoupons = couponService.pageVOFindAll(queryParam, page);
+        return ResultUtil.data(canUseCoupons);
+    }
 
     @ApiOperation(value = "儿童优惠券关系接口")
     @PostMapping("/addChildUnionCoupon")

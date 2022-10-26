@@ -23,10 +23,15 @@ public interface DdgParentsAssignGoodsSkuService extends IService<DdgParentsAssi
      */
     Boolean addAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO);
 
-
     /**
      * 通过儿童ID获取商品SKU列表
      * @return
      */
     IPage<GoodsSku> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams);
+
+    /**
+     * 嘟嘟罐取消分配商品
+     * @return 操作状态
+     */
+    Object cancelAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO);
 }

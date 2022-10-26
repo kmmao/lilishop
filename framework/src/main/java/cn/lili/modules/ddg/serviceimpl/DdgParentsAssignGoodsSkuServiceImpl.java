@@ -34,6 +34,7 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
                 .eq("child_id", ddgParentsAssignGoodsSkuVO.getChildId())
                 .eq("parent_id", ddgParentsAssignGoodsSkuVO.getParentId())
                 .eq("goods_sku_id", ddgParentsAssignGoodsSkuVO.getGoodsSkuId())
+                .eq("status", 1)
         );
         if (!ddgParentsAssignGoodsList.isEmpty()) {
             throw new ServiceException(ResultCode.DDG_GOODS_REPEAT_ERROR);
@@ -47,5 +48,25 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
     @Override
     public IPage<GoodsSku> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
         return this.baseMapper.getGoodsSkuByChildIdFormAssign(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromAssignWrapper(),searchParams.getChildId());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean cancelAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
+        //校验关联商品是否重复
+        List<DdgParentsAssignGoodsSku> ddgParentsAssignGoodsList = this.baseMapper.selectList(new QueryWrapper<DdgParentsAssignGoodsSku>()
+                .eq("child_id", ddgParentsAssignGoodsSkuVO.getChildId())
+                .eq("parent_id", ddgParentsAssignGoodsSkuVO.getParentId())
+                .eq("goods_sku_id", ddgParentsAssignGoodsSkuVO.getGoodsSkuId())
+                .eq("status", 1)
+        );
+        if (ddgParentsAssignGoodsList.isEmpty()) {
+            throw new ServiceException(ResultCode.DDG_GOODS_NULL_ERROR);
+        }
+        //参数封装
+        DdgParentsAssignGoodsSku ddgParentsAssignGoods = new DdgParentsAssignGoodsSku();
+        BeanUtil.copyProperties(ddgParentsAssignGoodsSkuVO, ddgParentsAssignGoods);
+        ddgParentsAssignGoods.setStatus(false);
+        return this.baseMapper.updateById(ddgParentsAssignGoods) > 0;
     }
 }
