@@ -82,6 +82,9 @@ public class Coupon extends BasePromotions {
     @ApiModelProperty(value = "有效期")
     private Integer effectiveDays;
 
+    @ApiModelProperty(value = "兑换的嘟币，0为免费领取")
+    private Double ddgPrice;
+
     public Coupon(CouponVO couponVO) {
         BeanUtils.copyProperties(couponVO, this);
     }
