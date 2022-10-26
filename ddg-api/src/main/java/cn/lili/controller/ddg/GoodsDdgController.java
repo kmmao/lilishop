@@ -46,6 +46,12 @@ public class GoodsDdgController {
         return ResultUtil.data(ddgParentsAssignGoodsSkuService.addAssignGoodsSku(ddgParentsAssignGoodsSkuVO));
     }
 
+    @ApiOperation(value = "商品取消分配接口")
+    @PostMapping("/cancelAssignGoodsSku")
+    public ResultMessage<Object> cancelAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
+        return ResultUtil.data(ddgParentsAssignGoodsSkuService.cancelAssignGoodsSku(ddgParentsAssignGoodsSkuVO));
+    }
+
     @ApiOperation(value = "通过儿童id获取商品分页列表")
     @GetMapping("/getGoodsSkuByChildIdFormAssign")
     public ResultMessage<IPage<GoodsSku>> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {

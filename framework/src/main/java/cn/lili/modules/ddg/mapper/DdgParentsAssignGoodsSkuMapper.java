@@ -19,10 +19,10 @@ import org.apache.ibatis.annotations.Select;
 public interface DdgParentsAssignGoodsSkuMapper extends BaseMapper<DdgParentsAssignGoodsSku> {
 
     /**
-     * 获取直播商品ID列表
+     * 通过儿童ID获取商品SKU列表
      *
-     * @return 直播商品ID列表
+     * @return 商品SKU列表
      */
-    @Select("SELECT gs.* FROM li_goods_sku gs WHERE gs.id IN(SELECT goods_sku_id FROM ddg_parents_assign_goods_sku WHERE child_id=${childId}) ${ew.customSqlSegment}")
+    @Select("SELECT gs.* FROM li_goods_sku gs WHERE gs.id IN(SELECT goods_sku_id FROM ddg_parents_assign_goods_sku WHERE status=1 AND child_id=${childId}) ${ew.customSqlSegment}")
     IPage<GoodsSku> getGoodsSkuByChildIdFormAssign(IPage<GoodsSku> page, @Param(Constants.WRAPPER) Wrapper<GoodsSku> queryWrapper, String childId);
 }
