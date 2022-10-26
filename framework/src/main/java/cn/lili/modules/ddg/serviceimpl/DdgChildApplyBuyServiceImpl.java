@@ -20,6 +20,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -44,6 +45,8 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
         //参数封装
         DdgChildApplyBuy ddgChildApplyBuy = new DdgChildApplyBuy();
         BeanUtil.copyProperties(ddgChildApplyBuyVO, ddgChildApplyBuy);
+        // 设置采购时间
+        ddgChildApplyBuy.setOrderTime(new Date());
         return this.baseMapper.insert(ddgChildApplyBuy) > 0;
     }
 
