@@ -66,7 +66,7 @@ public class GoodsDdgController {
 
     @ApiOperation(value = "通过儿童id获取儿童采购申请分页列表")
     @GetMapping("/getChildApplyBuyByChildId")
-    public ResultMessage<IPage<DdgChildApplyBuy>> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams) {
+    public ResultMessage<IPage<DdgChildApplyBuyVO>> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgChildApplyBuyService.getChildApplyBuyByChildId(searchParams));
     }
 

@@ -27,5 +27,5 @@ public interface DdgChildApplyBuyService extends IService<DdgChildApplyBuy> {
      * 通过儿童id获取儿童采购申请分页列表
      * @return
      */
-    IPage<DdgChildApplyBuy> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams);
+    IPage<DdgChildApplyBuyVO> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams);
 }
