@@ -1,9 +1,7 @@
 package cn.lili.modules.ddg.service;
 
-import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dos.DdgChildUnionCoupon;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
-import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
 import cn.lili.modules.ddg.entity.vo.DdgChildUnionCouponVO;
 import cn.lili.modules.promotion.entity.dos.Coupon;
 import com.baomidou.mybatisplus.core.metadata.IPage;
