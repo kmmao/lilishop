@@ -8,6 +8,7 @@ import cn.lili.modules.order.order.entity.dto.OrderMessage;
 import cn.lili.modules.order.order.entity.dto.OrderSearchParams;
 import cn.lili.modules.order.order.entity.vo.OrderDetailVO;
 import cn.lili.modules.order.order.entity.vo.OrderSimpleVO;
+import cn.lili.modules.order.order.entity.vo.OrderStatusVO;
 import cn.lili.modules.order.order.entity.vo.PaymentLog;
 import cn.lili.modules.system.entity.vo.Traces;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -286,4 +287,10 @@ public interface OrderService extends IService<Order> {
      */
     boolean checkFictitiousOrder(String pintuanId, Integer requiredNum, Boolean fictitious);
 
+    /**
+     * 查询订单状态
+     *
+     * @param orderSearchParams 查询参数
+     */
+    OrderStatusVO queryOrderStatus(OrderSearchParams orderSearchParams);
 }
