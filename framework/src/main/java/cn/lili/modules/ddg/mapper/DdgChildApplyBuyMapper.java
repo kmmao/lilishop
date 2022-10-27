@@ -2,6 +2,7 @@ package cn.lili.modules.ddg.mapper;
 
 
 import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
+import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,5 +19,5 @@ import org.apache.ibatis.annotations.Select;
  */
 public interface DdgChildApplyBuyMapper extends BaseMapper<DdgChildApplyBuy> {
     @Select("SELECT cab.*,gs.big,gs.goods_name,gs.price FROM ddg_child_apply_buy cab LEFT JOIN li_goods_sku gs ON cab.goods_sku_id=gs.id WHERE cab.child_id=${childId} ${ew.customSqlSegment}")
-    IPage<DdgChildApplyBuy> getChildApplyBuyByChildId(Page<Object> initPage, @Param(Constants.WRAPPER) QueryWrapper<Object> queryChildApplyBuyWrapper, String childId);
+    IPage<DdgChildApplyBuyVO> getChildApplyBuyByChildId(Page<Object> initPage, @Param(Constants.WRAPPER) QueryWrapper<Object> queryChildApplyBuyWrapper, String childId);
 }
