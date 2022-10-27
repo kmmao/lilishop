@@ -60,6 +60,9 @@ public class TradeDTO implements Serializable {
     @ApiModelProperty(value = "不支持配送方式")
     private List<CartSkuVO> notSupportFreight;
 
+    @ApiModelProperty(value = "儿童ID")
+    private String childId;
+
     /**
      * 购物车类型
      */

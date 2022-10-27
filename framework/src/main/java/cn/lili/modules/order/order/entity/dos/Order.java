@@ -204,6 +204,9 @@ public class Order extends BaseEntity {
     @ApiModelProperty(value = "使用的平台会员优惠券id")
     private String usePlatformMemberCouponId;
 
+    @ApiModelProperty(value = "儿童ID")
+    private String childId;
+
     /**
      * 构建订单
      *
@@ -218,6 +221,11 @@ public class Order extends BaseEntity {
         //填写订单类型
         this.setTradeType(cartVO, tradeDTO);
         setId(oldId);
+
+        //填写儿童ID
+        if(CharSequenceUtil.isNotEmpty(tradeDTO.getChildId())){
+            this.childId = tradeDTO.getChildId();
+        }
 
         //设置默认支付状态
         this.setOrderStatus(OrderStatusEnum.UNPAID.name());
