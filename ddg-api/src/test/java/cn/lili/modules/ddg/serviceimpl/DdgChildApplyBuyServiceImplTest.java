@@ -19,7 +19,7 @@ class DdgChildApplyBuyServiceImplTest {
     @Test
     void getChildApplyBuyByChildId() {
         GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
-        goodsDdgSearchParams.setChildId("1535182572286844929");
+        goodsDdgSearchParams.setChildId("1535195481096314881");
         IPage<DdgChildApplyBuy> childApplyBuyByChildId = ddgChildApplyBuyService.getChildApplyBuyByChildId(goodsDdgSearchParams);
         System.out.println(JSONUtil.toJsonStr(childApplyBuyByChildId));
     }
