@@ -37,6 +37,9 @@ public class GoodsDdgSearchParams extends PageVO {
     @ApiModelProperty(value = "最终成交金额，未进行优惠券渲染")
     private Double finalePrice;
 
+    @ApiModelProperty(value = "1已使用；0未使用")
+    private Boolean status;
+
     public <T> QueryWrapper<T> queryGoodsSkuFromAssignWrapper() {
         QueryWrapper<T> queryWrapper = new QueryWrapper<>();
         return queryWrapper;
