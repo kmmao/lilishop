@@ -60,6 +60,11 @@ public class CouponDdgController {
         return ResultUtil.data(ddgChildUnionCouponService.getCouponByChildId(searchParams));
     }
 
+    /**
+     * 需要转childId，parentId，goodsSkuId，finalePrice
+     * @param searchParams
+     * @return
+     */
     @ApiOperation(value = "下单最优优惠券选择")
     @GetMapping("/getBestCouponByDdg")
     public ResultMessage<Coupon> getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
