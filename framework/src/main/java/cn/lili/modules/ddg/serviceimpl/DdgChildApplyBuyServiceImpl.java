@@ -51,7 +51,7 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
     }
 
     @Override
-    public IPage<DdgChildApplyBuy> getChildApplyBuyByParentId(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getChildApplyBuyByParentId(PageUtil.initPage(searchParams),searchParams.queryChildApplyBuyWrapper(),searchParams.getParentId());
+    public IPage<DdgChildApplyBuy> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams) {
+        return this.baseMapper.getChildApplyBuyByChildId(PageUtil.initPage(searchParams),searchParams.queryChildApplyBuyWrapper(),searchParams.getParentId());
     }
 }

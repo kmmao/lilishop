@@ -64,10 +64,10 @@ public class GoodsDdgController {
         return ResultUtil.data(ddgChildApplyBuyService.addChildApplyBuy(ddgChildApplyBuyVO));
     }
 
-    @ApiOperation(value = "通过家长id获取儿童采购申请分页列表")
-    @GetMapping("/getChildApplyBuyByParentId")
-    public ResultMessage<IPage<DdgChildApplyBuy>> getChildApplyBuyByParentId(GoodsDdgSearchParams searchParams) {
-        return ResultUtil.data(ddgChildApplyBuyService.getChildApplyBuyByParentId(searchParams));
+    @ApiOperation(value = "通过儿童id获取儿童采购申请分页列表")
+    @GetMapping("/getChildApplyBuyByChildId")
+    public ResultMessage<IPage<DdgChildApplyBuy>> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams) {
+        return ResultUtil.data(ddgChildApplyBuyService.getChildApplyBuyByChildId(searchParams));
     }
 
     @ApiOperation(value = "儿童收藏信息接口")
