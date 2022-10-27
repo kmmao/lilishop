@@ -5,7 +5,9 @@ import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 /**
@@ -21,5 +23,5 @@ public interface DdgChildApplyBuyMapper extends BaseMapper<DdgChildApplyBuy> {
      * @return 直播商品ID列表
      */
     @Select("SELECT cab.* FROM ddg_child_apply_buy cab WHERE cab.parent_id=${parentId}) ${ew.customSqlSegment}")
-    IPage<DdgChildApplyBuy> getChildApplyBuyByParentId(Page<DdgChildApplyBuy> initPage, QueryWrapper<DdgChildApplyBuy> queryChildApplyBuyWrapper, String parentId);
+    IPage<DdgChildApplyBuy> getChildApplyBuyByParentId(Page<DdgChildApplyBuy> initPage, @Param(Constants.WRAPPER) QueryWrapper<DdgChildApplyBuy> queryChildApplyBuyWrapper, String parentId);
 }

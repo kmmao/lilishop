@@ -6,7 +6,9 @@ import cn.lili.modules.promotion.entity.dos.Coupon;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 /**
@@ -22,5 +24,5 @@ public interface DdgChildUnionCouponMapper extends BaseMapper<DdgChildUnionCoupo
      * @return
      */
     @Select("SELECT c.* FROM li_coupon c WHERE c.id IN(SELECT coupon_id FROM ddg_child_union_coupon WHERE child_id=${childId}) ${ew.customSqlSegment}")
-    IPage<Coupon> getCouponByChildId(Page<Coupon> initPage, QueryWrapper<Coupon> queryCouponWrapper, String childId);
+    IPage<Coupon> getCouponByChildId(Page<Coupon> initPage, @Param(Constants.WRAPPER) QueryWrapper<Coupon> queryCouponWrapper, String childId);
 }

@@ -48,6 +48,9 @@ public class OrderSearchParams extends PageVO {
     @ApiModelProperty(value = "会员ID")
     private String memberId;
 
+    @ApiModelProperty(value = "儿童ID")
+    private String childId;
+
     @ApiModelProperty(value = "收货人")
     private String shipName;
 
@@ -137,6 +140,9 @@ public class OrderSearchParams extends PageVO {
         }
         //按照买家查询
         wrapper.like(CharSequenceUtil.isNotEmpty(memberId), "o.member_id", memberId);
+
+        //按照儿童ID查询
+        wrapper.like(CharSequenceUtil.isNotEmpty(childId), "o.child_id", childId);
 
         //按订单编号查询
         wrapper.like(CharSequenceUtil.isNotEmpty(orderSn), "o.sn", orderSn);

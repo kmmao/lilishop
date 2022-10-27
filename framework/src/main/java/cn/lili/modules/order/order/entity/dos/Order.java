@@ -209,7 +209,8 @@ public class Order extends BaseEntity {
 
     @ApiModelProperty(value = "qrCode  实物为提货码  虚拟货物为账号")
     private String qrCode;
-
+    @ApiModelProperty(value = "儿童ID")
+    private String childId;
     /**
      * 构建订单
      *
@@ -224,6 +225,11 @@ public class Order extends BaseEntity {
         //填写订单类型
         this.setTradeType(cartVO, tradeDTO);
         setId(oldId);
+
+        //填写儿童ID
+        if(CharSequenceUtil.isNotEmpty(tradeDTO.getChildId())){
+            this.childId = tradeDTO.getChildId();
+        }
 
         //设置默认支付状态
         this.setOrderStatus(OrderStatusEnum.UNPAID.name());
