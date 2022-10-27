@@ -21,8 +21,9 @@ public interface DdgChildUnionCouponMapper extends BaseMapper<DdgChildUnionCoupo
 
     /**
      * 通过儿童id获取儿童已领取的优惠券分页列表
+     *
      * @return
      */
-    @Select("SELECT c.* FROM li_coupon c WHERE c.id IN(SELECT coupon_id FROM ddg_child_union_coupon WHERE child_id=${childId}) ${ew.customSqlSegment}")
-    IPage<Coupon> getCouponByChildId(Page<Coupon> initPage, @Param(Constants.WRAPPER) QueryWrapper<Coupon> queryCouponWrapper, String childId);
+    @Select("SELECT c.* FROM li_coupon c WHERE c.id IN(SELECT coupon_id FROM ddg_child_union_coupon WHERE status=${status} AND child_id=${childId}) ${ew.customSqlSegment}")
+    IPage<Coupon> getCouponByChildId(Page<Coupon> initPage, @Param(Constants.WRAPPER) QueryWrapper<Coupon> queryCouponWrapper, String childId, Boolean status);
 }
