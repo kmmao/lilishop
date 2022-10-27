@@ -30,10 +30,7 @@ import cn.lili.modules.order.order.entity.dto.OrderExportDTO;
 import cn.lili.modules.order.order.entity.dto.OrderMessage;
 import cn.lili.modules.order.order.entity.dto.OrderSearchParams;
 import cn.lili.modules.order.order.entity.enums.*;
-import cn.lili.modules.order.order.entity.vo.OrderDetailVO;
-import cn.lili.modules.order.order.entity.vo.OrderSimpleVO;
-import cn.lili.modules.order.order.entity.vo.OrderVO;
-import cn.lili.modules.order.order.entity.vo.PaymentLog;
+import cn.lili.modules.order.order.entity.vo.*;
 import cn.lili.modules.order.order.mapper.OrderItemMapper;
 import cn.lili.modules.order.order.mapper.OrderMapper;
 import cn.lili.modules.order.order.service.*;
@@ -752,6 +749,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             }
         }
         return false;
+    }
+
+    @Override
+    public OrderStatusVO queryOrderStatus(OrderSearchParams orderSearchParams) {
+        List<Order> orderUnpaidList;
+        List<Order> orderUnDeliveredList;
+        List<Order> orders = this.queryListByParams(orderSearchParams);
+        OrderStatusVO orderStatusVO = new OrderStatusVO(0,0);
+        orderUnpaidList = orders.stream().filter(order -> order.getOrderStatus().equals(OrderStatusEnum.UNPAID)).collect(Collectors.toList());
+        if (!orderUnpaidList.isEmpty()) {
+            orderStatusVO.setUnPaidCount(orderUnpaidList.size());
+        }
+        orderUnDeliveredList = orders.stream().filter(order -> order.getOrderStatus().equals(OrderStatusEnum.UNDELIVERED)).collect(Collectors.toList());
+        if (!orderUnDeliveredList.isEmpty()) {
+            orderStatusVO.setUnDeliveredCount(orderUnDeliveredList.size());
+        }
+        return orderStatusVO;
     }
 
     /**

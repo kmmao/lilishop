@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 订单简略信息
+ * 订单状态信息
  * 用于订单列表查看
  *
  * @author Chopper
@@ -21,9 +21,21 @@ import java.util.List;
  */
 @Data
 public class OrderStatusVO {
+    public OrderStatusVO(Integer unPaidCount, Integer unDeliveredCount) {
+        this.unPaidCount = unPaidCount;
+        this.unDeliveredCount = unDeliveredCount;
+    }
 
-    @ApiModelProperty("sn")
-    private String sn;
+    /**
+     * 未付款数量
+     */
+    @ApiModelProperty("unPaidCount")
+    private Integer unPaidCount;
 
+    /**
+     * 待发货数量
+     */
+    @ApiModelProperty("unDeliveredCount")
+    private Integer unDeliveredCount;
 
 }

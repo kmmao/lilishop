@@ -146,13 +146,12 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
                         CurrencyUtil.sub(1, CurrencyUtil.div(memberCoupon.getDiscount(), 10, 3)));
             }
 
-            if(tradeDTO.getPriceDetailVO().getDiscountPrice() == 0D){
+            if (tradeDTO.getPriceDetailVO().getDiscountPrice() == 0D) {
                 tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
-                BeanUtil.copyProperties(memberCoupon,returnMemberCoupon);
-            }
-            else if (tradeDTO.getPriceDetailVO().getDiscountPrice() >= discountCouponPrice) {
+                BeanUtil.copyProperties(memberCoupon, returnMemberCoupon);
+            } else if (tradeDTO.getPriceDetailVO().getDiscountPrice() >= discountCouponPrice) {
                 tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
-                BeanUtil.copyProperties(memberCoupon,returnMemberCoupon);
+                BeanUtil.copyProperties(memberCoupon, returnMemberCoupon);
             }
         }
 
@@ -167,12 +166,10 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
      */
     private List<CartSkuVO> filterSkuVo(List<CartSkuVO> cartSkuVOS, MemberCoupon memberCoupon) {
 
-        List<CartSkuVO> filterSku;
+        List<CartSkuVO> filterSku = Collections.emptyList();
         //平台店铺过滤
         if (Boolean.TRUE.equals(memberCoupon.getPlatformFlag())) {
             filterSku = cartSkuVOS;
-        } else {
-            filterSku = cartSkuVOS.stream().filter(cartSkuVO -> cartSkuVO.getStoreId().equals(memberCoupon.getStoreId())).collect(Collectors.toList());
         }
         if (filterSku == null || filterSku.isEmpty()) {
             return Collections.emptyList();
