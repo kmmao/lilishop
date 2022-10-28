@@ -24,4 +24,15 @@ class DdgChildUnionCouponServiceImplTest {
         IPage<Coupon> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(searchParams);
         System.out.println(JSONUtil.toJsonStr(couponByChildId));
     }
+
+    @Test
+    void getBestCouponByDdg() {
+        GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
+        goodsDdgSearchParams.setGoodsSkuId("1580471390475116545");
+        goodsDdgSearchParams.setChildId("1535195481096314881");
+        goodsDdgSearchParams.setParentId("1535182572286844929");
+        goodsDdgSearchParams.setFinalePrice(0.2D);
+        Coupon bestCouponByDdg = ddgChildUnionCouponService.getBestCouponByDdg(goodsDdgSearchParams);
+        System.out.println(JSONUtil.toJsonStr(bestCouponByDdg));
+    }
 }

@@ -89,7 +89,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
                 .filter(item -> item.getStartTime().before(new Date()) && item.getEndTime().after(new Date()))
                 .collect(Collectors.toList());
 
-        if (!memberCouponList.isEmpty()) {
+        if (memberCouponList.isEmpty()) {
             return null;
         }
         GoodsSku goodsSkuByIdFromCache = goodsSkuService.getGoodsSkuByIdFromCache(searchParams.getGoodsSkuId());
