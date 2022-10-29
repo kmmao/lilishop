@@ -612,17 +612,21 @@ public class GoodsServiceImpl extends ServiceImpl<GoodsMapper, Goods> implements
         //是否需要审核
         goods.setAuthFlag(Boolean.TRUE.equals(goodsSetting.getGoodsCheck()) ? GoodsAuthEnum.TOBEAUDITED.name() : GoodsAuthEnum.PASS.name());
         //判断当前用户是否为店铺
-        if (Objects.requireNonNull(UserContext.getCurrentUser()).getRole().equals(UserEnums.STORE)) {
-            StoreVO storeDetail = this.storeService.getStoreDetail();
-            if (storeDetail.getSelfOperated() != null) {
-                goods.setSelfOperated(storeDetail.getSelfOperated());
-            }
-            goods.setStoreId(storeDetail.getId());
-            goods.setStoreName(storeDetail.getStoreName());
-            goods.setSelfOperated(storeDetail.getSelfOperated());
-        } else {
-            throw new ServiceException(ResultCode.STORE_NOT_LOGIN_ERROR);
-        }
+        //TODO 同步时改正这个地方
+        goods.setStoreId("1579807436705091586");
+        goods.setStoreName("厦门全务");
+        goods.setSelfOperated(false);
+//        if (Objects.requireNonNull(UserContext.getCurrentUser()).getRole().equals(UserEnums.STORE)) {
+//            StoreVO storeDetail = this.storeService.getStoreDetail();
+//            if (storeDetail.getSelfOperated() != null) {
+//                goods.setSelfOperated(storeDetail.getSelfOperated());
+//            }
+//            goods.setStoreId(storeDetail.getId());
+//            goods.setStoreName(storeDetail.getStoreName());
+//            goods.setSelfOperated(storeDetail.getSelfOperated());
+//        } else {
+//            throw new ServiceException(ResultCode.STORE_NOT_LOGIN_ERROR);
+//        }
     }
 
     /**
