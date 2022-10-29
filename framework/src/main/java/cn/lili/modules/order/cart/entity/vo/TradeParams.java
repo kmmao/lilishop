@@ -37,4 +37,7 @@ public class TradeParams implements Serializable {
     @ApiModelProperty(value = "会员ID")
     private String ddgMemberId;
 
+    @ApiModelProperty(value = "儿童ID")
+    private String childId;
+
 }
