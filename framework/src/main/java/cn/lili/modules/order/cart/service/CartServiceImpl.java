@@ -2,6 +2,7 @@ package cn.lili.modules.order.cart.service;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.lili.cache.Cache;
@@ -692,6 +693,9 @@ public class CartServiceImpl implements CartService {
         //获取购物车
         CartTypeEnum cartTypeEnum = getCartType(tradeParams.getWay());
         TradeDTO tradeDTO = this.readDTO(cartTypeEnum);
+        if (ObjectUtil.isNotEmpty(tradeParams.getChildId())) {
+            tradeDTO.setChildId(tradeParams.getChildId());
+        }
         //设置基础属性
         tradeDTO.setClientType(tradeParams.getClient());
         tradeDTO.setStoreRemark(tradeParams.getRemark());
