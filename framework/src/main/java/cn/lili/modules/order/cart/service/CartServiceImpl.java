@@ -12,6 +12,8 @@ import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.utils.CurrencyUtil;
+import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
+import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
 import cn.lili.modules.goods.entity.dos.Wholesale;
 import cn.lili.modules.goods.entity.enums.GoodsAuthEnum;
@@ -116,6 +118,9 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private WholesaleService wholesaleService;
+
+    @Autowired
+    private DdgChildApplyBuyService ddgChildApplyBuyService;
 
     @Override
     public void add(String skuId, Integer num, String cartType, Boolean cover) {
@@ -707,6 +712,16 @@ public class CartServiceImpl implements CartService {
         //构建交易
         Trade trade = tradeBuilder.createTrade(tradeDTO);
         this.cleanChecked(this.readDTO(cartTypeEnum));
+        // 校验订单是否属于儿童申请的订单，如是儿童申请的订单需要将儿童订单转换已处理
+        if (ObjectUtil.isNotEmpty(tradeParams.getChildId()) && ObjectUtil.isNotEmpty(tradeParams.getApplyBuyId())) {
+            DdgChildApplyBuy childApplyBuy = ddgChildApplyBuyService.getById(tradeParams.getApplyBuyId());
+            if (ObjectUtil.isNotEmpty(childApplyBuy)) {
+                childApplyBuy.setStatus(true);
+                childApplyBuy.setOrderNo(trade.getSn());
+                ddgChildApplyBuyService.updateById(childApplyBuy);
+            }
+        }
+
         return trade;
     }
 

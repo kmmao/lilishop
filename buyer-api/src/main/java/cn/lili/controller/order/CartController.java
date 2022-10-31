@@ -1,15 +1,18 @@
 package cn.lili.controller.order;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.vo.ResultMessage;
+import cn.lili.modules.order.cart.entity.dto.StoreRemarkDTO;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.cart.entity.enums.CartTypeEnum;
 import cn.lili.modules.order.cart.entity.vo.TradeParams;
 import cn.lili.modules.order.cart.service.CartService;
 import cn.lili.modules.order.order.entity.vo.ReceiptVO;
+import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 买家端，购物车接口
@@ -299,6 +303,16 @@ public class CartController {
     @PostMapping(value = "/create/tradeDDG")
     public ResultMessage<Object> crateTradeDDG(TradeParams tradeParams) {
         try {
+            // 处理用户备注
+            try {
+                if (ObjectUtil.isNotEmpty(tradeParams.getOrderRemark())) {
+                    List<StoreRemarkDTO> remarkDTOList = JSONObject.parseArray(tradeParams.getOrderRemark(),StoreRemarkDTO.class);
+                    if (ObjectUtil.isNotEmpty(remarkDTOList) && remarkDTOList.size() > 0) {
+                        tradeParams.setRemark(remarkDTOList);
+                    }
+                }
+            } catch (Exception e) {
+            }
             //读取选中的列表
             return ResultUtil.data(this.cartService.createTrade(tradeParams));
         } catch (ServiceException se) {
