@@ -8,6 +8,8 @@ import cn.lili.modules.goods.entity.dos.GoodsSku;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 
 /**
  * 嘟嘟罐儿童采购申请相关联业务层
@@ -28,4 +30,18 @@ public interface DdgChildApplyBuyService extends IService<DdgChildApplyBuy> {
      * @return
      */
     IPage<DdgChildApplyBuyVO> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams);
+
+    /**
+     * 通过家长id获取儿童采购申请分页列表
+     * @param searchParams
+     * @return
+     */
+    IPage<DdgChildApplyBuyVO> getChildApplyBuyByParentId(GoodsDdgSearchParams searchParams);
+
+    /**
+     * 获取儿童采购申请列表
+     * @param searchParams
+     * @return
+     */
+    List<DdgChildApplyBuyVO> getChildApplyBuy(GoodsDdgSearchParams searchParams);
 }

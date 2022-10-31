@@ -21,10 +21,17 @@ import java.util.List;
  */
 @Data
 public class OrderStatusVO {
-    public OrderStatusVO(Integer unPaidCount, Integer unDeliveredCount) {
+    public OrderStatusVO(Integer unHandleCount,Integer unPaidCount, Integer unDeliveredCount) {
+        this.unHandleCount = unPaidCount;
         this.unPaidCount = unPaidCount;
         this.unDeliveredCount = unDeliveredCount;
     }
+
+    /**
+     * 待处理数量
+     */
+    @ApiModelProperty("unHandleCount")
+    private Integer unHandleCount;
 
     /**
      * 未付款数量

@@ -18,6 +18,9 @@ import cn.lili.common.security.OperationalJudgment;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.utils.SnowFlake;
+import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
+import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
+import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
 import cn.lili.modules.goods.entity.dto.GoodsCompleteMessage;
 import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.entity.dto.MemberAddressDTO;
@@ -150,6 +153,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
+
+    @Autowired
+    private DdgChildApplyBuyService ddgChildApplyBuyService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -756,15 +762,27 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     public OrderStatusVO queryOrderStatus(OrderSearchParams orderSearchParams) {
         List<Order> orderUnpaidList;
         List<Order> orderUnDeliveredList;
+        List<DdgChildApplyBuyVO> orderUnHandleList;
         List<Order> orders = this.queryListByParams(orderSearchParams);
-        OrderStatusVO orderStatusVO = new OrderStatusVO(0,0);
-        orderUnpaidList = orders.stream().filter(order -> order.getOrderStatus().equals(OrderStatusEnum.UNPAID)).collect(Collectors.toList());
+        OrderStatusVO orderStatusVO = new OrderStatusVO(0,0,0);
+        orderUnpaidList = orders.stream().filter(order -> order.getOrderStatus().equals(OrderStatusEnum.UNPAID.name())).collect(Collectors.toList());
         if (!orderUnpaidList.isEmpty()) {
             orderStatusVO.setUnPaidCount(orderUnpaidList.size());
         }
-        orderUnDeliveredList = orders.stream().filter(order -> order.getOrderStatus().equals(OrderStatusEnum.UNDELIVERED)).collect(Collectors.toList());
+        orderUnDeliveredList = orders.stream().filter(order -> order.getOrderStatus().equals(OrderStatusEnum.UNDELIVERED.name())).collect(Collectors.toList());
         if (!orderUnDeliveredList.isEmpty()) {
             orderStatusVO.setUnDeliveredCount(orderUnDeliveredList.size());
+        }
+        GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
+        goodsDdgSearchParams.setStatus(false);
+        List<DdgChildApplyBuyVO> childApplyBuyVOList = ddgChildApplyBuyService.getChildApplyBuy(goodsDdgSearchParams);
+        if("0".equals(orderSearchParams.getChildId())){
+            orderUnHandleList = childApplyBuyVOList.stream().filter(childApplyBuyVO -> childApplyBuyVO.getParentId().equals(orderSearchParams.getMemberId())).collect(Collectors.toList());
+        }else{
+            orderUnHandleList = childApplyBuyVOList.stream().filter(childApplyBuyVO -> childApplyBuyVO.getChildId().equals(orderSearchParams.getChildId())).collect(Collectors.toList());
+        }
+        if (!orderUnHandleList.isEmpty()) {
+            orderStatusVO.setUnHandleCount(orderUnHandleList.size());
         }
         return orderStatusVO;
     }

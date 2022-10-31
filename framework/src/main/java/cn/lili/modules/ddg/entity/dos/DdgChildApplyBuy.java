@@ -25,7 +25,7 @@ public class DdgChildApplyBuy extends BaseEntity {
 
     private static final long serialVersionUID = -5640362461584762721L;
 
-    @ApiModelProperty(value = "状态(正常1，禁用0)")
+    @ApiModelProperty(value = "状态(待处理0，已处理1)")
     private Boolean status;
     @ApiModelProperty(value = "儿童id")
     private String childId;
