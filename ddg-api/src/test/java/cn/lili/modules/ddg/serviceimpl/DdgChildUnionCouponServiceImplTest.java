@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
 import cn.lili.modules.promotion.entity.dos.Coupon;
+import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,7 @@ class DdgChildUnionCouponServiceImplTest {
         goodsDdgSearchParams.setChildId("1535195481096314881");
         goodsDdgSearchParams.setParentId("1535182572286844929");
         goodsDdgSearchParams.setFinalePrice(0.2D);
-        Coupon bestCouponByDdg = ddgChildUnionCouponService.getBestCouponByDdg(goodsDdgSearchParams);
+        MemberCoupon bestCouponByDdg = ddgChildUnionCouponService.getBestCouponByDdg(goodsDdgSearchParams);
         System.out.println(JSONUtil.toJsonStr(bestCouponByDdg));
     }
 }
