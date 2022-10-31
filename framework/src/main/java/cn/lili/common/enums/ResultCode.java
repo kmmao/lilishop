@@ -473,11 +473,12 @@ public enum ResultCode {
     /**
      * 嘟嘟罐
      */
-    DDG_GOODS_REPEAT_ERROR(90001,"嘟嘟罐商品关联信息重复"),
-    DDG_GOODS_NULL_ERROR(90005,"嘟嘟罐商品关联信息不存在"),
-    DDG_CHILD_APPLY_ORDER_REPEAT_ERROR(90002,"嘟嘟罐儿童采购申请订单信息重复"),
-    DDG_CHILD_UNION_COUPON_REPEAT_ERROR(90003,"嘟嘟罐儿童优惠券关系信息重复"),
-    DDG_CHILD_COLLECT_REPEAT_ERROR(90004,"嘟嘟罐儿童收藏信息重复"),
+    DDG_GOODS_REPEAT_ERROR(90011,"嘟嘟罐商品关联信息重复"),
+    DDG_GOODS_NULL_ERROR(90015,"嘟嘟罐商品关联信息不存在"),
+    DDG_CHILD_APPLY_ORDER_REPEAT_ERROR(90012,"嘟嘟罐儿童申请采购信息重复"),
+    DDG_CHILD_APPLY_ORDER_NULL_ERROR(90016,"嘟嘟罐儿童取消采购信息不存在"),
+    DDG_CHILD_UNION_COUPON_REPEAT_ERROR(90013,"嘟嘟罐儿童优惠券关系信息重复"),
+    DDG_CHILD_COLLECT_REPEAT_ERROR(90014,"嘟嘟罐儿童收藏信息重复"),
 
     /**
      * 其他

@@ -44,4 +44,11 @@ public interface DdgChildApplyBuyService extends IService<DdgChildApplyBuy> {
      * @return
      */
     List<DdgChildApplyBuyVO> getChildApplyBuy(GoodsDdgSearchParams searchParams);
+
+    /**
+     *
+     * @param ddgChildApplyBuyVO
+     * @return
+     */
+    Boolean cancelChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO);
 }

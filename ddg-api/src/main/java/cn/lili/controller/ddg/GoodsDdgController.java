@@ -62,6 +62,12 @@ public class GoodsDdgController {
         return ResultUtil.data(ddgChildApplyBuyService.addChildApplyBuy(ddgChildApplyBuyVO));
     }
 
+    @ApiOperation(value = "儿童取消采购接口")
+    @PostMapping("/cancelChildApplyBuy")
+    public ResultMessage<Object> cancelChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
+        return ResultUtil.data(ddgChildApplyBuyService.cancelChildApplyBuy(ddgChildApplyBuyVO));
+    }
+
     @ApiOperation(value = "通过儿童id获取儿童采购申请分页列表")
     @GetMapping("/getChildApplyBuyByChildId")
     public ResultMessage<IPage<DdgChildApplyBuyVO>> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams) {
