@@ -31,6 +31,9 @@ public class TradeParams implements Serializable {
     @ApiModelProperty(value = "店铺备注")
     private List<StoreRemarkDTO> remark;
 
+    @ApiModelProperty(value = "下单用户备注")
+    private String orderRemark;
+
     @ApiModelProperty(value = "是否为其他订单下的订单，如果是则为依赖订单的sn，否则为空")
     private String parentOrderSn;
 
@@ -39,5 +42,8 @@ public class TradeParams implements Serializable {
 
     @ApiModelProperty(value = "儿童ID")
     private String childId;
+
+    @ApiModelProperty(value = "儿童申请采购记录ID")
+    private String applyBuyId;
 
 }
