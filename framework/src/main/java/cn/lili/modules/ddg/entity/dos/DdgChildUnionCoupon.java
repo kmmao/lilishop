@@ -30,6 +30,8 @@ public class DdgChildUnionCoupon extends BaseEntity {
     private String parentId;
     @ApiModelProperty(value = "优惠券id")
     private String couponId;
+    @ApiModelProperty(value = "用户领取优惠券id")
+    private String memberCouponId;
     @ApiModelProperty(value = "1已使用；0未使用")
     private Boolean status;
 }
