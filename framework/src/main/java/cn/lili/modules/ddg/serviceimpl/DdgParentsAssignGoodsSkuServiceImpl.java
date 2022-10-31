@@ -53,12 +53,9 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean cancelAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO) {
-        //校验关联商品是否重复
+        //校验关联商品是否存在
         List<DdgParentsAssignGoodsSku> ddgParentsAssignGoodsList = this.baseMapper.selectList(new QueryWrapper<DdgParentsAssignGoodsSku>()
-                .eq("child_id", ddgParentsAssignGoodsSkuVO.getChildId())
-                .eq("parent_id", ddgParentsAssignGoodsSkuVO.getParentId())
-                .eq("goods_sku_id", ddgParentsAssignGoodsSkuVO.getGoodsSkuId())
-                .eq("status", 1)
+                .eq("id", ddgParentsAssignGoodsSkuVO.getId())
         );
         if (ddgParentsAssignGoodsList.isEmpty()) {
             throw new ServiceException(ResultCode.DDG_GOODS_NULL_ERROR);

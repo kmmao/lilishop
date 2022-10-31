@@ -37,7 +37,10 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
     public Boolean addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
         //校验关联申请订单是否重复
         List<DdgChildApplyBuy> ddgChildApplyBuys = this.baseMapper.selectList(new QueryWrapper<DdgChildApplyBuy>()
-                .eq("order_no", ddgChildApplyBuyVO.getOrderNo())
+                .eq("child_id", ddgChildApplyBuyVO.getChildId())
+                .eq("parent_id", ddgChildApplyBuyVO.getParentId())
+                .eq("goods_sku_id", ddgChildApplyBuyVO.getGoodsSkuId())
+                .eq("status", 0)
         );
         if (!ddgChildApplyBuys.isEmpty()) {
             throw new ServiceException(ResultCode.DDG_CHILD_APPLY_ORDER_REPEAT_ERROR);
@@ -63,5 +66,18 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
     @Override
     public List<DdgChildApplyBuyVO> getChildApplyBuy(GoodsDdgSearchParams searchParams) {
         return this.baseMapper.getChildApplyBuy(PageUtil.initPage(searchParams),searchParams.queryChildApplyBuyListWrapper());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean cancelChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
+        //校验关联是否存在
+        List<DdgChildApplyBuy> ddgChildApplyBuys = this.baseMapper.selectList(new QueryWrapper<DdgChildApplyBuy>()
+                .eq("id", ddgChildApplyBuyVO.getId())
+        );
+        if (ddgChildApplyBuys.isEmpty()) {
+            throw new ServiceException(ResultCode.DDG_CHILD_APPLY_ORDER_NULL_ERROR);
+        }
+        return this.removeById(ddgChildApplyBuys.get(0));
     }
 }

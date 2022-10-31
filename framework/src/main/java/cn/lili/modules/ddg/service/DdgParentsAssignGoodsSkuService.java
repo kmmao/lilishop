@@ -33,5 +33,5 @@ public interface DdgParentsAssignGoodsSkuService extends IService<DdgParentsAssi
      * 嘟嘟罐取消分配商品
      * @return 操作状态
      */
-    Object cancelAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO);
+    Boolean cancelAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO);
 }
