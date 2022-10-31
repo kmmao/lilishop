@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -23,5 +25,14 @@ class DdgChildApplyBuyServiceImplTest {
         goodsDdgSearchParams.setChildId("1535195481096314881");
         IPage<DdgChildApplyBuyVO> childApplyBuyByChildId = ddgChildApplyBuyService.getChildApplyBuyByChildId(goodsDdgSearchParams);
         System.out.println(JSONUtil.toJsonStr(childApplyBuyByChildId));
+    }
+
+    @Test
+    void getChildApplyBuy() {
+        GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
+        goodsDdgSearchParams.setStatus(true);
+        List<DdgChildApplyBuyVO> childApplyBuy = ddgChildApplyBuyService.getChildApplyBuy(goodsDdgSearchParams);
+        System.out.println(JSONUtil.toJsonStr(childApplyBuy));
+
     }
 }

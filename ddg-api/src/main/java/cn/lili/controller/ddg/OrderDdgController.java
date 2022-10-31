@@ -49,6 +49,10 @@ public class OrderDdgController {
         return ResultUtil.data(orderService.queryOrderStatus(orderSearchParams));
     }
 
+    /**
+     * @param orderSearchParams
+     * @return
+     */
     @ApiOperation(value = "通过儿童id查询会员订单状态信息")
     @GetMapping(value = "/queryOrderStatusByChildIdId")
     public ResultMessage<OrderStatusVO> queryOrderStatusByChildIdId(OrderSearchParams orderSearchParams) {
