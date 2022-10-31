@@ -48,22 +48,10 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     private MemberService memberService;
     @Autowired
     private GoodsSkuService goodsSkuService;
-    @Autowired
-    private CouponService couponService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean addChildUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
-        //校验关联优惠券是否重复
-        List<DdgChildUnionCoupon> ddgChildUnionCoupons = this.baseMapper.selectList(new QueryWrapper<DdgChildUnionCoupon>()
-                .eq("coupon_id", ddgChildUnionCouponVO.getCouponId())
-                .eq("child_id", ddgChildUnionCouponVO.getChildId())
-                .eq("parent_id", ddgChildUnionCouponVO.getParentId())
-                .eq("status", false)
-        );
-        if (!ddgChildUnionCoupons.isEmpty()) {
-            throw new ServiceException(ResultCode.DDG_CHILD_UNION_COUPON_REPEAT_ERROR);
-        }
         String memberIdByDdgId = memberService.getMemberIdByDdgId(ddgChildUnionCouponVO.getParentId());
         Member member = memberService.getById(memberIdByDdgId);
         memberCouponService.receiveBuyerCoupon(ddgChildUnionCouponVO.getCouponId(), member.getId(), member.getNickName());
@@ -79,7 +67,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     }
 
     @Override
-    public Coupon getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
+    public MemberCoupon getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
         String memberIdByDdgId = memberService.getMemberIdByDdgId(searchParams.getParentId());
         // 判断最优解，然后返回
         List<MemberCoupon> memberCouponList = memberCouponService.getMemberCoupons(memberIdByDdgId);
@@ -107,7 +95,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
         tradeDTO.setPriceDetailVO(priceDetailVO);
         MemberCoupon returnMemberCoupon = new MemberCoupon();
         memberCouponList.forEach(memberCoupon -> available(tradeDTO, memberCoupon, searchParams.getFinalePrice(), returnMemberCoupon));
-        return couponService.getById(returnMemberCoupon.getCouponId());
+        return memberCouponList.get(0);
     }
 
     /**
