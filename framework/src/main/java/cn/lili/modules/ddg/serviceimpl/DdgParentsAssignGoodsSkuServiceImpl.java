@@ -63,10 +63,6 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
         if (ddgParentsAssignGoodsList.isEmpty()) {
             throw new ServiceException(ResultCode.DDG_GOODS_NULL_ERROR);
         }
-        //参数封装
-        DdgParentsAssignGoodsSku ddgParentsAssignGoods = new DdgParentsAssignGoodsSku();
-        BeanUtil.copyProperties(ddgParentsAssignGoodsSkuVO, ddgParentsAssignGoods);
-        ddgParentsAssignGoods.setStatus(false);
-        return this.baseMapper.updateById(ddgParentsAssignGoods) > 0;
+        return this.removeById(ddgParentsAssignGoodsList.get(0));
     }
 }
