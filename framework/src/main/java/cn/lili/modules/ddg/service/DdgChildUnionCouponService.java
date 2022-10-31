@@ -4,6 +4,7 @@ import cn.lili.modules.ddg.entity.dos.DdgChildUnionCoupon;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildUnionCouponVO;
 import cn.lili.modules.promotion.entity.dos.Coupon;
+import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -32,5 +33,5 @@ public interface DdgChildUnionCouponService extends IService<DdgChildUnionCoupon
      * 下单最优优惠券选择
      * @return 最优的优惠券信息
      */
-    Coupon getBestCouponByDdg(GoodsDdgSearchParams searchParams);
+    MemberCoupon getBestCouponByDdg(GoodsDdgSearchParams searchParams);
 }

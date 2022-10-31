@@ -7,6 +7,7 @@ import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildUnionCouponVO;
 import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
 import cn.lili.modules.promotion.entity.dos.Coupon;
+import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import cn.lili.modules.promotion.entity.dto.search.CouponSearchParams;
 import cn.lili.modules.promotion.entity.enums.CouponGetEnum;
 import cn.lili.modules.promotion.entity.enums.PromotionsStatusEnum;
@@ -67,7 +68,7 @@ public class CouponDdgController {
      */
     @ApiOperation(value = "下单最优优惠券选择")
     @GetMapping("/getBestCouponByDdg")
-    public ResultMessage<Coupon> getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
+    public ResultMessage<MemberCoupon> getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgChildUnionCouponService.getBestCouponByDdg(searchParams));
     }
 
