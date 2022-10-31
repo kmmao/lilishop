@@ -1,6 +1,8 @@
 package cn.lili.modules.ddg.entity.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.lili.common.utils.StringUtils;
 import cn.lili.common.vo.PageVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.ApiModelProperty;
@@ -37,7 +39,7 @@ public class GoodsDdgSearchParams extends PageVO {
     @ApiModelProperty(value = "最终成交金额，未进行优惠券渲染")
     private Double finalePrice;
 
-    @ApiModelProperty(value = "1已使用；0未使用")
+    @ApiModelProperty(value = "状态(待处理0，已处理1)")
     private Boolean status;
 
     public <T> QueryWrapper<T> queryGoodsSkuFromAssignWrapper() {
@@ -60,5 +62,12 @@ public class GoodsDdgSearchParams extends PageVO {
         return queryWrapper;
     }
 
+    public <T> QueryWrapper<T> queryChildApplyBuyListWrapper() {
+        QueryWrapper<T> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(status, "status", status);
+        queryWrapper.eq(StrUtil.isNotEmpty(childId), "child_id", childId);
+        queryWrapper.eq(StrUtil.isNotEmpty(parentId), "parent_id", parentId);
+        return queryWrapper;
+    }
 
 }
