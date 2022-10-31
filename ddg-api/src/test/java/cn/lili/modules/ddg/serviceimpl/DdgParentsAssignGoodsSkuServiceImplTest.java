@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @SpringBootTest
@@ -35,5 +37,17 @@ class DdgParentsAssignGoodsSkuServiceImplTest {
         searchParams.setChildId("1535195481096314881");
         IPage<GoodsSku> strings = ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams);
         System.out.println(strings.toString());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    void cancelAssignGoodsSku() {
+        DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO =new DdgParentsAssignGoodsSkuVO();
+        ddgParentsAssignGoodsSkuVO.setGoodsSkuId("1580471390475116545");
+        ddgParentsAssignGoodsSkuVO.setChildId("1535195481096314881");
+        ddgParentsAssignGoodsSkuVO.setParentId("1535182572286844929");
+        Boolean o = (Boolean) ddgParentsAssignGoodsSkuService.cancelAssignGoodsSku(ddgParentsAssignGoodsSkuVO);
+        System.out.println(o);
     }
 }
