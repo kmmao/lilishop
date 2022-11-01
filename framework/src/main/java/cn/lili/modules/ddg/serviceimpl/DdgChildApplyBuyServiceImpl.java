@@ -34,7 +34,7 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
+    public DdgChildApplyBuy addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
         //校验关联申请订单是否重复
         List<DdgChildApplyBuy> ddgChildApplyBuys = this.baseMapper.selectList(new QueryWrapper<DdgChildApplyBuy>()
                 .eq("child_id", ddgChildApplyBuyVO.getChildId())
@@ -50,22 +50,25 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
         BeanUtil.copyProperties(ddgChildApplyBuyVO, ddgChildApplyBuy);
         // 设置采购时间
         ddgChildApplyBuy.setOrderTime(new Date());
-        return this.baseMapper.insert(ddgChildApplyBuy) > 0;
+        if (this.baseMapper.insert(ddgChildApplyBuy) <= 0) {
+            throw new ServiceException(ResultCode.DDG_CHILD_APPLY_ORDER_INSERT_ERROR);
+        }
+        return ddgChildApplyBuy;
     }
 
     @Override
     public IPage<DdgChildApplyBuyVO> getChildApplyBuyByChildId(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getChildApplyBuyByChildId(PageUtil.initPage(searchParams),searchParams.queryChildApplyBuyWrapper(),searchParams.getChildId());
+        return this.baseMapper.getChildApplyBuyByChildId(PageUtil.initPage(searchParams), searchParams.queryChildApplyBuyWrapper(), searchParams.getChildId());
     }
 
     @Override
     public IPage<DdgChildApplyBuyVO> getChildApplyBuyByParentId(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getChildApplyBuyByParentId(PageUtil.initPage(searchParams),searchParams.queryChildApplyBuyWrapper(),searchParams.getParentId());
+        return this.baseMapper.getChildApplyBuyByParentId(PageUtil.initPage(searchParams), searchParams.queryChildApplyBuyWrapper(), searchParams.getParentId());
     }
 
     @Override
     public List<DdgChildApplyBuyVO> getChildApplyBuy(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getChildApplyBuy(PageUtil.initPage(searchParams),searchParams.queryChildApplyBuyListWrapper());
+        return this.baseMapper.getChildApplyBuy(PageUtil.initPage(searchParams), searchParams.queryChildApplyBuyListWrapper());
     }
 
     @Override

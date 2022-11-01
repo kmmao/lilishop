@@ -23,7 +23,7 @@ public interface DdgChildApplyBuyService extends IService<DdgChildApplyBuy> {
      * 添加嘟嘟罐儿童采购申请
      * @return 操作状态
      */
-    Boolean addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO);
+    DdgChildApplyBuy addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO);
 
     /**
      * 通过儿童id获取儿童采购申请分页列表

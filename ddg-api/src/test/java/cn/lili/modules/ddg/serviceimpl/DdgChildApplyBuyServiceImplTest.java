@@ -47,4 +47,17 @@ class DdgChildApplyBuyServiceImplTest {
         Boolean aBoolean = ddgChildApplyBuyService.cancelChildApplyBuy(ddgChildApplyBuyVO);
         System.out.println(aBoolean);
     }
+
+    @Test
+    @Rollback
+    @Transactional
+    void addChildApplyBuy() {
+        DdgChildApplyBuyVO ddgChildApplyBuyVO = new DdgChildApplyBuyVO();
+        ddgChildApplyBuyVO.setChildId("1535195481096314881");
+        ddgChildApplyBuyVO.setParentId("1535182572286844929");
+        ddgChildApplyBuyVO.setGoodsSkuId("1580459378168791041");
+        ddgChildApplyBuyVO.setGoodsId("1580459377522868226");
+        DdgChildApplyBuy ddgChildApplyBuy = ddgChildApplyBuyService.addChildApplyBuy(ddgChildApplyBuyVO);
+        System.out.println(JSONUtil.toJsonStr(ddgChildApplyBuy));
+    }
 }
