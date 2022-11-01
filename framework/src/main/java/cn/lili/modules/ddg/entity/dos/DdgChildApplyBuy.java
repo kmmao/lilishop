@@ -39,7 +39,7 @@ public class DdgChildApplyBuy extends BaseEntity {
     private Integer goodsNums;
     @ApiModelProperty(value = "申请采购总价")
     private Double totalPrices;
-    @ApiModelProperty(value = "下单时间")
+    @ApiModelProperty(value = "申请时间")
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     private Date orderTime;

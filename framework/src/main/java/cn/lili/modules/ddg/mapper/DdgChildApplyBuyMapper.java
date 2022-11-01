@@ -30,6 +30,6 @@ public interface DdgChildApplyBuyMapper extends BaseMapper<DdgChildApplyBuy> {
     @Select("SELECT cab.* FROM ddg_child_apply_buy cab ${ew.customSqlSegment}")
     List<DdgChildApplyBuyVO> getChildApplyBuy(Page<Object> initPage, @Param(Constants.WRAPPER) QueryWrapper<Object> queryChildApplyBuyWrapper);
 
-    @Select("SELECT cab.goods_nums,cab.total_prices,gs.* FROM ddg_child_apply_buy cab LEFT JOIN li_goods_sku gs ON cab.goods_sku_id=gs.id WHERE cab.id=${id}")
+    @Select("SELECT cab.goods_nums,cab.total_prices,cab.order_time,gs.* FROM ddg_child_apply_buy cab LEFT JOIN li_goods_sku gs ON cab.goods_sku_id=gs.id WHERE cab.id=${id}")
     GoodsSkuVO getGoodsSkuByChildApplyBuy(String id);
 }
