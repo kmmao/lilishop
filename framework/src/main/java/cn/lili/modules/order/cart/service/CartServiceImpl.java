@@ -33,8 +33,10 @@ import cn.lili.modules.order.cart.entity.vo.CartSkuVO;
 import cn.lili.modules.order.cart.entity.vo.CartVO;
 import cn.lili.modules.order.cart.entity.vo.TradeParams;
 import cn.lili.modules.order.cart.render.TradeBuilder;
+import cn.lili.modules.order.order.entity.dos.Order;
 import cn.lili.modules.order.order.entity.dos.Trade;
 import cn.lili.modules.order.order.entity.vo.ReceiptVO;
+import cn.lili.modules.order.order.service.OrderService;
 import cn.lili.modules.promotion.entity.dos.KanjiaActivity;
 import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import cn.lili.modules.promotion.entity.dto.search.KanjiaActivitySearchParams;
@@ -121,6 +123,9 @@ public class CartServiceImpl implements CartService {
 
     @Autowired
     private DdgChildApplyBuyService ddgChildApplyBuyService;
+
+    @Autowired
+    private OrderService orderService;
 
     @Override
     public void add(String skuId, Integer num, String cartType, Boolean cover) {
@@ -717,7 +722,9 @@ public class CartServiceImpl implements CartService {
             DdgChildApplyBuy childApplyBuy = ddgChildApplyBuyService.getById(tradeParams.getApplyBuyId());
             if (ObjectUtil.isNotEmpty(childApplyBuy)) {
                 childApplyBuy.setStatus(true);
-                childApplyBuy.setOrderNo(trade.getSn());
+                // 通过TSN获取订单SN
+                Order order = orderService.lambdaQuery().eq(Order::getTradeSn,trade.getSn()).last(" limit 1").one();
+                childApplyBuy.setOrderNo(order.getSn());
                 ddgChildApplyBuyService.updateById(childApplyBuy);
             }
         }
