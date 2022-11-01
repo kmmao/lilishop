@@ -1,5 +1,6 @@
 package cn.lili.modules.ddg.serviceimpl;
 
+import cn.hutool.json.JSONUtil;
 import cn.lili.common.utils.DateUtil;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
@@ -50,5 +51,14 @@ class DdgParentsAssignGoodsSkuServiceImplTest {
         ddgParentsAssignGoodsSkuVO.setParentId("1535182572286844929");
         Boolean o = (Boolean) ddgParentsAssignGoodsSkuService.cancelAssignGoodsSku(ddgParentsAssignGoodsSkuVO);
         System.out.println(o);
+    }
+
+    @Test
+    void getGoodsSkuByChildIdFormAssign() {
+        GoodsDdgSearchParams searchParams = new GoodsDdgSearchParams();
+        searchParams.setChildId("1535195481096314881");
+        searchParams.setGoodsName("暴力熊仔");
+        IPage<GoodsSkuVO> goodsSkuByChildIdFormAssign = ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams);
+        System.out.println(JSONUtil.toJsonStr(goodsSkuByChildIdFormAssign));
     }
 }
