@@ -63,7 +63,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
 
     @Override
     public IPage<Coupon> getCouponByChildId(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getCouponByChildId(PageUtil.initPage(searchParams), searchParams.queryCouponWrapper(), searchParams.getChildId(),searchParams.getStatus());
+        return this.baseMapper.getCouponByChildId(PageUtil.initPage(searchParams), searchParams.queryCouponWrapper(), searchParams.getChildId());
     }
 
     @Override
