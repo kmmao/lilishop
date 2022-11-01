@@ -50,6 +50,6 @@ public class DdgChildCollectServiceImpl extends ServiceImpl<DdgChildColectMapper
 
     @Override
     public IPage<GoodsSku> getGoodsSkuByChildIdFormCollect(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getGoodsSkuByChildIdFormCollect(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromCollectWrapper(),searchParams.getParentId());
+        return this.baseMapper.getGoodsSkuByChildIdFormCollect(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromCollectWrapper(),searchParams.getChildId());
     }
 }

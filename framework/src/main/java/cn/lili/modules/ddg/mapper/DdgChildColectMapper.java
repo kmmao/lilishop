@@ -23,5 +23,5 @@ public interface DdgChildColectMapper extends BaseMapper<DdgChildCollect> {
      * 通过儿童id获取儿童收藏信息分页列表
      */
     @Select("SELECT gs.* FROM li_goods_sku gs WHERE gs.id IN(SELECT goods_sku_id FROM ddg_child_collect WHERE child_id=${childId}) ${ew.customSqlSegment}")
-    IPage<GoodsSku> getGoodsSkuByChildIdFormCollect(Page<GoodsSku> initPage, @Param(Constants.WRAPPER) QueryWrapper<GoodsSku> queryChildApplyBuyWrapper, String parentId);
+    IPage<GoodsSku> getGoodsSkuByChildIdFormCollect(Page<GoodsSku> initPage, @Param(Constants.WRAPPER) QueryWrapper<GoodsSku> queryChildApplyBuyWrapper, String childId);
 }
