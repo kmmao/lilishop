@@ -92,6 +92,12 @@ public class GoodsDdgController {
         return ResultUtil.data(ddgChildCollectService.addChildCollect(ddgChildCollectVO));
     }
 
+    @ApiOperation(value = "儿童是否收藏商品信息接口")
+    @PostMapping("/isHaveCollectByChildAndSkuId")
+    public ResultMessage<Object> isHaveCollectByChildAndSkuId(DdgChildCollectVO ddgChildCollectVO) {
+        return ResultUtil.data(ddgChildCollectService.isHaveCollectByChildAndSkuId(ddgChildCollectVO));
+    }
+
     @ApiOperation(value = "通过儿童id获取儿童收藏信息分页列表")
     @GetMapping("/getGoodsSkuByChildIdFormCollect")
     public ResultMessage<IPage<GoodsSku>> getGoodsSkuByChildIdFormCollect(GoodsDdgSearchParams searchParams) {

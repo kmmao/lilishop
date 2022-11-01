@@ -52,4 +52,17 @@ public class DdgChildCollectServiceImpl extends ServiceImpl<DdgChildColectMapper
     public IPage<GoodsSku> getGoodsSkuByChildIdFormCollect(GoodsDdgSearchParams searchParams) {
         return this.baseMapper.getGoodsSkuByChildIdFormCollect(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromCollectWrapper(),searchParams.getChildId());
     }
+
+    @Override
+    public Boolean isHaveCollectByChildAndSkuId(DdgChildCollectVO ddgChildCollectVO) {
+        //校验关联申请订单是否重复
+        List<DdgChildCollect> ddgChildCollects = this.baseMapper.selectList(new QueryWrapper<DdgChildCollect>()
+                .eq("child_id", ddgChildCollectVO.getChildId())
+                .eq("goods_sku_id", ddgChildCollectVO.getGoodsSkuId())
+        );
+        if (!ddgChildCollects.isEmpty()) {
+            return true;
+        }
+        return false;
+    }
 }
