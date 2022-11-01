@@ -9,6 +9,7 @@ import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
 import cn.lili.modules.ddg.mapper.DdgParentsAssignGoodsSkuMapper;
 import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import cn.lili.mybatis.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -46,7 +47,7 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
     }
 
     @Override
-    public IPage<GoodsSku> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
+    public IPage<GoodsSkuVO> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
         return this.baseMapper.getGoodsSkuByChildIdFormAssign(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromAssignWrapper(),searchParams.getChildId());
     }
 

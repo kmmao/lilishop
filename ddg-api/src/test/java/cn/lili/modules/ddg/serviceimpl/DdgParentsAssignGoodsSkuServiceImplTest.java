@@ -5,6 +5,7 @@ import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
 import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ class DdgParentsAssignGoodsSkuServiceImplTest {
     void goodsSkuPageByChildId() {
         GoodsDdgSearchParams searchParams = new GoodsDdgSearchParams();
         searchParams.setChildId("1535195481096314881");
-        IPage<GoodsSku> strings = ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams);
+        IPage<GoodsSkuVO> strings = ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams);
         System.out.println(strings.toString());
     }
 

@@ -30,6 +30,9 @@ public class GoodsSkuVO extends GoodsSku {
     @ApiModelProperty(value = "商品图片")
     private List<String> goodsGalleryList;
 
+    @ApiModelProperty(value = "是否需要金币购买（1是0否）")
+    private Boolean isGoldPay;
+
     public GoodsSkuVO(GoodsSku goodsSku) {
         BeanUtil.copyProperties(goodsSku, this);
     }

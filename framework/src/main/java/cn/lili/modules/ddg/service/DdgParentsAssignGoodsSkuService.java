@@ -2,9 +2,9 @@ package cn.lili.modules.ddg.service;
 
 import cn.lili.modules.ddg.entity.dos.DdgParentsAssignGoodsSku;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
-import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
 import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -27,7 +27,7 @@ public interface DdgParentsAssignGoodsSkuService extends IService<DdgParentsAssi
      * 通过儿童ID获取商品SKU列表
      * @return
      */
-    IPage<GoodsSku> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams);
+    IPage<GoodsSkuVO> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams);
 
     /**
      * 嘟嘟罐取消分配商品
