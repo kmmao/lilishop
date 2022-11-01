@@ -5,6 +5,7 @@ import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
 import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
+import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,5 +60,13 @@ class DdgChildApplyBuyServiceImplTest {
         ddgChildApplyBuyVO.setGoodsId("1580459377522868226");
         DdgChildApplyBuy ddgChildApplyBuy = ddgChildApplyBuyService.addChildApplyBuy(ddgChildApplyBuyVO);
         System.out.println(JSONUtil.toJsonStr(ddgChildApplyBuy));
+    }
+
+    @Test
+    void getGoodsSkuByChildApplyBuy() {
+        GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
+        goodsDdgSearchParams.setId("1584810070377484290");
+        GoodsSkuVO goodsSkuByChildApplyBuy = ddgChildApplyBuyService.getGoodsSkuByChildApplyBuy(goodsDdgSearchParams);
+        System.out.println(JSONUtil.toJsonStr(goodsSkuByChildApplyBuy));
     }
 }

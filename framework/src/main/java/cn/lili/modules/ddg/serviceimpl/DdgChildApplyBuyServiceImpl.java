@@ -13,6 +13,7 @@ import cn.lili.modules.ddg.mapper.DdgParentsAssignGoodsSkuMapper;
 import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
 import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import cn.lili.mybatis.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -82,5 +83,10 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
             throw new ServiceException(ResultCode.DDG_CHILD_APPLY_ORDER_NULL_ERROR);
         }
         return this.removeById(ddgChildApplyBuys.get(0));
+    }
+
+    @Override
+    public GoodsSkuVO getGoodsSkuByChildApplyBuy(GoodsDdgSearchParams searchParams) {
+        return this.baseMapper.getGoodsSkuByChildApplyBuy(searchParams.getId());
     }
 }

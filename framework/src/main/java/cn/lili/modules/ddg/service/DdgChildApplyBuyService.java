@@ -5,6 +5,7 @@ import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
 import cn.lili.modules.ddg.entity.vo.DdgParentsAssignGoodsSkuVO;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -51,4 +52,11 @@ public interface DdgChildApplyBuyService extends IService<DdgChildApplyBuy> {
      * @return
      */
     Boolean cancelChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO);
+
+    /**
+     * 通过儿童申请采购ID获取商品SKU信息接口
+     * @param searchParams
+     * @return
+     */
+    GoodsSkuVO getGoodsSkuByChildApplyBuy(GoodsDdgSearchParams searchParams);
 }
