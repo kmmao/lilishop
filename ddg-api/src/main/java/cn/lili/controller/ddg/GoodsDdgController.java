@@ -2,6 +2,7 @@ package cn.lili.controller.ddg;
 
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.ResultMessage;
+import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildApplyBuyVO;
 import cn.lili.modules.ddg.entity.vo.DdgChildCollectVO;
@@ -59,7 +60,7 @@ public class GoodsDdgController {
 
     @ApiOperation(value = "儿童申请采购接口")
     @PostMapping("/addChildApplyBuy")
-    public ResultMessage<Object> addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
+    public ResultMessage<DdgChildApplyBuy> addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
         return ResultUtil.data(ddgChildApplyBuyService.addChildApplyBuy(ddgChildApplyBuyVO));
     }
 

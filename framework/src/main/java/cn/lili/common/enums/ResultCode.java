@@ -487,6 +487,7 @@ public enum ResultCode {
     DDG_GOODS_REPEAT_ERROR(90011,"嘟嘟罐商品关联信息重复"),
     DDG_GOODS_NULL_ERROR(90015,"嘟嘟罐商品关联信息不存在"),
     DDG_CHILD_APPLY_ORDER_REPEAT_ERROR(90012,"嘟嘟罐儿童申请采购信息重复"),
+    DDG_CHILD_APPLY_ORDER_INSERT_ERROR(90012,"嘟嘟罐儿童申请采购信息添加失败"),
     DDG_CHILD_APPLY_ORDER_NULL_ERROR(90016,"嘟嘟罐儿童取消采购信息不存在"),
     DDG_CHILD_UNION_COUPON_REPEAT_ERROR(90013,"嘟嘟罐儿童优惠券关系信息重复"),
     DDG_CHILD_COLLECT_REPEAT_ERROR(90014,"嘟嘟罐儿童收藏信息重复"),
