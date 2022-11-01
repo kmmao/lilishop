@@ -490,6 +490,7 @@ public enum ResultCode {
     DDG_CHILD_APPLY_ORDER_NULL_ERROR(90016,"嘟嘟罐儿童取消采购信息不存在"),
     DDG_CHILD_UNION_COUPON_REPEAT_ERROR(90013,"嘟嘟罐儿童优惠券关系信息重复"),
     DDG_CHILD_COLLECT_REPEAT_ERROR(90014,"嘟嘟罐儿童收藏信息重复"),
+    DDG_CHILD_COLLECT_NULL_ERROR(90017,"嘟嘟罐儿童收藏信息不存在"),
 
     /**
      * 其他

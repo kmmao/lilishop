@@ -55,7 +55,7 @@ public class DdgChildCollectServiceImpl extends ServiceImpl<DdgChildColectMapper
 
     @Override
     public Boolean isHaveCollectByChildAndSkuId(DdgChildCollectVO ddgChildCollectVO) {
-        //校验关联申请订单是否重复
+        //校验关联信息是否重复
         List<DdgChildCollect> ddgChildCollects = this.baseMapper.selectList(new QueryWrapper<DdgChildCollect>()
                 .eq("child_id", ddgChildCollectVO.getChildId())
                 .eq("goods_sku_id", ddgChildCollectVO.getGoodsSkuId())
@@ -64,5 +64,18 @@ public class DdgChildCollectServiceImpl extends ServiceImpl<DdgChildColectMapper
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Boolean cancelChildCollect(DdgChildCollectVO ddgChildCollectVO) {
+        //校验关联信息是否存在
+        List<DdgChildCollect> ddgChildCollects = this.baseMapper.selectList(new QueryWrapper<DdgChildCollect>()
+                .eq("child_id", ddgChildCollectVO.getChildId())
+                .eq("goods_sku_id", ddgChildCollectVO.getGoodsSkuId())
+        );
+        if (ddgChildCollects.isEmpty()) {
+            throw new ServiceException(ResultCode.DDG_CHILD_COLLECT_NULL_ERROR);
+        }
+        return this.removeById(ddgChildCollects.get(0));
     }
 }
