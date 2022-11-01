@@ -36,4 +36,11 @@ public interface DdgChildCollectService extends IService<DdgChildCollect> {
      * @return
      */
     Boolean isHaveCollectByChildAndSkuId(DdgChildCollectVO ddgChildCollectVO);
+
+    /**
+     * 取消儿童收藏商品信息接口
+     * @param ddgChildCollectVO
+     * @return
+     */
+    Boolean cancelChildCollect(DdgChildCollectVO ddgChildCollectVO);
 }
