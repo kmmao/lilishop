@@ -2,12 +2,15 @@ package cn.lili.modules.goods.entity.vos;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,6 +41,11 @@ public class GoodsSkuVO extends GoodsSku {
 
     @ApiModelProperty(value = "申请采购总价")
     private Double totalPrices;
+
+    @ApiModelProperty(value = "申请时间")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date orderTime;
 
     public GoodsSkuVO(GoodsSku goodsSku) {
         BeanUtil.copyProperties(goodsSku, this);
