@@ -42,8 +42,14 @@ public class GoodsDdgSearchParams extends PageVO {
     @ApiModelProperty(value = "状态(待处理0，已处理1)")
     private Boolean status;
 
+    @ApiModelProperty(value = "商品名称")
+    private String goodsName;
+
     public <T> QueryWrapper<T> queryGoodsSkuFromAssignWrapper() {
         QueryWrapper<T> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(StrUtil.isNotEmpty(childId), "child_id", childId);
+        queryWrapper.eq("status", true);
+        queryWrapper.like(CharSequenceUtil.isNotEmpty(goodsName), "gs.goods_name", goodsName);
         return queryWrapper;
     }
 

@@ -48,7 +48,7 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
 
     @Override
     public IPage<GoodsSkuVO> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getGoodsSkuByChildIdFormAssign(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromAssignWrapper(),searchParams.getChildId());
+        return this.baseMapper.getGoodsSkuByChildIdFormAssign(PageUtil.initPage(searchParams),searchParams.queryGoodsSkuFromAssignWrapper());
     }
 
     @Override
