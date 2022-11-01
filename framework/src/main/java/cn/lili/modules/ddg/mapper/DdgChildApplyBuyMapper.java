@@ -20,7 +20,7 @@ import java.util.List;
  * @since 2022-10-20 18:25:16
  */
 public interface DdgChildApplyBuyMapper extends BaseMapper<DdgChildApplyBuy> {
-    @Select("SELECT cab.*,gs.big,gs.goods_name,gs.price FROM ddg_child_apply_buy cab LEFT JOIN li_goods_sku gs ON cab.goods_sku_id=gs.id WHERE cab.child_id=${childId} ${ew.customSqlSegment}")
+    @Select("SELECT cab.*,gs.big,gs.goods_name,gs.price FROM ddg_child_apply_buy cab LEFT JOIN li_goods_sku gs ON cab.goods_sku_id=gs.id WHERE cab.child_id=${childId} AND cab.status = 0 ${ew.customSqlSegment}")
     IPage<DdgChildApplyBuyVO> getChildApplyBuyByChildId(Page<Object> initPage, @Param(Constants.WRAPPER) QueryWrapper<Object> queryChildApplyBuyWrapper, String childId);
 
     @Select("SELECT cab.*,gs.big,gs.goods_name,gs.price FROM ddg_child_apply_buy cab LEFT JOIN li_goods_sku gs ON cab.goods_sku_id=gs.id WHERE cab.parent_id=${parentId} ${ew.customSqlSegment}")
