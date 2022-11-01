@@ -29,4 +29,11 @@ public interface DdgChildCollectService extends IService<DdgChildCollect> {
      * @return
      */
     IPage<GoodsSku> getGoodsSkuByChildIdFormCollect(GoodsDdgSearchParams searchParams);
+
+    /**
+     * 儿童是否收藏商品信息接口
+     * @param ddgChildCollectVO
+     * @return
+     */
+    Boolean isHaveCollectByChildAndSkuId(DdgChildCollectVO ddgChildCollectVO);
 }
