@@ -10,6 +10,7 @@ import cn.lili.modules.ddg.service.DdgChildApplyBuyService;
 import cn.lili.modules.ddg.service.DdgChildCollectService;
 import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
+import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,7 +53,7 @@ public class GoodsDdgController {
 
     @ApiOperation(value = "通过儿童id获取商品分页列表")
     @GetMapping("/getGoodsSkuByChildIdFormAssign")
-    public ResultMessage<IPage<GoodsSku>> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
+    public ResultMessage<IPage<GoodsSkuVO>> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams));
     }
 
