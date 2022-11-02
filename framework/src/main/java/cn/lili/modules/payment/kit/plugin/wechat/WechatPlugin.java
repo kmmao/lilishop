@@ -561,7 +561,7 @@ public class WechatPlugin implements Payment {
                 // TODO 发送订单退款成功消息到嘟嘟罐MQ
                 Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
                 if (ObjectUtil.isNotEmpty(order)) {
-                    log.info("【订单支付成功MQ通知log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
+                    log.info("【发送订单退款成功消息到嘟嘟罐MQlog】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
                     applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("发送订单退款成功消息到嘟嘟罐MQ", rocketmqCustomProperties.getOrderDdgRefundTopic(), OrderTagsEnum.STATUS_CHANGE.name(), JSONUtil.toJsonStr(order)));
                 }
             } else {
@@ -608,7 +608,7 @@ public class WechatPlugin implements Payment {
                 // TODO 发送订单退款成功消息到嘟嘟罐MQ
                 Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
                 if (ObjectUtil.isNotEmpty(order)) {
-                    log.info("【订单支付成功MQ通知log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
+                    log.info("【发送订单退款成功消息到嘟嘟罐MQlog】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
                     applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("发送订单退款成功消息到嘟嘟罐MQ", rocketmqCustomProperties.getOrderDdgRefundTopic(), OrderTagsEnum.STATUS_CHANGE.name(), JSONUtil.toJsonStr(order)));
                 }
             } else {
