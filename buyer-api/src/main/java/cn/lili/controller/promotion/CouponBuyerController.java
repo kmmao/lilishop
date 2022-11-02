@@ -89,7 +89,7 @@ public class CouponBuyerController {
     @GetMapping("/receive/{couponId}")
     public ResultMessage<Object> receiveCoupon(@NotNull(message = "优惠券ID不能为空") @PathVariable("couponId") String couponId) {
         AuthUser currentUser = Objects.requireNonNull(UserContext.getCurrentUser());
-        memberCouponService.receiveBuyerCoupon(couponId, currentUser.getId(), currentUser.getNickName());
+        memberCouponService.receiveBuyerCoupon(couponId, currentUser.getId(), currentUser.getNickName(),null);
         return ResultUtil.success();
     }
 

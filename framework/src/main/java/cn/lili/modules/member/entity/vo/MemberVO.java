@@ -95,6 +95,9 @@ public class MemberVO implements Serializable {
     @ApiModelProperty(value = "创建时间", hidden = true)
     private Date createTime;
 
+    @ApiModelProperty(value = "嘟嘟罐ID")
+    private String ddgId;
+
     public MemberVO(Member member) {
         BeanUtil.copyProperties(member, this);
     }

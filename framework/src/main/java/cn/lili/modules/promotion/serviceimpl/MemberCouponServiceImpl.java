@@ -1,12 +1,18 @@
 package cn.lili.modules.promotion.serviceimpl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.lili.cache.Cache;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.vo.PageVO;
+import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
+import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
+import cn.lili.modules.member.entity.dos.Member;
+import cn.lili.modules.member.entity.vo.MemberVO;
+import cn.lili.modules.member.service.MemberService;
 import cn.lili.modules.promotion.entity.dos.Coupon;
 import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import cn.lili.modules.promotion.entity.dto.search.MemberCouponSearchParams;
@@ -51,6 +57,9 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     @Autowired
     private CouponService couponService;
 
+    @Autowired
+    private DdgChildUnionCouponService ddgChildUnionCouponService;
+
     /**
      * 缓存
      */
@@ -58,7 +67,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     private Cache cache;
 
     @Override
-    public void checkCouponLimit(String couponId, String memberId) {
+    public void checkCouponLimit(String couponId, String memberId,String childId) {
         Coupon coupon = couponService.getById(couponId);
         LambdaQueryWrapper<MemberCoupon> queryWrapper = new LambdaQueryWrapper<MemberCoupon>()
                 .eq(MemberCoupon::getCouponId, couponId)
@@ -70,6 +79,15 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
         if (coupon.getPublishNum() != 0 && coupon.getReceivedNum() >= coupon.getPublishNum()) {
             throw new ServiceException(ResultCode.COUPON_NUM_INSUFFICIENT_ERROR);
         }
+
+        if (StrUtil.isNotEmpty(childId)){
+            GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
+            goodsDdgSearchParams.setChildId(childId);
+            goodsDdgSearchParams.setCouponId(couponId);
+            IPage<Coupon> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(goodsDdgSearchParams);
+            haveCoupons = couponByChildId.getSize();
+        }
+
         if (!coupon.getCouponLimitNum().equals(0) && haveCoupons >= coupon.getCouponLimitNum()) {
             throw new ServiceException(ResultCode.COUPON_LIMIT_ERROR, "此优惠券最多领取" + coupon.getCouponLimitNum() + "张");
         }
@@ -85,12 +103,12 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     @Override
     @CacheEvict(key = "#memberId")
     @Transactional(rollbackFor = Exception.class)
-    public void receiveBuyerCoupon(String couponId, String memberId, String memberName) {
+    public void receiveBuyerCoupon(String couponId, String memberId, String memberName, String childId) {
         Coupon coupon = couponService.getById(couponId);
         if (coupon != null && !CouponGetEnum.FREE.name().equals(coupon.getGetType())) {
             throw new ServiceException(ResultCode.COUPON_DO_NOT_RECEIVER);
         } else if (coupon != null) {
-            this.receiverCoupon(couponId, memberId, memberName, coupon);
+            this.receiverCoupon(couponId, memberId, memberName, coupon, childId);
         }
 
     }
@@ -101,7 +119,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     public void receiveCoupon(String couponId, String memberId, String memberName) {
         Coupon coupon = couponService.getById(couponId);
         if (coupon != null) {
-            this.receiverCoupon(couponId, memberId, memberName, coupon);
+            this.receiverCoupon(couponId, memberId, memberName, coupon,null);
         } else {
             throw new ServiceException(ResultCode.COUPON_NOT_EXIST);
         }
@@ -326,8 +344,8 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
         return this.update(updateWrapper);
     }
 
-    private void receiverCoupon(String couponId, String memberId, String memberName, Coupon coupon) {
-        this.checkCouponLimit(couponId, memberId);
+    private void receiverCoupon(String couponId, String memberId, String memberName, Coupon coupon,String childId) {
+        this.checkCouponLimit(couponId, memberId,childId);
         MemberCoupon memberCoupon = new MemberCoupon(coupon);
         memberCoupon.setMemberId(memberId);
         memberCoupon.setMemberName(memberName);
