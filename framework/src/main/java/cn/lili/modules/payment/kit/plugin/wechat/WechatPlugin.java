@@ -46,9 +46,11 @@ import cn.lili.modules.system.entity.dos.Setting;
 import cn.lili.modules.system.entity.dto.payment.WechatPaymentSetting;
 import cn.lili.modules.system.entity.enums.SettingEnum;
 import cn.lili.modules.system.service.SettingService;
+import cn.lili.rocketmq.RocketmqSendCallbackBuilder;
 import cn.lili.rocketmq.tags.OrderTagsEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -119,7 +121,7 @@ public class WechatPlugin implements Payment {
     private RocketmqCustomProperties rocketmqCustomProperties;
 
     @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private RocketMQTemplate rocketMQTemplate;
 
 
     @Override
@@ -562,7 +564,7 @@ public class WechatPlugin implements Payment {
                 Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
                 if (ObjectUtil.isNotEmpty(order)) {
                     log.info("【发送订单退款成功消息到嘟嘟罐MQlog】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
-                    applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("发送订单退款成功消息到嘟嘟罐MQ", rocketmqCustomProperties.getOrderDdgRefundTopic(), OrderTagsEnum.STATUS_CHANGE.name(), JSONUtil.toJsonStr(order)));
+                    rocketMQTemplate.asyncSend(rocketmqCustomProperties.getOrderDdgRefundTopic(), JSONUtil.toJsonStr(order), RocketmqSendCallbackBuilder.commonCallback());
                 }
             } else {
                 //退款申请失败
@@ -609,7 +611,7 @@ public class WechatPlugin implements Payment {
                 Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
                 if (ObjectUtil.isNotEmpty(order)) {
                     log.info("【发送订单退款成功消息到嘟嘟罐MQlog】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
-                    applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("发送订单退款成功消息到嘟嘟罐MQ", rocketmqCustomProperties.getOrderDdgRefundTopic(), OrderTagsEnum.STATUS_CHANGE.name(), JSONUtil.toJsonStr(order)));
+                    rocketMQTemplate.asyncSend(rocketmqCustomProperties.getOrderDdgRefundTopic(), JSONUtil.toJsonStr(order), RocketmqSendCallbackBuilder.commonCallback());
                 }
             } else {
                 log.info("退款失败 {}", plainText);
