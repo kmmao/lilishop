@@ -7,7 +7,9 @@ import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.context.UserContext;
+import cn.lili.common.utils.BeanUtil;
 import cn.lili.common.vo.PageVO;
+import cn.lili.modules.ddg.entity.dos.DdgChildUnionCoupon;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
 import cn.lili.modules.member.entity.dos.Member;
@@ -67,7 +69,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     private Cache cache;
 
     @Override
-    public void checkCouponLimit(String couponId, String memberId,String childId) {
+    public void checkCouponLimit(String couponId, String memberId, String childId) {
         Coupon coupon = couponService.getById(couponId);
         LambdaQueryWrapper<MemberCoupon> queryWrapper = new LambdaQueryWrapper<MemberCoupon>()
                 .eq(MemberCoupon::getCouponId, couponId)
@@ -80,14 +82,14 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
             throw new ServiceException(ResultCode.COUPON_NUM_INSUFFICIENT_ERROR);
         }
 
-        if (StrUtil.isNotEmpty(childId)){
+        if (StrUtil.isNotEmpty(childId)) {
             GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
             goodsDdgSearchParams.setChildId(childId);
             goodsDdgSearchParams.setCouponId(couponId);
             IPage<Coupon> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(goodsDdgSearchParams);
-            if(null != couponByChildId){
+            if (null != couponByChildId) {
                 haveCoupons = couponByChildId.getRecords().size();
-            }else {
+            } else {
                 haveCoupons = 0;
             }
         }
@@ -107,12 +109,12 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     @Override
     @CacheEvict(key = "#memberId")
     @Transactional(rollbackFor = Exception.class)
-    public void receiveBuyerCoupon(String couponId, String memberId, String memberName, String childId) {
+    public void receiveBuyerCoupon(String couponId, String memberId, String memberName, DdgChildUnionCoupon ddgChildUnionCoupon) {
         Coupon coupon = couponService.getById(couponId);
         if (coupon != null && !CouponGetEnum.FREE.name().equals(coupon.getGetType())) {
             throw new ServiceException(ResultCode.COUPON_DO_NOT_RECEIVER);
         } else if (coupon != null) {
-            this.receiverCoupon(couponId, memberId, memberName, coupon, childId);
+            this.receiverCoupon(couponId, memberId, memberName, coupon, ddgChildUnionCoupon);
         }
 
     }
@@ -123,7 +125,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     public void receiveCoupon(String couponId, String memberId, String memberName) {
         Coupon coupon = couponService.getById(couponId);
         if (coupon != null) {
-            this.receiverCoupon(couponId, memberId, memberName, coupon,null);
+            this.receiverCoupon(couponId, memberId, memberName, coupon, null);
         } else {
             throw new ServiceException(ResultCode.COUPON_NOT_EXIST);
         }
@@ -348,8 +350,8 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
         return this.update(updateWrapper);
     }
 
-    private void receiverCoupon(String couponId, String memberId, String memberName, Coupon coupon,String childId) {
-        this.checkCouponLimit(couponId, memberId,childId);
+    private void receiverCoupon(String couponId, String memberId, String memberName, Coupon coupon, DdgChildUnionCoupon ddgChildUnionCoupon) {
+        this.checkCouponLimit(couponId, memberId, ddgChildUnionCoupon.getChildId());
         MemberCoupon memberCoupon = new MemberCoupon(coupon);
         memberCoupon.setMemberId(memberId);
         memberCoupon.setMemberName(memberName);
@@ -357,5 +359,8 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
         memberCoupon.setPlatformFlag((PromotionTools.PLATFORM_ID).equals(coupon.getStoreId()));
         this.save(memberCoupon);
         couponService.receiveCoupon(couponId, 1);
+        //添加儿童与优惠券关联表
+        ddgChildUnionCoupon.setMemberCouponId(memberCoupon.getMemberId());
+        ddgChildUnionCouponService.save(ddgChildUnionCoupon);
     }
 }

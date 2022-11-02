@@ -1,6 +1,7 @@
 package cn.lili.modules.ddg.serviceimpl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.utils.BeanUtil;
@@ -54,11 +55,10 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     public Boolean addChildUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
         String memberIdByDdgId = memberService.getMemberIdByDdgId(ddgChildUnionCouponVO.getParentId());
         Member member = memberService.getById(memberIdByDdgId);
-        memberCouponService.receiveBuyerCoupon(ddgChildUnionCouponVO.getCouponId(), member.getId(), member.getNickName(),ddgChildUnionCouponVO.getChildId());
-        //参数封装
         DdgChildUnionCoupon ddgChildUnionCoupon = new DdgChildUnionCoupon();
         BeanUtil.copyProperties(ddgChildUnionCouponVO, ddgChildUnionCoupon);
-        return this.baseMapper.insert(ddgChildUnionCoupon) > 0;
+        memberCouponService.receiveBuyerCoupon(ddgChildUnionCouponVO.getCouponId(), member.getId(), member.getNickName(), ddgChildUnionCoupon);
+        return StrUtil.isEmpty(ddgChildUnionCoupon.getId());
     }
 
     @Override
