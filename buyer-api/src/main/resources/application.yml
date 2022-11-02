@@ -155,6 +155,8 @@ ignored:
     - /buyer/order/afterSale/**
     - /buyer/order/order
     - /buyer/order/order/**
+    - /buyer/other/logistics
+    - /buyer/other/**
     - /buyer/member/evaluation/**/goodsEvaluation
     - /buyer/member/evaluation/**/evaluationNumber
     - /buyer/other/appVersion/**
@@ -275,6 +277,7 @@ lili:
       goods-topic: lili_goods_topic
       goods-group: lili_goods_group
       order-topic: lili_order_topic
+      order-ddg-topic: lili_order_ddg_topic
       order-group: lili_order_group
       member-topic: lili_member_topic
       member-group: lili_member_group

@@ -372,6 +372,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setCanReturn(!PaymentMethodEnum.BANK_TRANSFER.name().equals(order.getPaymentMethod()));
         this.updateById(order);
 
+
+
         //记录店铺订单支付流水
         storeFlowService.payOrder(orderSn);
 
@@ -381,6 +383,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         orderMessage.setPaymentMethod(paymentMethod);
         orderMessage.setNewStatus(OrderStatusEnum.PAID);
         this.sendUpdateStatusMessage(orderMessage);
+
+        // TODO 发送订单支付成功消息到嘟嘟罐MQ
+        log.info("【订单支付成功MQ通知log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
+        applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("发送订单支付成功消息到嘟嘟罐MQ", rocketmqCustomProperties.getOrderDdgTopic(), OrderTagsEnum.STATUS_CHANGE.name(), JSONUtil.toJsonStr(order)));
 
         String message = "订单付款，付款方式[" + PaymentMethodEnum.valueOf(paymentMethod).paymentName() + "]";
         OrderLog orderLog = new OrderLog(orderSn, "-1", UserEnums.SYSTEM.getRole(), "系统操作", message);

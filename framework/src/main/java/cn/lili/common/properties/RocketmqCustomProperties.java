@@ -25,6 +25,8 @@ public class RocketmqCustomProperties {
 
     private String orderTopic;
 
+    private String orderDdgTopic;
+
     private String orderGroup;
 
     private String msgExtTopic;
