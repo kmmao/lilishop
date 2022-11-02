@@ -85,7 +85,11 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
             goodsDdgSearchParams.setChildId(childId);
             goodsDdgSearchParams.setCouponId(couponId);
             IPage<Coupon> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(goodsDdgSearchParams);
-            haveCoupons = couponByChildId.getSize();
+            if(null != couponByChildId){
+                haveCoupons = couponByChildId.getSize();
+            }else {
+                haveCoupons = 0;
+            }
         }
 
         if (!coupon.getCouponLimitNum().equals(0) && haveCoupons >= coupon.getCouponLimitNum()) {
