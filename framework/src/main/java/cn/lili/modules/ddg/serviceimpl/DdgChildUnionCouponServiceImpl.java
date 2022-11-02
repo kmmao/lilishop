@@ -54,7 +54,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     public Boolean addChildUnionCoupon(DdgChildUnionCouponVO ddgChildUnionCouponVO) {
         String memberIdByDdgId = memberService.getMemberIdByDdgId(ddgChildUnionCouponVO.getParentId());
         Member member = memberService.getById(memberIdByDdgId);
-        memberCouponService.receiveBuyerCoupon(ddgChildUnionCouponVO.getCouponId(), member.getId(), member.getNickName());
+        memberCouponService.receiveBuyerCoupon(ddgChildUnionCouponVO.getCouponId(), member.getId(), member.getNickName(),ddgChildUnionCouponVO.getChildId());
         //参数封装
         DdgChildUnionCoupon ddgChildUnionCoupon = new DdgChildUnionCoupon();
         BeanUtil.copyProperties(ddgChildUnionCouponVO, ddgChildUnionCoupon);

@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.lili.common.utils.StringUtils;
 import cn.lili.common.vo.PageVO;
+import cn.lili.modules.promotion.entity.enums.MemberCouponStatusEnum;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
@@ -42,6 +43,15 @@ public class GoodsDdgSearchParams extends PageVO {
     @ApiModelProperty(value = "状态(待处理0，已处理1)")
     private Boolean status;
 
+    /**
+     * @see MemberCouponStatusEnum
+     */
+    @ApiModelProperty(value = "会员优惠券状态")
+    private String memberCouponStatus;
+
+    @ApiModelProperty(value = "从哪个模版领取的优惠券")
+    private String couponId;
+
     @ApiModelProperty(value = "商品名称")
     private String goodsName;
 
@@ -65,6 +75,10 @@ public class GoodsDdgSearchParams extends PageVO {
 
     public <T> QueryWrapper<T> queryCouponWrapper() {
         QueryWrapper<T> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(StrUtil.isNotEmpty(childId), "dcuc.child_id", childId);
+        queryWrapper.eq(StrUtil.isNotEmpty(memberCouponStatus), "mc.member_coupon_status", memberCouponStatus);
+        queryWrapper.eq(StrUtil.isNotEmpty(couponId), "mc.coupon_id", couponId);
+        queryWrapper.groupBy("c.id");
         return queryWrapper;
     }
 

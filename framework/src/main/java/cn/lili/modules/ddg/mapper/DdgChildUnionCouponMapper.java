@@ -24,14 +24,6 @@ public interface DdgChildUnionCouponMapper extends BaseMapper<DdgChildUnionCoupo
      *
      * @return
      */
-    @Select("SELECT\n" +
-            "\tc.*\n" +
-            "FROM\n" +
-            "\tddg_child_union_coupon dcuc\n" +
-            "\tLEFT JOIN li_member m ON m.ddg_id = dcuc.parent_id\n" +
-            "\tLEFT JOIN li_member_coupon mc ON m.id = mc.member_id\n" +
-            "\tLEFT JOIN li_coupon c ON c.id = mc.coupon_id\n" +
-            "\tWHERE mc.member_coupon_status != 'USED' AND dcuc.child_id = ${childId}\n" +
-            "\tGROUP BY c.id")
+    @Select("SELECT c.* FROM ddg_child_union_coupon dcuc LEFT JOIN li_member m ON m.ddg_id = dcuc.parent_id LEFT JOIN li_member_coupon mc ON m.id = mc.member_id LEFT JOIN li_coupon c ON c.id = mc.coupon_id  ${ew.customSqlSegment}")
     IPage<Coupon> getCouponByChildId(Page<Coupon> initPage, @Param(Constants.WRAPPER) QueryWrapper<Coupon> queryCouponWrapper, String childId);
 }

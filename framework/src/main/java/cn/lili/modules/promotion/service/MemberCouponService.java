@@ -22,7 +22,7 @@ public interface MemberCouponService extends IService<MemberCoupon> {
      * @param couponId 优惠券编号
      * @param memberId 会员
      */
-    void checkCouponLimit(String couponId, String memberId);
+    void checkCouponLimit(String couponId, String memberId,String childId);
 
     /**
      * 领取优惠券
@@ -30,8 +30,9 @@ public interface MemberCouponService extends IService<MemberCoupon> {
      * @param couponId   优惠券编号
      * @param memberId   会员
      * @param memberName 会员名称
+     * @param childId 儿童ID
      */
-    void receiveBuyerCoupon(String couponId, String memberId, String memberName);
+    void receiveBuyerCoupon(String couponId, String memberId, String memberName,String childId);
 
     /**
      * 领取优惠券
