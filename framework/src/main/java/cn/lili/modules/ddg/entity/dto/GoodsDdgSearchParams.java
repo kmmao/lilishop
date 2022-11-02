@@ -78,7 +78,6 @@ public class GoodsDdgSearchParams extends PageVO {
         queryWrapper.eq(StrUtil.isNotEmpty(childId), "dcuc.child_id", childId);
         queryWrapper.eq(StrUtil.isNotEmpty(memberCouponStatus), "mc.member_coupon_status", memberCouponStatus);
         queryWrapper.eq(StrUtil.isNotEmpty(couponId), "mc.coupon_id", couponId);
-        queryWrapper.groupBy("mc.id");
         return queryWrapper;
     }
 

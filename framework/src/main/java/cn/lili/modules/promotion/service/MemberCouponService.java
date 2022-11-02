@@ -1,6 +1,7 @@
 package cn.lili.modules.promotion.service;
 
 import cn.lili.common.vo.PageVO;
+import cn.lili.modules.ddg.entity.dos.DdgChildUnionCoupon;
 import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import cn.lili.modules.promotion.entity.dto.search.MemberCouponSearchParams;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -30,9 +31,9 @@ public interface MemberCouponService extends IService<MemberCoupon> {
      * @param couponId   优惠券编号
      * @param memberId   会员
      * @param memberName 会员名称
-     * @param childId 儿童ID
+     * @param ddgChildUnionCoupon 儿童与优惠券关联表
      */
-    void receiveBuyerCoupon(String couponId, String memberId, String memberName,String childId);
+    void receiveBuyerCoupon(String couponId, String memberId, String memberName, DdgChildUnionCoupon ddgChildUnionCoupon);
 
     /**
      * 领取优惠券
