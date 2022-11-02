@@ -25,8 +25,6 @@ public class RocketmqCustomProperties {
 
     private String orderTopic;
 
-    private String orderDdgTopic;
-
     private String orderGroup;
 
     private String msgExtTopic;
@@ -66,5 +64,15 @@ public class RocketmqCustomProperties {
     private String broadcastTopic;
 
     private String broadcastGroup;
+
+    /**
+     * 发送给嘟嘟罐-订单支付成功
+     */
+    private String orderDdgTopic;
+
+    /**
+     * 发送给嘟嘟罐-订单退款
+     */
+    private String orderDdgRefundTopic;
 
 }

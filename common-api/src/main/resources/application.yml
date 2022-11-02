@@ -271,6 +271,10 @@ lili:
       notice-group: lili_notice_group
       notice-send-topic: lili_send_notice_topic
       notice-send-group: lili_send_notice_group
+      #发送给嘟嘟罐-订单支付成功
+      order-ddg-topic: lili_order_ddg_topic
+      #发送给嘟嘟罐-订单退款
+      order-ddg-refund-topic: lili_order_ddg_refund_topic
 rocketmq:
   name-server: ${ROCKETMQ-HOST:lilishop-rocketmq}:${ROCKETMQ-PORT:9876}
   producer:

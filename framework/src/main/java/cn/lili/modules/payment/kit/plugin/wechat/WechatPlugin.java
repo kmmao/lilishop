@@ -2,6 +2,7 @@ package cn.lili.modules.payment.kit.plugin.wechat;
 
 import cn.hutool.core.net.URLDecoder;
 import cn.hutool.core.net.URLEncoder;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -9,8 +10,10 @@ import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.event.TransactionCommitSendMQEvent;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.properties.ApiProperties;
+import cn.lili.common.properties.RocketmqCustomProperties;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.utils.CurrencyUtil;
 import cn.lili.common.utils.SnowFlake;
@@ -20,6 +23,7 @@ import cn.lili.modules.connect.entity.Connect;
 import cn.lili.modules.connect.entity.enums.ConnectEnum;
 import cn.lili.modules.connect.service.ConnectService;
 import cn.lili.modules.member.entity.dto.ConnectQueryDTO;
+import cn.lili.modules.order.order.entity.dos.Order;
 import cn.lili.modules.order.order.service.OrderService;
 import cn.lili.modules.payment.entity.RefundLog;
 import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
@@ -42,9 +46,11 @@ import cn.lili.modules.system.entity.dos.Setting;
 import cn.lili.modules.system.entity.dto.payment.WechatPaymentSetting;
 import cn.lili.modules.system.entity.enums.SettingEnum;
 import cn.lili.modules.system.service.SettingService;
+import cn.lili.rocketmq.tags.OrderTagsEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -105,6 +111,15 @@ public class WechatPlugin implements Payment {
      */
     @Autowired
     private OrderService orderService;
+
+    /**
+     * RocketMQ配置
+     */
+    @Autowired
+    private RocketmqCustomProperties rocketmqCustomProperties;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
 
     @Override
@@ -543,6 +558,12 @@ public class WechatPlugin implements Payment {
             //退款申请成功
             if (response.getStatus() == 200) {
                 refundLogService.save(refundLog);
+                // TODO 发送订单退款成功消息到嘟嘟罐MQ
+                Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
+                if (ObjectUtil.isNotEmpty(order)) {
+                    log.info("【订单支付成功MQ通知log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
+                    applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("发送订单退款成功消息到嘟嘟罐MQ", rocketmqCustomProperties.getOrderDdgRefundTopic(), OrderTagsEnum.STATUS_CHANGE.name(), JSONUtil.toJsonStr(order)));
+                }
             } else {
                 //退款申请失败
                 refundLog.setErrorMessage(response.getBody());
@@ -584,7 +605,12 @@ public class WechatPlugin implements Payment {
                     refundLog.setReceivableNo(refundId);
                     refundLogService.saveOrUpdate(refundLog);
                 }
-
+                // TODO 发送订单退款成功消息到嘟嘟罐MQ
+                Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
+                if (ObjectUtil.isNotEmpty(order)) {
+                    log.info("【订单支付成功MQ通知log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
+                    applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("发送订单退款成功消息到嘟嘟罐MQ", rocketmqCustomProperties.getOrderDdgRefundTopic(), OrderTagsEnum.STATUS_CHANGE.name(), JSONUtil.toJsonStr(order)));
+                }
             } else {
                 log.info("退款失败 {}", plainText);
                 JSONObject jsonObject = JSONUtil.parseObj(plainText);
