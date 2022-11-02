@@ -37,15 +37,15 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
     @Transactional(rollbackFor = Exception.class)
     public DdgChildApplyBuy addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
         //校验关联申请订单是否重复
-        List<DdgChildApplyBuy> ddgChildApplyBuys = this.baseMapper.selectList(new QueryWrapper<DdgChildApplyBuy>()
-                .eq("child_id", ddgChildApplyBuyVO.getChildId())
-                .eq("parent_id", ddgChildApplyBuyVO.getParentId())
-                .eq("goods_sku_id", ddgChildApplyBuyVO.getGoodsSkuId())
-                .eq("status", 0)
-        );
-        if (!ddgChildApplyBuys.isEmpty()) {
-            throw new ServiceException(ResultCode.DDG_CHILD_APPLY_ORDER_REPEAT_ERROR);
-        }
+//        List<DdgChildApplyBuy> ddgChildApplyBuys = this.baseMapper.selectList(new QueryWrapper<DdgChildApplyBuy>()
+//                .eq("child_id", ddgChildApplyBuyVO.getChildId())
+//                .eq("parent_id", ddgChildApplyBuyVO.getParentId())
+//                .eq("goods_sku_id", ddgChildApplyBuyVO.getGoodsSkuId())
+//                .eq("status", 0)
+//        );
+//        if (!ddgChildApplyBuys.isEmpty()) {
+//            throw new ServiceException(ResultCode.DDG_CHILD_APPLY_ORDER_REPEAT_ERROR);
+//        }
         //参数封装
         DdgChildApplyBuy ddgChildApplyBuy = new DdgChildApplyBuy();
         BeanUtil.copyProperties(ddgChildApplyBuyVO, ddgChildApplyBuy);
