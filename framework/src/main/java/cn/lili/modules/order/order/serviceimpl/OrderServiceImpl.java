@@ -855,6 +855,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private void generatorStoreRefundFlow(Order order) {
         // 判断订单是否是付款
         if (!PayStatusEnum.PAID.name().equals((order.getPayStatus()))) {
+            // TODO 订单未支付状态下发送订单取消消息到嘟嘟罐MQ监听
+            if (ObjectUtil.isNotEmpty(order)) {
+                log.info("【发送订单未支付情况下取消订单消息到嘟嘟罐MQlog】通知MQ地址："+rocketmqCustomProperties.getOrderDdgCancelTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
+                rocketMQTemplate.asyncSend(rocketmqCustomProperties.getOrderDdgCancelTopic(), JSONUtil.toJsonStr(order), RocketmqSendCallbackBuilder.commonCallback());
+            }
             return;
         }
         List<OrderItem> items = orderItemService.getByOrderSn(order.getSn());

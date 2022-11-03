@@ -75,4 +75,9 @@ public class RocketmqCustomProperties {
      */
     private String orderDdgRefundTopic;
 
+    /**
+     * 发送给嘟嘟罐-订单未支付情况下取消订单
+     */
+    private String orderDdgCancelTopic;
+
 }
