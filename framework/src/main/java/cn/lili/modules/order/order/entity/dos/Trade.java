@@ -5,6 +5,7 @@ import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.cart.entity.enums.DeliveryMethodEnum;
 import cn.lili.modules.order.order.entity.enums.PayStatusEnum;
 import cn.lili.mybatis.BaseEntity;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -76,6 +77,10 @@ public class Trade extends BaseEntity {
 
     @ApiModelProperty(value = "地址id，'，'分割 ")
     private String consigneeAddressIdPath;
+
+    @TableField(exist = false)
+    @ApiModelProperty(value = "订单sn")
+    private String orderSn;
 
     public Trade(TradeDTO tradeDTO) {
         String originId = this.getId();
