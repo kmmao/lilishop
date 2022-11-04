@@ -717,18 +717,19 @@ public class CartServiceImpl implements CartService {
         //构建交易
         Trade trade = tradeBuilder.createTrade(tradeDTO);
         this.cleanChecked(this.readDTO(cartTypeEnum));
+        // 通过TSN获取订单SN
+        Order order = orderService.lambdaQuery().eq(Order::getTradeSn,trade.getSn()).last(" limit 1").one();
         // 校验订单是否属于儿童申请的订单，如是儿童申请的订单需要将儿童订单转换已处理
         if (ObjectUtil.isNotEmpty(tradeParams.getChildId()) && ObjectUtil.isNotEmpty(tradeParams.getApplyBuyId())) {
             DdgChildApplyBuy childApplyBuy = ddgChildApplyBuyService.getById(tradeParams.getApplyBuyId());
             if (ObjectUtil.isNotEmpty(childApplyBuy)) {
                 childApplyBuy.setStatus(true);
-                // 通过TSN获取订单SN
-                Order order = orderService.lambdaQuery().eq(Order::getTradeSn,trade.getSn()).last(" limit 1").one();
+
                 childApplyBuy.setOrderNo(order.getSn());
                 ddgChildApplyBuyService.updateById(childApplyBuy);
             }
         }
-
+        trade.setOrderSn(order.getSn());
         return trade;
     }
 
