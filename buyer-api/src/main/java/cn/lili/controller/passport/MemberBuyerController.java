@@ -130,6 +130,15 @@ public class MemberBuyerController {
         return ResultUtil.data(this.memberService.usernameLogin(username, password));
     }
 
+    @ApiOperation(value = "通过memberId获取token")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "memberId", value = "用户ID", required = true, paramType = "query")
+    })
+    @GetMapping("/getTokenByMemberId")
+    public ResultMessage<Object> getTokenByMemberId(@NotNull(message = "用户ID") @RequestParam String memberId) {
+        return ResultUtil.data(this.memberService.getTokenByMemberId(memberId));
+    }
+
     @ApiOperation(value = "注销接口")
     @PostMapping("/logout")
     public ResultMessage<Object> logout() {

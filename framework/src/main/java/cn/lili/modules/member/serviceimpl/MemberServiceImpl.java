@@ -3,6 +3,7 @@ package cn.lili.modules.member.serviceimpl;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.aop.annotation.DemoSite;
@@ -99,6 +100,8 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
+    @Autowired
+    private MemberService memberService;
     /**
      * 缓存
      */
@@ -148,6 +151,14 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
         }
         loginBindUser(member);
         return memberTokenGenerate.createToken(member, false);
+    }
+
+    @Override
+    public Token getTokenByMemberId(String memberId) {
+        if (StrUtil.isEmpty(memberId)) {
+            throw new ServiceException(ResultCode.USER_MEMBER_NOT_EXIST);
+        }
+        return memberService.getTokenByMemberId(memberId);
     }
 
     @Override

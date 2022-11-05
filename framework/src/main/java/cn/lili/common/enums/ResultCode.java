@@ -117,6 +117,7 @@ public enum ResultCode {
      */
     USER_EDIT_SUCCESS(20001, "用户修改成功"),
     USER_NOT_EXIST(20002, "用户不存在"),
+    USER_MEMBER_NOT_EXIST(20025, "用户ID不存在"),
     USER_NOT_LOGIN(20003, "用户未登录"),
     USER_AUTH_EXPIRED(20004, "用户已退出，请重新登录"),
     USER_AUTHORITY_ERROR(20005, "权限不足"),

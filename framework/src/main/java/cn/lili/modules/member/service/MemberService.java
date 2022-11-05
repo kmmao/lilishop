@@ -66,6 +66,14 @@ public interface MemberService extends IService<Member> {
     Token usernameLogin(String username, String password);
 
     /**
+     * 通过member_id获取token
+     *
+     * @param memberId 用户Id
+     * @return token
+     */
+    Token getTokenByMemberId(String memberId);
+
+    /**
      * 商家登录：用户名、密码登录
      *
      * @param username 用户名
