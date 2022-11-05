@@ -37,6 +37,9 @@ public class AfterSaleSearchParams extends PageVO {
     @ApiModelProperty(value = "商家ID")
     private String storeId;
 
+    @ApiModelProperty(value = "儿童id")
+    private String childId;
+
     @ApiModelProperty(value = "商品名称")
     private String goodsName;
 
@@ -115,6 +118,11 @@ public class AfterSaleSearchParams extends PageVO {
         }
         this.betweenWrapper(queryWrapper);
         queryWrapper.eq("delete_flag", false);
+
+        if (CharSequenceUtil.isNotEmpty(childId)) {
+            queryWrapper.last(" AND order_sn IN ( SELECT sn FROM li_order WHERE member_id = " + UserContext.getCurrentUser().getId() + " AND child_id = " + childId + " )");
+        }
+
         return queryWrapper;
     }
 
