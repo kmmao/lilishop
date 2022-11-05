@@ -561,14 +561,6 @@ public class WechatPlugin implements Payment {
             //退款申请成功
             if (response.getStatus() == 200) {
                 refundLogService.save(refundLog);
-                // TODO 发送订单退款成功消息到嘟嘟罐MQ
-                Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
-                if (ObjectUtil.isNotEmpty(order)) {
-                    // 生成随机数标记
-                    order.setRemark(CommonUtil.getRandomNum()+"B1");
-                    log.info("【发送订单退款成功消息到嘟嘟罐MQ-log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
-                    rocketMQTemplate.asyncSend(rocketmqCustomProperties.getOrderDdgRefundTopic(), JSONUtil.toJsonStr(order), RocketmqSendCallbackBuilder.commonCallback());
-                }
             } else {
                 //退款申请失败
                 refundLog.setErrorMessage(response.getBody());
