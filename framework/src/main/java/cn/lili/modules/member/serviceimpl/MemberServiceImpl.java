@@ -188,7 +188,13 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
         if (StrUtil.isEmpty(memberId)) {
             throw new ServiceException(ResultCode.USER_MEMBER_NOT_EXIST);
         }
-        return memberService.getTokenByMemberId(memberId);
+        Member member = this.getById(memberId);
+        //判断用户是否存在
+        if (member == null || !member.getDisabled()) {
+            throw new ServiceException(ResultCode.USER_NOT_EXIST);
+        }
+        loginBindUser(member);
+        return memberTokenGenerate.createToken(member, false);
     }
 
     @Override
