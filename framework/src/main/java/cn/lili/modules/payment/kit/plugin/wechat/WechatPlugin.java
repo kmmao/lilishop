@@ -565,7 +565,7 @@ public class WechatPlugin implements Payment {
                 Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
                 if (ObjectUtil.isNotEmpty(order)) {
                     // 生成随机数标记
-                    order.setRemark(CommonUtil.getRandomNum());
+                    order.setRemark(CommonUtil.getRandomNum()+"B1");
                     log.info("【发送订单退款成功消息到嘟嘟罐MQ-log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
                     rocketMQTemplate.asyncSend(rocketmqCustomProperties.getOrderDdgRefundTopic(), JSONUtil.toJsonStr(order), RocketmqSendCallbackBuilder.commonCallback());
                 }
@@ -614,7 +614,7 @@ public class WechatPlugin implements Payment {
                 Order order = orderService.lambdaQuery().eq(Order::getSn,refundLog.getOrderSn()).last(" limit 1").one();
                 if (ObjectUtil.isNotEmpty(order)) {
                     // 生成随机数标记
-                    order.setRemark(CommonUtil.getRandomNum());
+                    order.setRemark(CommonUtil.getRandomNum()+"A1");
                     log.info("【发送订单退款成功消息到嘟嘟罐MQ&log】通知MQ地址："+rocketmqCustomProperties.getOrderDdgRefundTopic()+"，通知内容："+JSONUtil.toJsonStr(order));
                     rocketMQTemplate.asyncSend(rocketmqCustomProperties.getOrderDdgRefundTopic(), JSONUtil.toJsonStr(order), RocketmqSendCallbackBuilder.commonCallback());
                 }
