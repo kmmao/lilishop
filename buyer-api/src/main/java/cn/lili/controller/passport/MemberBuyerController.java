@@ -135,7 +135,7 @@ public class MemberBuyerController {
             @ApiImplicitParam(name = "memberId", value = "用户ID", required = true, paramType = "query")
     })
     @GetMapping("/getTokenByMemberId")
-    public ResultMessage<Object> getTokenByMemberId(@NotNull(message = "用户ID") @RequestParam String memberId) {
+    public ResultMessage<Object> getTokenByMemberId(@NotNull(message = "用户ID") String memberId) {
         return ResultUtil.data(this.memberService.getTokenByMemberId(memberId));
     }
 

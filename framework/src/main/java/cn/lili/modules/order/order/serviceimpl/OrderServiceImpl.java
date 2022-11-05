@@ -25,6 +25,8 @@ import cn.lili.modules.goods.entity.dto.GoodsCompleteMessage;
 import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.entity.dto.MemberAddressDTO;
 import cn.lili.modules.member.service.MemberService;
+import cn.lili.modules.order.aftersale.entity.dos.AfterSale;
+import cn.lili.modules.order.aftersale.service.AfterSaleService;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.order.aop.OrderLogPoint;
 import cn.lili.modules.order.order.entity.dos.*;
@@ -42,6 +44,7 @@ import cn.lili.modules.order.trade.service.OrderLogService;
 import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
 import cn.lili.modules.promotion.entity.dos.Pintuan;
 import cn.lili.modules.promotion.service.PintuanService;
+import cn.lili.modules.statistics.service.AfterSaleStatisticsService;
 import cn.lili.modules.system.aspect.annotation.SystemLogPoint;
 import cn.lili.modules.system.entity.dos.Logistics;
 import cn.lili.modules.system.entity.vo.Traces;
@@ -145,6 +148,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
 
     @Autowired
     private TradeService tradeService;
+
+    @Autowired
+    private AfterSaleService afterSaleService;
+
     /**
      * 会员
      */
@@ -295,7 +302,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         //查询发票信息
         Receipt receipt = receiptService.getByOrderSn(orderSn);
         //查询订单和自订单，然后写入vo返回
-        return new OrderDetailVO(order, orderItems, orderLogs, receipt);
+        OrderDetailVO orderDetailVO = new OrderDetailVO(order, orderItems, orderLogs, receipt);
+        // 查询订单是否存在售后订单编号
+        AfterSale afterSale = afterSaleService.lambdaQuery().eq(AfterSale::getOrderSn,order.getSn()).last(" ORDER BY create_time desc LIMIT 1").one();
+        if (ObjectUtil.isNotEmpty(afterSale)) {
+            orderDetailVO.setAfterSaleSn(afterSale.getSn());
+        }
+        return orderDetailVO;
     }
 
     @Override

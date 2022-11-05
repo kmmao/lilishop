@@ -120,6 +120,7 @@ ignored:
     - /weixin/**
     - /source/**
     - /common/common/slider/**
+    - /common/common/region/item/**
     - /common/common/sms/**
     - /common/common/logo
     - /common/common/site
