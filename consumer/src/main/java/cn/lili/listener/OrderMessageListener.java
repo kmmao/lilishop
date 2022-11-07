@@ -7,6 +7,7 @@ import cn.lili.event.TradeEvent;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.order.entity.dto.OrderMessage;
 import cn.lili.rocketmq.tags.OrderTagsEnum;
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -57,7 +58,6 @@ public class OrderMessageListener implements RocketMQListener<MessageExt> {
      * @param messageExt
      */
     public void orderStatusEvent(MessageExt messageExt) {
-
         switch (OrderTagsEnum.valueOf(messageExt.getTags())) {
             //订单创建
             case ORDER_CREATE:
@@ -83,6 +83,7 @@ public class OrderMessageListener implements RocketMQListener<MessageExt> {
                 break;
             //订单状态变更
             case STATUS_CHANGE:
+                log.info("【MQ监听订单状态变更LOG】监听订单状态变更处理，监听信息："+ JSONObject.toJSONString(messageExt.getBody()));
                 for (OrderStatusChangeEvent orderStatusChangeEvent : orderStatusChangeEvents) {
                     try {
                         OrderMessage orderMessage = JSONUtil.toBean(new String(messageExt.getBody()), OrderMessage.class);
