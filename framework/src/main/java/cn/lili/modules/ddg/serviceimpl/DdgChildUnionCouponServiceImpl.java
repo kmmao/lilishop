@@ -95,7 +95,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
         tradeDTO.setPriceDetailVO(priceDetailVO);
         MemberCoupon returnMemberCoupon = new MemberCoupon();
         memberCouponList.forEach(memberCoupon -> available(tradeDTO, memberCoupon, searchParams.getFinalePrice(), returnMemberCoupon));
-        return memberCouponList.get(0);
+        return returnMemberCoupon;
     }
 
     /**
@@ -130,6 +130,8 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
                 tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
                 BeanUtil.copyProperties(memberCoupon, returnMemberCoupon);
             }
+        }else {
+            returnMemberCoupon = null;
         }
 
     }
