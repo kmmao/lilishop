@@ -8,6 +8,7 @@ import cn.lili.modules.goods.entity.dos.GoodsSku;
 import cn.lili.modules.goods.service.GoodsSkuService;
 import cn.lili.modules.order.order.entity.dos.OrderItem;
 import cn.lili.modules.order.order.entity.dto.OrderMessage;
+import cn.lili.modules.order.order.entity.enums.OrderStatusEnum;
 import cn.lili.modules.order.order.entity.enums.PayStatusEnum;
 import cn.lili.modules.order.order.entity.vo.OrderDetailVO;
 import cn.lili.modules.order.order.service.OrderService;
@@ -20,6 +21,7 @@ import cn.lili.modules.promotion.service.KanjiaActivityGoodsService;
 import cn.lili.modules.promotion.service.KanjiaActivityService;
 import cn.lili.modules.promotion.service.PointsGoodsService;
 import cn.lili.modules.promotion.service.PromotionGoodsService;
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -83,7 +85,7 @@ public class StockUpdateExecute implements OrderStatusChangeEvent {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void orderChange(OrderMessage orderMessage) {
-
+        log.info("【MQ监听订单状态变更LOG】监听订单状态变更处理，监听信息："+ JSONObject.toJSONString(orderMessage));
         switch (orderMessage.getNewStatus()) {
             case PAID: {
                 //获取订单详情

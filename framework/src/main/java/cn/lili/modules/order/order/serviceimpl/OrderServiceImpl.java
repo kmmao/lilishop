@@ -1009,6 +1009,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         this.update(new LambdaUpdateWrapper<Order>()
                 .eq(Order::getSn, orderSn)
                 .set(Order::getOrderStatus, OrderStatusEnum.UNDELIVERED.name()));
+        log.info("【MQ监听订单状态变更LOG】订单支付成功，修改订单："+orderSn+",订单状态为："+OrderStatusEnum.UNDELIVERED.name());
         //修改订单
         OrderMessage orderMessage = new OrderMessage();
         orderMessage.setNewStatus(OrderStatusEnum.UNDELIVERED);
