@@ -34,4 +34,10 @@ public interface DdgParentsAssignGoodsSkuService extends IService<DdgParentsAssi
      * @return 操作状态
      */
     Boolean cancelAssignGoodsSku(DdgParentsAssignGoodsSkuVO ddgParentsAssignGoodsSkuVO);
+
+    /**
+     * 通过订单编号关联分配儿童的商品信息
+     * @return 操作状态
+     */
+    DdgParentsAssignGoodsSku getAssignGoodsSkuByOrderSn(String orderSn);
 }

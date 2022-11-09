@@ -65,4 +65,15 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
         }
         return this.removeById(ddgParentsAssignGoodsList.get(0));
     }
+
+    /**
+     * 通过订单编号关联分配儿童的商品信息
+     *
+     * @param orderSn
+     * @return 操作状态
+     */
+    @Override
+    public DdgParentsAssignGoodsSku getAssignGoodsSkuByOrderSn(String orderSn) {
+        return baseMapper.getAssignGoodsSkuByOrderSn(orderSn);
+    }
 }
