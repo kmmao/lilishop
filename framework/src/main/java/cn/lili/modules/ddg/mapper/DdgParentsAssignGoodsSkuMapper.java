@@ -26,4 +26,13 @@ public interface DdgParentsAssignGoodsSkuMapper extends BaseMapper<DdgParentsAss
      */
     @Select("SELECT gs.*,dpags.is_gold_pay FROM ddg_parents_assign_goods_sku dpags LEFT JOIN  li_goods_sku gs ON gs.id = dpags.goods_sku_id ${ew.customSqlSegment}")
     IPage<GoodsSkuVO> getGoodsSkuByChildIdFormAssign(IPage<GoodsSkuVO> page, @Param(Constants.WRAPPER) Wrapper<GoodsSkuVO> queryWrapper);
+
+
+    /**
+     * 通过订单编号关联分配儿童的商品信息
+     * @param id
+     * @return
+     */
+    @Select("SELECT s.* from ddg_child_apply_buy b INNER JOIN ddg_parents_assign_goods_sku s on s.goods_sku_id = b.goods_sku_id where b.order_no = #{orderSn} limit 1")
+    DdgParentsAssignGoodsSku getAssignGoodsSkuByOrderSn(String orderSn);
 }

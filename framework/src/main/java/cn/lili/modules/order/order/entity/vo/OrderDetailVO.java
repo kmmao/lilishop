@@ -66,6 +66,11 @@ public class OrderDetailVO implements Serializable {
     private String paymentMethodValue;
 
     /**
+     * 售后订单编号
+     */
+    private String afterSaleSn;
+
+    /**
      * 发票
      */
     private Receipt receipt;

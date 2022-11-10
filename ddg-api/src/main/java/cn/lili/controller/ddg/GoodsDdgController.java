@@ -52,6 +52,12 @@ public class GoodsDdgController {
         return ResultUtil.data(ddgParentsAssignGoodsSkuService.cancelAssignGoodsSku(ddgParentsAssignGoodsSkuVO));
     }
 
+    @ApiOperation(value = "通过订单编号关联分配儿童的商品信息")
+    @GetMapping("/getAssignGoodsSkuByOrderSn")
+    public ResultMessage<Object> getGoodsSkuByChildIdFormAssign(String orderSn) {
+        return ResultUtil.data(ddgParentsAssignGoodsSkuService.getAssignGoodsSkuByOrderSn(orderSn));
+    }
+
     @ApiOperation(value = "通过儿童id获取商品分页列表")
     @GetMapping("/getGoodsSkuByChildIdFormAssign")
     public ResultMessage<IPage<GoodsSkuVO>> getGoodsSkuByChildIdFormAssign(GoodsDdgSearchParams searchParams) {

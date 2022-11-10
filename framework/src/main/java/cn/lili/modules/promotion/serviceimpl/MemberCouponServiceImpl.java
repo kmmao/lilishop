@@ -165,7 +165,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
      * @return 会员优惠券列表
      */
     @Override
-    @Cacheable(key = "#memberId")
+//    @Cacheable(key = "#memberId")
     public List<MemberCoupon> getMemberCoupons(String memberId) {
         MemberCouponSearchParams searchParams = new MemberCouponSearchParams();
 //        searchParams.setMemberId(Objects.requireNonNull(UserContext.getCurrentUser()).getId());
