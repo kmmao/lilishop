@@ -1,6 +1,7 @@
 package cn.lili.modules.order.aftersale.entity.vo;
 
 import cn.lili.modules.order.aftersale.entity.dos.AfterSale;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 /**
@@ -11,6 +12,13 @@ import lombok.Data;
  */
 @Data
 public class AfterSaleVO extends AfterSale {
+
+    /**
+     * @see cn.lili.modules.order.order.entity.enums.OrderStatusEnum
+     */
+    @ApiModelProperty(value = "订单状态")
+    private String orderStatus;
+
     /**
      * 初始化自身状态
      */

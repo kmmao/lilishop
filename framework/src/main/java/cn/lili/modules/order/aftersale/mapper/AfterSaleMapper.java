@@ -33,6 +33,6 @@ public interface AfterSaleMapper extends BaseMapper<AfterSale> {
      * @param sn 售后编号
      * @return 售后VO
      */
-    @Select("SELECT * FROM li_after_sale WHERE sn=#{sn}")
+    @Select("SELECT las.*,o.order_status FROM li_after_sale las LEFT JOIN li_order o ON las.order_sn = o.sn WHERE las.sn=#{sn}")
     AfterSaleVO getAfterSaleVO(String sn);
 }
