@@ -72,7 +72,7 @@ public interface OrderMapper extends BaseMapper<Order> {
             ",GROUP_CONCAT(oi.comment_status) as group_comment_status" +
             ",GROUP_CONCAT(oi.sn) as group_order_items_sn " +
             ",GROUP_CONCAT(oi.goods_price) as group_goods_price " +
-            " FROM li_order o LEFT JOIN li_order_item AS oi on o.sn = oi.order_sn LEFT JOIN li_after_sale AS las ON las.order_sn = oi.order_sn ${ew.customSqlSegment} ")
+            " FROM li_order o LEFT JOIN li_order_item AS oi on o.sn = oi.order_sn LEFT JOIN (SELECT order_sn,SUBSTRING_INDEX(GROUP_CONCAT(service_status),',',1) AS service_status FROM li_after_sale GROUP BY order_sn) AS las ON las.order_sn = oi.order_sn ${ew.customSqlSegment} ")
     IPage<OrderSimpleVO> queryByParams(IPage<OrderSimpleVO> page, @Param(Constants.WRAPPER) Wrapper<OrderSimpleVO> queryWrapper);
 
     /**
