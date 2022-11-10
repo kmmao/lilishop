@@ -61,17 +61,17 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return 简短订单分页
      */
     @Select("select o.sn,o.flow_price,o.create_time,o.order_status,o.pay_status,o.payment_method,o.payment_time,o.member_name,o.store_name as store_name,o.store_id as store_id,o.client_type,o.order_type,o.deliver_status,o.order_promotion_type " +
-            ",SUBSTRING_INDEX(GROUP_CONCAT(service_status),',',1) AS service_status" +
-            ",GROUP_CONCAT(oi.goods_id) as group_goods_id," +
-            " GROUP_CONCAT(oi.sku_id) as group_sku_id," +
-            " GROUP_CONCAT(oi.num) as group_num" +
-            ",GROUP_CONCAT(oi.image) as group_images" +
-            ",GROUP_CONCAT(oi.goods_name) as group_name " +
-            ",GROUP_CONCAT(oi.after_sale_status) as group_after_sale_status" +
-            ",GROUP_CONCAT(oi.complain_status) as group_complain_status" +
-            ",GROUP_CONCAT(oi.comment_status) as group_comment_status" +
-            ",GROUP_CONCAT(oi.sn) as group_order_items_sn " +
-            ",GROUP_CONCAT(oi.goods_price) as group_goods_price " +
+            ",SUBSTRING_INDEX(GROUP_CONCAT(service_status),',',-1) AS service_status" +
+            ",SUBSTRING_INDEX(GROUP_CONCAT( oi.goods_id ),',',1) AS group_goods_id," +
+            " SUBSTRING_INDEX(GROUP_CONCAT( oi.sku_id ),',',1) AS group_sku_id," +
+            " SUBSTRING_INDEX(GROUP_CONCAT( oi.num ),',',1) AS group_num," +
+            " SUBSTRING_INDEX(GROUP_CONCAT( oi.image ),',',1) AS group_images" +
+            ",SUBSTRING_INDEX(GROUP_CONCAT( oi.goods_name ),',',1) AS group_name " +
+            ",SUBSTRING_INDEX(GROUP_CONCAT( oi.after_sale_status ),',',1) AS group_after_sale_status" +
+            ",SUBSTRING_INDEX(GROUP_CONCAT( oi.complain_status ),',',1) AS group_complain_status" +
+            ",SUBSTRING_INDEX(GROUP_CONCAT( oi.comment_status ),',',1) AS group_comment_status" +
+            ",SUBSTRING_INDEX(GROUP_CONCAT( oi.sn ),',',1) AS group_order_items_sn " +
+            ",SUBSTRING_INDEX(GROUP_CONCAT( oi.goods_price ),',',1) AS group_goods_price " +
             " FROM li_order o LEFT JOIN li_order_item AS oi on o.sn = oi.order_sn LEFT JOIN (SELECT order_sn,service_status FROM li_after_sale) AS las ON las.order_sn = oi.order_sn ${ew.customSqlSegment} ")
     IPage<OrderSimpleVO> queryByParams(IPage<OrderSimpleVO> page, @Param(Constants.WRAPPER) Wrapper<OrderSimpleVO> queryWrapper);
 
