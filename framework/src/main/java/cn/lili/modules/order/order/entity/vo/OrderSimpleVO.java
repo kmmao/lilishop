@@ -110,6 +110,12 @@ public class OrderSimpleVO {
     private String groupAfterSaleStatus;
 
     /**
+     * @see cn.lili.modules.order.trade.entity.enums.AfterSaleStatusEnum
+     */
+    @ApiModelProperty(value = "售后单状态", allowableValues = "APPLY,PASS,REFUSE,BUYER_RETURN,SELLER_RE_DELIVERY,BUYER_CONFIRM,SELLER_CONFIRM,COMPLETE")
+    private String serviceStatus;
+
+    /**
      * @see cn.lili.modules.order.order.entity.enums.OrderComplaintStatusEnum
      */
     @ApiModelProperty(hidden = true, value = "item 投诉状态")

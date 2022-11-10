@@ -61,6 +61,7 @@ public interface OrderMapper extends BaseMapper<Order> {
      * @return 简短订单分页
      */
     @Select("select o.sn,o.flow_price,o.create_time,o.order_status,o.pay_status,o.payment_method,o.payment_time,o.member_name,o.store_name as store_name,o.store_id as store_id,o.client_type,o.order_type,o.deliver_status,o.order_promotion_type " +
+            ",GROUP_CONCAT(las.service_status) AS service_status," +
             ",GROUP_CONCAT(oi.goods_id) as group_goods_id," +
             " GROUP_CONCAT(oi.sku_id) as group_sku_id," +
             " GROUP_CONCAT(oi.num) as group_num" +
@@ -71,7 +72,7 @@ public interface OrderMapper extends BaseMapper<Order> {
             ",GROUP_CONCAT(oi.comment_status) as group_comment_status" +
             ",GROUP_CONCAT(oi.sn) as group_order_items_sn " +
             ",GROUP_CONCAT(oi.goods_price) as group_goods_price " +
-            " FROM li_order o LEFT JOIN li_order_item AS oi on o.sn = oi.order_sn ${ew.customSqlSegment} ")
+            " FROM li_order o LEFT JOIN li_order_item AS oi on o.sn = oi.order_sn LEFT JOIN li_after_sale AS las ON las.order_sn = oi.order_sn ${ew.customSqlSegment} ")
     IPage<OrderSimpleVO> queryByParams(IPage<OrderSimpleVO> page, @Param(Constants.WRAPPER) Wrapper<OrderSimpleVO> queryWrapper);
 
     /**
