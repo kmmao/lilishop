@@ -1,6 +1,9 @@
 package cn.lili.controller.ddg;
 
+import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.exception.ServiceException;
+import cn.lili.common.security.OperationalJudgment;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
@@ -12,14 +15,19 @@ import cn.lili.modules.ddg.service.DdgChildCollectService;
 import cn.lili.modules.ddg.service.DdgParentsAssignGoodsSkuService;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
 import cn.lili.modules.goods.entity.vos.GoodsSkuVO;
+import cn.lili.modules.goods.service.GoodsSkuService;
+import cn.lili.modules.order.aftersale.entity.vo.AfterSaleVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Allen
@@ -39,6 +47,8 @@ public class GoodsDdgController {
 
     @Autowired
     private DdgChildCollectService ddgChildCollectService;
+    @Autowired
+    private GoodsSkuService goodsSkuService;
 
     @ApiOperation(value = "商品分配接口")
     @PostMapping("/addAssignGoodsSku")
@@ -122,6 +132,26 @@ public class GoodsDdgController {
     @GetMapping("/getGoodsSkuByChildIdFormCollect")
     public ResultMessage<IPage<GoodsSku>> getGoodsSkuByChildIdFormCollect(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgChildCollectService.getGoodsSkuByChildIdFormCollect(searchParams));
+    }
+
+    @ApiOperation(value = "通过商品SKUID获取sku商品详情")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "goodsId", value = "商品ID", required = true),
+            @ApiImplicitParam(name = "skuId", value = "skuId", required = true)
+    })
+    @GetMapping(value = "getGoodsShareBySkuId")
+    public ResultMessage<Map<String, Object>> getGoodsShareBySkuId(String goodsId, String skuId) {
+        try {
+            // 读取选中的列表
+            Map<String, Object> map = goodsSkuService.getGoodsSkuDetail(goodsId, skuId);
+            return ResultUtil.data(map);
+        } catch (ServiceException se) {
+            log.info(se.getMsg(), se);
+            throw se;
+        } catch (Exception e) {
+            log.error(ResultCode.GOODS_ERROR.message(), e);
+            return ResultUtil.error(ResultCode.GOODS_ERROR);
+        }
     }
 
 }
