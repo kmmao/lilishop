@@ -18,10 +18,7 @@ import cn.lili.common.security.context.UserContext;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.security.token.Token;
 import cn.lili.common.sensitive.SensitiveWordsFilter;
-import cn.lili.common.utils.BeanUtil;
-import cn.lili.common.utils.CookieUtil;
-import cn.lili.common.utils.SnowFlake;
-import cn.lili.common.utils.UuidUtils;
+import cn.lili.common.utils.*;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.connect.config.ConnectAuthEnum;
 import cn.lili.modules.connect.entity.Connect;
@@ -126,6 +123,13 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
     }
 
     @Override
+    public Member findByMobile(String mobile) {
+        QueryWrapper<Member> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("mobile", mobile);
+        return this.baseMapper.selectOne(queryWrapper);
+    }
+
+    @Override
     public boolean findByMobile(String uuid, String mobile) {
         QueryWrapper<Member> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("mobile", mobile);
@@ -148,6 +152,46 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
         //判断密码是否输入正确
         if (!new BCryptPasswordEncoder().matches(password, member.getPassword())) {
             throw new ServiceException(ResultCode.USER_PASSWORD_ERROR);
+        }
+        loginBindUser(member);
+        return memberTokenGenerate.createToken(member, false);
+    }
+
+
+    @Override
+    public void resetPassword(List<String> ids) {
+        String password = new BCryptPasswordEncoder().encode(StringUtils.md5("123456"));
+        LambdaUpdateWrapper<Member> lambdaUpdateWrapper = Wrappers.lambdaUpdate();
+        lambdaUpdateWrapper.in(Member::getId, ids);
+        lambdaUpdateWrapper.set(Member::getPassword, password);
+        this.update(lambdaUpdateWrapper);
+    }
+
+    @Override
+    public void updateHaveShop(Boolean haveStore, String storeId, List<String> memberIds) {
+        List<Member> members = this.baseMapper.selectBatchIds(memberIds);
+        if (members.size() > 0) {
+            members.forEach(member -> {
+                member.setHaveStore(haveStore);
+                if (haveStore) {
+                    member.setStoreId(storeId);
+                } else {
+                    member.setStoreId(null);
+                }
+            });
+            this.updateBatchById(members);
+        }
+    }
+
+    @Override
+    public Token getTokenByMemberId(String memberId) {
+        if (StrUtil.isEmpty(memberId)) {
+            throw new ServiceException(ResultCode.USER_MEMBER_NOT_EXIST);
+        }
+        Member member = this.getById(memberId);
+        //判断用户是否存在
+        if (member == null || !member.getDisabled()) {
+            throw new ServiceException(ResultCode.USER_NOT_EXIST);
         }
         loginBindUser(member);
         return memberTokenGenerate.createToken(member, false);
@@ -331,7 +375,6 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
         return member;
     }
 
-    @Override
     @DemoSite
     public Member modifyPass(String oldPassword, String newPassword) {
         AuthUser tokenUser = UserContext.getCurrentUser();

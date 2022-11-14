@@ -4,6 +4,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import cn.lili.common.enums.ClientTypeEnum;
 import cn.lili.common.enums.PromotionTypeEnum;
+import cn.lili.common.security.sensitive.Sensitive;
+import cn.lili.common.security.sensitive.enums.SensitiveStrategy;
 import cn.lili.common.utils.BeanUtil;
 import cn.lili.modules.goods.entity.enums.GoodsTypeEnum;
 import cn.lili.modules.order.cart.entity.dto.MemberCouponDTO;
@@ -58,6 +60,7 @@ public class Order extends BaseEntity {
     private String memberId;
 
     @ApiModelProperty(value = "用户名")
+    @Sensitive(strategy = SensitiveStrategy.PHONE)
     private String memberName;
 
     /**
@@ -204,9 +207,11 @@ public class Order extends BaseEntity {
     @ApiModelProperty(value = "使用的平台会员优惠券id")
     private String usePlatformMemberCouponId;
 
+
+    @ApiModelProperty(value = "qrCode  实物为提货码  虚拟货物为账号")
+    private String qrCode;
     @ApiModelProperty(value = "儿童ID")
     private String childId;
-
     /**
      * 构建订单
      *
