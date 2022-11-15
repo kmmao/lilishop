@@ -82,6 +82,9 @@ public class Bill extends BaseIdEntity {
     @ApiModelProperty(value = "退单金额")
     private Double refundPrice;
 
+    @ApiModelProperty(value = "已支付未确认收货金额")
+    private Double uncompletedPrice;
+
     @ApiModelProperty(value = "平台收取佣金")
     private Double commissionPrice;
 

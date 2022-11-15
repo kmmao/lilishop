@@ -546,6 +546,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         orderItemService.update(new UpdateWrapper<OrderItem>().eq(ORDER_SN_COLUMN, orderSn)
                 .set("comment_status", CommentStatusEnum.UNFINISHED));
         this.update(new LambdaUpdateWrapper<Order>().eq(Order::getSn, orderSn).set(Order::getCompleteTime, new Date()));
+        //TODO lk 这里可能要处理结算的未完成结算订单信息。
+        storeFlowService.update(new UpdateWrapper<StoreFlow>().eq(ORDER_SN_COLUMN,orderSn)
+                .set("flow_type",FlowTypeEnum.PAY).set("create_time",new Date()));
         //发送订单状态改变消息
         OrderMessage orderMessage = new OrderMessage();
         orderMessage.setNewStatus(OrderStatusEnum.COMPLETED);

@@ -75,7 +75,7 @@ public class StoreFlowServiceImpl extends ServiceImpl<StoreFlowMapper, StoreFlow
 
         //循环子订单记录流水
         for (OrderItem item : orderItems) {
-            StoreFlow storeFlow = new StoreFlow(order, item, FlowTypeEnum.PAY);
+            StoreFlow storeFlow = new StoreFlow(order, item, FlowTypeEnum.UNCOMPLETED);
             //添加付款交易流水
             this.save(storeFlow);
         }
@@ -108,8 +108,7 @@ public class StoreFlowServiceImpl extends ServiceImpl<StoreFlowMapper, StoreFlow
 
 
         //获取付款信息
-        StoreFlow payStoreFlow = this.getOne(new LambdaUpdateWrapper<StoreFlow>().eq(StoreFlow::getOrderItemSn, afterSale.getOrderItemSn())
-                .eq(StoreFlow::getFlowType, FlowTypeEnum.PAY));
+        StoreFlow payStoreFlow = this.getOne(new LambdaUpdateWrapper<StoreFlow>().eq(StoreFlow::getOrderItemSn, afterSale.getOrderItemSn()));
         //申请商品退款数量
         storeFlow.setNum(afterSale.getNum());
         //分类ID
