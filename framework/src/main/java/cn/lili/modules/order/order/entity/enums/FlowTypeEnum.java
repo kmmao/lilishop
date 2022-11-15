@@ -13,7 +13,7 @@ public enum FlowTypeEnum {
      * 流水类型
      */
     PAY("支付"),
-    UNCOMPLETED("已支付未确认收货"),
+    UNCOMPLETED("已支付未确认"),
     REFUND("退款");
 
     private final String description;
