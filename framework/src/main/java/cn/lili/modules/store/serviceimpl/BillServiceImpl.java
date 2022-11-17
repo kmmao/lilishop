@@ -133,7 +133,7 @@ public class BillServiceImpl extends ServiceImpl<BillMapper, Bill> implements Bi
         }
         // uncompletedPrice 已支付未确认收货金额 不做为最终结算金额来进行计算
         List<StoreFlow> storeFlowList = storeFlowService
-                .listStoreFlow(StoreFlowQueryDTO.builder().type(FlowTypeEnum.UNCOMPLETED.name()).build());
+                .listStoreFlow(StoreFlowQueryDTO.builder().type(FlowTypeEnum.UNCOMPLETED.name()).storeId(storeId).build());
         if (storeFlowList != null && storeFlowList.size() > 0) {
             bill.setUncompletedPrice(storeFlowList.stream().mapToDouble(StoreFlow::getFinalPrice).sum());
         }

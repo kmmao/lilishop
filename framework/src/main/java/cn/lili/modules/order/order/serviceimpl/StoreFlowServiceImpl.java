@@ -200,6 +200,9 @@ public class StoreFlowServiceImpl extends ServiceImpl<StoreFlowMapper, StoreFlow
         //售后编号判定
         lambdaQueryWrapper.eq(CharSequenceUtil.isNotEmpty(storeFlowQueryDTO.getOrderSn()),
                 StoreFlow::getOrderSn, storeFlowQueryDTO.getOrderSn());
+        //店铺ID
+        lambdaQueryWrapper.eq(CharSequenceUtil.isNotEmpty(storeFlowQueryDTO.getStoreId()),
+                StoreFlow::getStoreId, storeFlowQueryDTO.getStoreId());
 
         //结算单非空，则校对结算单参数
         if (storeFlowQueryDTO.getBill() != null) {
