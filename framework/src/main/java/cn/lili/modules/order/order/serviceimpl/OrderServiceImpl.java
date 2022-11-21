@@ -881,6 +881,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         List<OrderItem> items = orderItemService.getByOrderSn(order.getSn());
         List<StoreFlow> storeFlows = new ArrayList<>();
         for (OrderItem item : items) {
+            //TODO lk 转化已支付未确认的订单为已支付，做为跟已退款的做对冲订单
+            storeFlowService.update(new UpdateWrapper<StoreFlow>().eq(ORDER_SN_COLUMN,item.getOrderSn()).eq("flow_type",FlowTypeEnum.UNCOMPLETED.name())
+                    .set("flow_type",FlowTypeEnum.PAY).set("create_time",new Date()));
             StoreFlow storeFlow = new StoreFlow(order, item, FlowTypeEnum.REFUND);
             storeFlows.add(storeFlow);
         }
