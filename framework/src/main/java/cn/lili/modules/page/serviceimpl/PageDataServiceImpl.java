@@ -1,7 +1,6 @@
 package cn.lili.modules.page.serviceimpl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.lili.common.enums.ClientTypeEnum;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.SwitchEnum;
@@ -98,8 +97,8 @@ public class PageDataServiceImpl extends ServiceImpl<PageDataMapper, PageData> i
             LambdaUpdateWrapper<PageData> lambdaUpdateWrapper = Wrappers.lambdaUpdate();
             lambdaUpdateWrapper.eq(CharSequenceUtil.isNotEmpty(pageData.getPageType()), PageData::getPageType, pageData.getPageType());
             lambdaUpdateWrapper.eq(CharSequenceUtil.isNotEmpty(pageData.getPageClientType()), PageData::getPageClientType, pageData.getPageClientType());
+            lambdaUpdateWrapper.eq(PageData::getNum, pageData.getNum());
             lambdaUpdateWrapper.set(PageData::getPageShow, SwitchEnum.CLOSE.name());
-            lambdaUpdateWrapper.set(StrUtil.isNotEmpty(pageData.getNum()), PageData::getNum, SwitchEnum.CLOSE.name());
             this.update(lambdaUpdateWrapper);
         } else {
             pageData.setPageShow(SwitchEnum.CLOSE.name());
