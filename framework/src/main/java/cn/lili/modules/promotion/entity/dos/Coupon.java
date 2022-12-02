@@ -1,5 +1,6 @@
 package cn.lili.modules.promotion.entity.dos;
 
+import cn.lili.modules.promotion.entity.enums.CouponGetEnum;
 import cn.lili.modules.promotion.entity.enums.CouponRangeDayEnum;
 import cn.lili.modules.promotion.entity.enums.PromotionsStatusEnum;
 import cn.lili.modules.promotion.entity.vos.CouponVO;
@@ -97,7 +98,7 @@ public class Coupon extends BasePromotions {
     @Override
     public String getPromotionStatus() {
         if (this.rangeDayType != null && this.rangeDayType.equals(CouponRangeDayEnum.DYNAMICTIME.name())
-                && (this.effectiveDays != null && this.effectiveDays > 0 && this.effectiveDays <= 365)) {
+                && (this.effectiveDays != null && this.effectiveDays > 0 && this.effectiveDays <= 365) && this.getType.equals(CouponGetEnum.ACTIVITY.name())) {
             return PromotionsStatusEnum.START.name();
         }
         return super.getPromotionStatus();
