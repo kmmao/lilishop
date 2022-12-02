@@ -360,7 +360,10 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
         this.save(memberCoupon);
         couponService.receiveCoupon(couponId, 1);
         //添加儿童与优惠券关联表
-        ddgChildUnionCoupon.setMemberCouponId(memberCoupon.getId());
-        ddgChildUnionCouponService.save(ddgChildUnionCoupon);
+        if (ddgChildUnionCoupon != null) {
+            ddgChildUnionCoupon.setMemberCouponId(memberCoupon.getId());
+            ddgChildUnionCouponService.save(ddgChildUnionCoupon);
+        }
+
     }
 }
