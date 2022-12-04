@@ -3,12 +3,14 @@ package cn.lili.modules.member.serviceimpl;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.aop.annotation.DemoSite;
 import cn.lili.common.context.ThreadContextHolder;
 import cn.lili.common.enums.ResultCode;
+import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.enums.SwitchEnum;
 import cn.lili.common.event.TransactionCommitSendMQEvent;
 import cn.lili.common.exception.ServiceException;
@@ -279,6 +281,22 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
             return registerHandler(menber);
         } else {
             return menber.getId();
+        }
+    }
+
+    /**
+     * 嘟嘟罐用户注销
+     *
+     * @param memberId 用户ID
+     * @return ddgId
+     */
+    @Override
+    public void ddgUserCancel(String memberId) {
+        Member member = getById(memberId);
+        if (ObjectUtil.isNotEmpty(member)) {
+            member.setMobile(member.getMobile()+"_cancel");
+            member.setDeleteFlag(true);
+            updateById(member);
         }
     }
 

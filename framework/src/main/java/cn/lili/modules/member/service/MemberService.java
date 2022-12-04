@@ -1,6 +1,7 @@
 package cn.lili.modules.member.service;
 
 
+import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.security.token.Token;
 import cn.lili.common.vo.PageVO;
@@ -98,6 +99,14 @@ public interface MemberService extends IService<Member> {
      * @return ddgId
      */
     String mobilePhoneLoginByDdgId(String mobilePhone,String ddgId);
+
+    /**
+     * 嘟嘟罐用户注销
+     *
+     * @param memberId 用户ID
+     * @return ddgId
+     */
+    void ddgUserCancel(String memberId);
 
     /**
      *

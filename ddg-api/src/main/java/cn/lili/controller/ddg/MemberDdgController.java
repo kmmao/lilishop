@@ -41,6 +41,17 @@ public class MemberDdgController {
         return ResultUtil.data(memberService.mobilePhoneLoginByDdgId(mobile, ddgId));
     }
 
+
+    @ApiOperation(value = "嘟嘟罐用户注销")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "memberId", value = "用户ID", required = true, paramType = "query")
+    })
+    @PostMapping("/ddgUserCancel")
+    public ResultMessage<Object> ddgUserCancel(@NotNull(message = "手机号为空") @RequestParam String memberId) {
+        memberService.ddgUserCancel(memberId);
+        return ResultUtil.data("注销成功");
+    }
+
     @ApiOperation(value = "嘟嘟罐用户删除")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "ddgId", value = "嘟嘟罐ID", required = true, paramType = "query")
