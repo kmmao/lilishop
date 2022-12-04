@@ -142,7 +142,7 @@ public class OrderSearchParams extends PageVO {
         wrapper.like(CharSequenceUtil.isNotEmpty(memberId), "o.member_id", memberId);
 
         //按照儿童ID查询
-        wrapper.like(CharSequenceUtil.isNotEmpty(childId), "o.child_id", childId);
+        wrapper.eq(CharSequenceUtil.isNotEmpty(childId), "o.child_id", childId);
 
         //按订单编号查询
         wrapper.like(CharSequenceUtil.isNotEmpty(orderSn), "o.sn", orderSn);

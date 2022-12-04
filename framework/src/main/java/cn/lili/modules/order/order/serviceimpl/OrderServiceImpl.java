@@ -364,6 +364,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return this.getOne(new LambdaQueryWrapper<Order>().eq(Order::getSn, orderSn));
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void payOrder(String orderSn, String paymentMethod, String receivableNo) {
@@ -545,6 +546,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         orderItemService.update(new UpdateWrapper<OrderItem>().eq(ORDER_SN_COLUMN, orderSn)
                 .set("comment_status", CommentStatusEnum.UNFINISHED));
         this.update(new LambdaUpdateWrapper<Order>().eq(Order::getSn, orderSn).set(Order::getCompleteTime, new Date()));
+        //TODO lk 这里可能要处理结算的未完成结算订单信息。
+        storeFlowService.update(new UpdateWrapper<StoreFlow>().eq(ORDER_SN_COLUMN,orderSn)
+                .set("flow_type",FlowTypeEnum.PAY).set("create_time",new Date()));
         //发送订单状态改变消息
         OrderMessage orderMessage = new OrderMessage();
         orderMessage.setNewStatus(OrderStatusEnum.COMPLETED);
@@ -877,6 +881,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         List<OrderItem> items = orderItemService.getByOrderSn(order.getSn());
         List<StoreFlow> storeFlows = new ArrayList<>();
         for (OrderItem item : items) {
+            //TODO lk 转化已支付未确认的订单为已支付，做为跟已退款的做对冲订单
+            storeFlowService.update(new UpdateWrapper<StoreFlow>().eq(ORDER_SN_COLUMN,item.getOrderSn()).eq("flow_type",FlowTypeEnum.UNCOMPLETED.name())
+                    .set("flow_type",FlowTypeEnum.PAY).set("create_time",new Date()));
             StoreFlow storeFlow = new StoreFlow(order, item, FlowTypeEnum.REFUND);
             storeFlows.add(storeFlow);
         }

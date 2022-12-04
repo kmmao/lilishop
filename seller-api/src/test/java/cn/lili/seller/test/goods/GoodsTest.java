@@ -56,7 +56,7 @@ class GoodsTest {
     }
 
     @Test
-    void getGoods(){
+    void getGoods() {
         GoodsSearchParams goodsSearchParams = new GoodsSearchParams();
         goodsSearchParams.setGoodsName("儿童计数竹节跳儿园专用可调节计数跳绳软珠节初学者跳绳");
         List<Goods> goods = goodsService.queryListByParams(goodsSearchParams);
@@ -95,24 +95,28 @@ class GoodsTest {
             }
         };
         String result1 = HttpRequest.post(goods_url).body(JSONUtil.toJsonStr(sortedMap)).execute().body();
-//        System.out.println(result1);
+        System.out.println(result1);
         JSONObject goodObject = (JSONObject) JSONUtil.parseObj(result1).get("data");
         JSONArray good_list = goodObject.getJSONArray("list");
 
         ExcelReader reader = ExcelUtil.getReader("/Users/allen/Documents/GitHub/lilishop/seller-api/src/test/java/cn/lili/seller/test/goods/import.xlsx");
         List<CategoryVo> all = reader.readAll(CategoryVo.class);
-        Map<String, String> readerMap = all.stream().collect(Collectors.toMap(CategoryVo::getGoodId, CategoryVo::getLevel_third,(oldValue, newValue) -> oldValue,
+        Map<String, String> readerMap = all.stream().collect(Collectors.toMap(CategoryVo::getGoodId, CategoryVo::getLevel_third, (oldValue, newValue) -> oldValue,
                 LinkedHashMap::new));
 
         for (int i = 0; i < good_list.size(); i++) {
             GoodsOperationDTO goodsOperationDTO = new GoodsOperationDTO();
             JSONObject good_item = (JSONObject) good_list.get(i);
 
-            GoodsSearchParams goodsSearchParams = new GoodsSearchParams();
-            goodsSearchParams.setGoodsName(good_item.getStr("storeName"));
-            List<Goods> goods = goodsService.queryListByParams(goodsSearchParams);
-            if(goods.size() > 0)
-                continue;
+            // 测试专用
+//            if(!good_item.getStr("id").equals("1701"))
+//                continue;
+
+//            GoodsSearchParams goodsSearchParams = new GoodsSearchParams();
+//            goodsSearchParams.setGoodsName(good_item.getStr("storeName"));
+//            List<Goods> goods = goodsService.queryListByParams(goodsSearchParams);
+//            if(goods.size() > 0)
+//                continue;
 
             Map paramMap = new HashMap();
             paramMap.put("goodsId", good_item.getStr("id"));
@@ -147,6 +151,7 @@ class GoodsTest {
                 Map<String, Object> sku = new HashMap<>();
                 JSONObject productValue = (JSONObject) productValueObject.get(s);
                 if (productValue == null) {
+                    System.out.println("productValue空报错goodsId：" + good_item.getStr("id"));
                     continue;
                 }
                 if (StringUtils.isEmpty(productValue.getStr("barCode"))) {
@@ -180,8 +185,11 @@ class GoodsTest {
                 }
                 sku.put("images", imagesArray);
                 String[] valueArray = s.split("/");
-                if(valueArray.length!=skuAttrList.length)
+                if (valueArray.length != skuAttrList.length)
+                {
+                    System.out.println("valueArray与skuAttrList值不相等报错goodsId：" + good_item.getStr("id"));
                     continue;
+                }
                 for (int k = 0; k < skuAttrList.length; k++) {
                     sku.put(skuAttrList[k], valueArray[k]);
                 }
@@ -192,17 +200,31 @@ class GoodsTest {
 
             String categoryName = readerMap.get(good_item.getStr("id"));
             if (StrUtil.isEmpty(categoryName))
+            {
+                System.out.println("categoryName空报错goodsId：" + good_item.getStr("id"));
                 continue;
+            }
+
             if (!MapList.containsKey(categoryName)) {
                 Category category = new Category();
                 category.setName(categoryName);
                 List<Category> byAllBySortOrder = categoryService.findByAllBySortOrder(category);
-                if(byAllBySortOrder==null || byAllBySortOrder.size() <= 0)
+                if (byAllBySortOrder == null || byAllBySortOrder.size() <= 0){
+                    System.out.println("byAllBySortOrder空报错goodsId：" + good_item.getStr("id"));
                     continue;
+                }
                 String level_third = byAllBySortOrder.get(0).getId();
                 Category second_category = categoryService.getCategoryById(byAllBySortOrder.get(0).getParentId());
+                if (second_category == null){
+                    System.out.println("second_category空报错goodsId：" + good_item.getStr("id"));
+                    continue;
+                }
                 String level_second = second_category.getId();
-                Category first_category = categoryService.getCategoryById(byAllBySortOrder.get(0).getParentId());
+                Category first_category = categoryService.getCategoryById(second_category.getParentId());
+                if (first_category == null){
+                    System.out.println("first_category空报错goodsId：" + good_item.getStr("id"));
+                    continue;
+                }
                 String level_first = first_category.getId();
                 String path = level_first + "," + level_second + "," + level_third;
                 MapList.put(categoryName, path);
@@ -241,6 +263,7 @@ class GoodsTest {
             goodsOperationDTO.setGoodsType("PHYSICAL_GOODS");
             goodsOperationDTO.setSkuList(skuList);
             if (goodsOperationDTO.getSkuList() == null || goodsOperationDTO.getSkuList().isEmpty()) {
+                System.out.println("SKu列表不存在报错goodsId：" + good_item.getStr("id"));
                 continue;
             }
 
@@ -248,4 +271,13 @@ class GoodsTest {
             goodsService.addGoods(goodsOperationDTO);
         }
     }
+
+    /**
+     * 处理商品分类ID的问题
+     */
+    @Test
+    void fixGoodsSkuCategoryPath() {
+
+    }
+
 }

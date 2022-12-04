@@ -69,7 +69,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     private Cache cache;
 
     @Override
-    public void checkCouponLimit(String couponId, String memberId, String childId) {
+    public void checkCouponLimit(String couponId, String memberId, DdgChildUnionCoupon ddgChildUnionCoupon) {
         Coupon coupon = couponService.getById(couponId);
         LambdaQueryWrapper<MemberCoupon> queryWrapper = new LambdaQueryWrapper<MemberCoupon>()
                 .eq(MemberCoupon::getCouponId, couponId)
@@ -82,9 +82,9 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
             throw new ServiceException(ResultCode.COUPON_NUM_INSUFFICIENT_ERROR);
         }
 
-        if (StrUtil.isNotEmpty(childId)) {
+        if (ddgChildUnionCoupon != null) {
             GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
-            goodsDdgSearchParams.setChildId(childId);
+            goodsDdgSearchParams.setChildId(ddgChildUnionCoupon.getChildId());
             goodsDdgSearchParams.setCouponId(couponId);
             IPage<Coupon> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(goodsDdgSearchParams);
             if (null != couponByChildId) {
@@ -351,7 +351,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     }
 
     private void receiverCoupon(String couponId, String memberId, String memberName, Coupon coupon, DdgChildUnionCoupon ddgChildUnionCoupon) {
-        this.checkCouponLimit(couponId, memberId, ddgChildUnionCoupon.getChildId());
+        this.checkCouponLimit(couponId, memberId, ddgChildUnionCoupon);
         MemberCoupon memberCoupon = new MemberCoupon(coupon);
         memberCoupon.setMemberId(memberId);
         memberCoupon.setMemberName(memberName);
@@ -360,7 +360,10 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
         this.save(memberCoupon);
         couponService.receiveCoupon(couponId, 1);
         //添加儿童与优惠券关联表
-        ddgChildUnionCoupon.setMemberCouponId(memberCoupon.getId());
-        ddgChildUnionCouponService.save(ddgChildUnionCoupon);
+        if (ddgChildUnionCoupon != null) {
+            ddgChildUnionCoupon.setMemberCouponId(memberCoupon.getId());
+            ddgChildUnionCouponService.save(ddgChildUnionCoupon);
+        }
+
     }
 }

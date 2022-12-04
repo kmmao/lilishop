@@ -2,6 +2,8 @@ package cn.lili.modules.order.order.entity.vo;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.common.enums.ClientTypeEnum;
+import cn.lili.common.security.sensitive.Sensitive;
+import cn.lili.common.security.sensitive.enums.SensitiveStrategy;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -53,6 +55,7 @@ public class OrderSimpleVO {
     private Date paymentTime;
 
     @ApiModelProperty(value = "用户名")
+    @Sensitive(strategy = SensitiveStrategy.PHONE)
     private String memberName;
 
     @ApiModelProperty(value = "店铺名称")
@@ -105,6 +108,12 @@ public class OrderSimpleVO {
     @ApiModelProperty(hidden = true, value = "item 售后状态", allowableValues = "NOT_APPLIED(未申请),ALREADY_APPLIED(已申请),EXPIRED(已失效不允许申请售后)")
     @Setter
     private String groupAfterSaleStatus;
+
+    /**
+     * @see cn.lili.modules.order.trade.entity.enums.AfterSaleStatusEnum
+     */
+    @ApiModelProperty(value = "售后单状态", allowableValues = "APPLY,PASS,REFUSE,BUYER_RETURN,SELLER_RE_DELIVERY,BUYER_CONFIRM,SELLER_CONFIRM,COMPLETE")
+    private String serviceStatus;
 
     /**
      * @see cn.lili.modules.order.order.entity.enums.OrderComplaintStatusEnum

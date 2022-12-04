@@ -25,6 +25,7 @@ public class CouponSearchParams extends BasePromotionsSearchParams implements Se
 
     private static final String PRICE_COLUMN = "price";
     private static final String RANGE_DAY_TYPE_COLUMN = "range_day_type";
+    private static final String GET_TYPE_COLUMN = "get_type";
 
     @ApiModelProperty(value = "会员id")
     private String memberId;
@@ -92,7 +93,7 @@ public class CouponSearchParams extends BasePromotionsSearchParams implements Se
                         break;
                     case START:
                         p.nested(i -> i.le(PromotionTools.START_TIME_COLUMN, new Date()).ge(PromotionTools.END_TIME_COLUMN, new Date()))
-                                .or(i -> i.gt("effective_days", 0).eq(RANGE_DAY_TYPE_COLUMN, CouponRangeDayEnum.DYNAMICTIME.name()));
+                                .or(i -> i.gt("effective_days", 0).eq(RANGE_DAY_TYPE_COLUMN, CouponRangeDayEnum.DYNAMICTIME.name()).eq(GET_TYPE_COLUMN,CouponGetEnum.ACTIVITY.name()));
                         break;
                     case END:
                         p.nested(i -> i.lt(PromotionTools.START_TIME_COLUMN, new Date()).lt(PromotionTools.END_TIME_COLUMN, new Date()));
