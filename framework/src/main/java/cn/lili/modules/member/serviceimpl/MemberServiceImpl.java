@@ -4,6 +4,7 @@ package cn.lili.modules.member.serviceimpl;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
@@ -56,10 +57,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -324,7 +322,9 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
     public void ddgUserCancel(String memberId) {
         Member member = getById(memberId);
         if (ObjectUtil.isNotEmpty(member)) {
-            member.setMobile(member.getMobile()+"_cancel");
+            member.setMobile(member.getMobile()+"_cancel"+ RandomUtil.randomNumbers(6));
+            member.setUsername(member.getMobile()+"_cancel"+ RandomUtil.randomNumbers(6));
+            member.setNickName(member.getMobile()+"_cancel"+ RandomUtil.randomNumbers(6));
             member.setDeleteFlag(true);
             updateById(member);
         }
