@@ -17,10 +17,14 @@ public class MemberCouponVO extends MemberCoupon {
 
     @ApiModelProperty(value = "无法使用原因")
     private String reason;
+
+    @ApiModelProperty(value = "折扣-与discount一致")
+    private Double couponDiscount;
     
     public MemberCouponVO(MemberCoupon memberCoupon, String reason) {
         BeanUtil.copyProperties(memberCoupon, this);
         this.reason = reason;
+        this.couponDiscount = memberCoupon.getDiscount();
     }
 
     public MemberCouponVO(){
