@@ -322,9 +322,9 @@ public class MemberServiceImpl extends ServiceImpl<MemberMapper, Member> impleme
     public void ddgUserCancel(String memberId) {
         Member member = getById(memberId);
         if (ObjectUtil.isNotEmpty(member)) {
-            member.setMobile(member.getMobile()+"_cancel"+ RandomUtil.randomNumbers(6));
-            member.setUsername(member.getMobile()+"_cancel"+ RandomUtil.randomNumbers(6));
-            member.setNickName(member.getMobile()+"_cancel"+ RandomUtil.randomNumbers(6));
+            member.setMobile(member.getMobile()+"_cancel_"+ RandomUtil.randomNumbers(6));
+            member.setUsername(member.getMobile()+"_cancel_"+ RandomUtil.randomNumbers(6));
+            member.setNickName(member.getMobile()+"_cancel_"+ RandomUtil.randomNumbers(6));
             member.setDeleteFlag(true);
             updateById(member);
         }
