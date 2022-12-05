@@ -12,6 +12,7 @@ import cn.lili.modules.promotion.entity.dto.search.CouponSearchParams;
 import cn.lili.modules.promotion.entity.enums.CouponGetEnum;
 import cn.lili.modules.promotion.entity.enums.PromotionsStatusEnum;
 import cn.lili.modules.promotion.entity.vos.CouponVO;
+import cn.lili.modules.promotion.entity.vos.MemberCouponVO;
 import cn.lili.modules.promotion.service.CouponService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
@@ -57,7 +58,7 @@ public class CouponDdgController {
 
     @ApiOperation(value = "通过儿童id获取儿童已领取的优惠券分页列表")
     @GetMapping("/getCouponByChildId")
-    public ResultMessage<IPage<Coupon>> getCouponByChildId(GoodsDdgSearchParams searchParams) {
+    public ResultMessage<IPage<MemberCouponVO>> getCouponByChildId(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgChildUnionCouponService.getCouponByChildId(searchParams));
     }
 

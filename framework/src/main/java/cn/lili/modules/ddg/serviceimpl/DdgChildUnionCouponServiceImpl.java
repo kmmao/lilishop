@@ -22,6 +22,7 @@ import cn.lili.modules.promotion.entity.dos.Coupon;
 import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import cn.lili.modules.promotion.entity.enums.CouponTypeEnum;
 import cn.lili.modules.promotion.entity.enums.PromotionsScopeTypeEnum;
+import cn.lili.modules.promotion.entity.vos.MemberCouponVO;
 import cn.lili.modules.promotion.service.CouponService;
 import cn.lili.modules.promotion.service.MemberCouponService;
 import cn.lili.mybatis.util.PageUtil;
@@ -62,8 +63,8 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     }
 
     @Override
-    public IPage<Coupon> getCouponByChildId(GoodsDdgSearchParams searchParams) {
-        return this.baseMapper.getCouponByChildId(PageUtil.initPage(searchParams), searchParams.queryCouponWrapper(), searchParams.getChildId());
+    public IPage<MemberCouponVO> getCouponByChildId(GoodsDdgSearchParams searchParams) {
+        return this.baseMapper.getCouponByChildId(PageUtil.initPage(searchParams), searchParams.queryMemberCouponWrapper());
     }
 
     @Override

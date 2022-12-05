@@ -3,6 +3,8 @@ package cn.lili.modules.ddg.mapper;
 
 import cn.lili.modules.ddg.entity.dos.DdgChildUnionCoupon;
 import cn.lili.modules.promotion.entity.dos.Coupon;
+import cn.lili.modules.promotion.entity.dos.MemberCoupon;
+import cn.lili.modules.promotion.entity.vos.MemberCouponVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,6 +26,6 @@ public interface DdgChildUnionCouponMapper extends BaseMapper<DdgChildUnionCoupo
      *
      * @return
      */
-    @Select("SELECT c.* FROM ddg_child_union_coupon dcuc INNER JOIN li_member_coupon mc ON dcuc.member_coupon_id = mc.id LEFT JOIN li_coupon c ON c.id = mc.coupon_id ${ew.customSqlSegment}")
-    IPage<Coupon> getCouponByChildId(Page<Coupon> initPage, @Param(Constants.WRAPPER) QueryWrapper<Coupon> queryCouponWrapper, String childId);
+    @Select("SELECT mc.* FROM ddg_child_union_coupon dcuc INNER JOIN li_member_coupon mc ON dcuc.member_coupon_id = mc.id ${ew.customSqlSegment}")
+    IPage<MemberCouponVO> getCouponByChildId(Page<MemberCouponVO> initPage, @Param(Constants.WRAPPER) QueryWrapper<MemberCouponVO> queryMemberCouponWrapper);
 }

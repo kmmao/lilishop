@@ -22,6 +22,7 @@ import cn.lili.modules.promotion.entity.enums.CouponGetEnum;
 import cn.lili.modules.promotion.entity.enums.MemberCouponStatusEnum;
 import cn.lili.modules.promotion.entity.enums.PromotionsScopeTypeEnum;
 import cn.lili.modules.promotion.entity.enums.PromotionsStatusEnum;
+import cn.lili.modules.promotion.entity.vos.MemberCouponVO;
 import cn.lili.modules.promotion.mapper.MemberCouponMapper;
 import cn.lili.modules.promotion.service.CouponService;
 import cn.lili.modules.promotion.service.MemberCouponService;
@@ -86,7 +87,7 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
             GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
             goodsDdgSearchParams.setChildId(ddgChildUnionCoupon.getChildId());
             goodsDdgSearchParams.setCouponId(couponId);
-            IPage<Coupon> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(goodsDdgSearchParams);
+            IPage<MemberCouponVO> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(goodsDdgSearchParams);
             if (null != couponByChildId) {
                 haveCoupons = couponByChildId.getRecords().size();
             } else {

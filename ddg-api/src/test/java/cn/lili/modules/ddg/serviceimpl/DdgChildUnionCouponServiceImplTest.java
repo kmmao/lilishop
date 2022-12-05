@@ -6,6 +6,7 @@ import cn.lili.modules.ddg.service.DdgChildUnionCouponService;
 import cn.lili.modules.promotion.entity.dos.Coupon;
 import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import cn.lili.modules.promotion.entity.enums.MemberCouponStatusEnum;
+import cn.lili.modules.promotion.entity.vos.MemberCouponVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ class DdgChildUnionCouponServiceImplTest {
         GoodsDdgSearchParams searchParams = new GoodsDdgSearchParams();
         searchParams.setChildId("1535195481096314881");
         searchParams.setMemberCouponStatus(MemberCouponStatusEnum.USED.name());
-        IPage<Coupon> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(searchParams);
+        IPage<MemberCouponVO> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(searchParams);
         System.out.println(JSONUtil.toJsonStr(couponByChildId));
     }
 

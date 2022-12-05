@@ -5,6 +5,7 @@ import cn.lili.modules.ddg.entity.dto.GoodsDdgSearchParams;
 import cn.lili.modules.ddg.entity.vo.DdgChildUnionCouponVO;
 import cn.lili.modules.promotion.entity.dos.Coupon;
 import cn.lili.modules.promotion.entity.dos.MemberCoupon;
+import cn.lili.modules.promotion.entity.vos.MemberCouponVO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -27,7 +28,7 @@ public interface DdgChildUnionCouponService extends IService<DdgChildUnionCoupon
      * 通过儿童id获取儿童已领取的优惠券分页列表
      * @return
      */
-    IPage<Coupon> getCouponByChildId(GoodsDdgSearchParams searchParams);
+    IPage<MemberCouponVO> getCouponByChildId(GoodsDdgSearchParams searchParams);
 
     /**
      * 下单最优优惠券选择
