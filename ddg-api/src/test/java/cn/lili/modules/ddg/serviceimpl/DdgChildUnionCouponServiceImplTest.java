@@ -24,7 +24,8 @@ class DdgChildUnionCouponServiceImplTest {
     void getCouponByChildId() {
         GoodsDdgSearchParams searchParams = new GoodsDdgSearchParams();
         searchParams.setChildId("1535195481096314881");
-        searchParams.setMemberCouponStatus(MemberCouponStatusEnum.USED.name());
+        searchParams.setParentId("1535182572286844929");
+        searchParams.setMemberCouponStatus(MemberCouponStatusEnum.NEW.name());
         IPage<MemberCouponVO> couponByChildId = ddgChildUnionCouponService.getCouponByChildId(searchParams);
         System.out.println(JSONUtil.toJsonStr(couponByChildId));
     }

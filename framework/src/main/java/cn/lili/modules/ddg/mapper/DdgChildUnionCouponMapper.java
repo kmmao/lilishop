@@ -26,6 +26,6 @@ public interface DdgChildUnionCouponMapper extends BaseMapper<DdgChildUnionCoupo
      *
      * @return
      */
-    @Select("SELECT mc.* FROM ddg_child_union_coupon dcuc INNER JOIN li_member_coupon mc ON dcuc.member_coupon_id = mc.id ${ew.customSqlSegment}")
+    @Select("SELECT mc.*,mc.discount AS couponDiscount FROM ddg_child_union_coupon dcuc INNER JOIN li_member_coupon mc ON dcuc.member_coupon_id = mc.id ${ew.customSqlSegment}")
     IPage<MemberCouponVO> getCouponByChildId(Page<MemberCouponVO> initPage, @Param(Constants.WRAPPER) QueryWrapper<MemberCouponVO> queryMemberCouponWrapper);
 }
