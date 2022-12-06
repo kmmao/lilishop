@@ -1,6 +1,7 @@
 package cn.lili.modules.system.serviceimpl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.SwitchEnum;
 import cn.lili.common.exception.ServiceException;
@@ -46,6 +47,16 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
     public Traces getLogistic(String logisticsId, String logisticsNo, String customerName) {
         try {
             return getOrderTracesByJson(logisticsId, logisticsNo,customerName);
+        } catch (Exception e) {
+            log.error("获取物流公司错误",e);
+
+        }
+        return null;
+    }
+    @Override
+    public Traces getLogisticByCodeAndName(String logisticsCode, String logisticsName,String logisticsNo, String customerName) {
+        try {
+            return getOrderTracesByJson(logisticsCode,logisticsName, logisticsNo,customerName);
         } catch (Exception e) {
             log.error("获取物流公司错误",e);
 
@@ -103,6 +114,52 @@ public class LogisticsServiceImpl extends ServiceImpl<LogisticsMapper, Logistics
             String result = sendPost(ReqURL, params);
             Map map = (Map) JSON.parse(result);
             return new Traces(logistics.getName(), expNo, (List<Map>) map.get("Traces"));
+        }
+        return null;
+    }
+
+    /**
+     * 获取物流信息
+     *
+     * @param logisticsCode 物流公司编码
+     * @param logisticsName 物流公司名称
+     * @param logisticsNo       物流单号
+     * @param customerName 手机号后四位
+     * @return 物流信息
+     * @throws Exception
+     */
+    private Traces getOrderTracesByJson(String logisticsCode,String logisticsName, String logisticsNo, String customerName) throws Exception {
+        Setting setting = settingService.get(SettingEnum.KUAIDI_SETTING.name());
+        if (CharSequenceUtil.isBlank(setting.getSettingValue())) {
+            throw new ServiceException(ResultCode.LOGISTICS_NOT_SETTING);
+        }
+        KuaidiSetting kuaidiSetting = new Gson().fromJson(setting.getSettingValue(), KuaidiSetting.class);
+
+        //ID
+        String EBusinessID = kuaidiSetting.getEbusinessID();
+
+        //KEY
+        String AppKey = kuaidiSetting.getAppKey();
+
+        //请求url
+        String ReqURL = kuaidiSetting.getReqURL();
+
+        if (StrUtil.isNotEmpty(logisticsCode) && StrUtil.isNotEmpty(logisticsName)) {
+            String requestData = "{'OrderCode':'','ShipperCode':'" + logisticsCode +
+                    "','LogisticCode':'" + logisticsNo + "'" +
+                    ",'CustomerName':'" + customerName + "'"+
+                    "}";
+            Map<String, String> params = new HashMap<>(8);
+            params.put("RequestData", urlEncoder(requestData, "UTF-8"));
+            params.put("EBusinessID", EBusinessID);
+            params.put("RequestType", "1002");
+            String dataSign = encrypt(requestData, AppKey, "UTF-8");
+            params.put("DataSign", urlEncoder(dataSign, "UTF-8"));
+            params.put("DataType", "2");
+
+            String result = sendPost(ReqURL, params);
+            Map map = (Map) JSON.parse(result);
+            return new Traces(logisticsName, logisticsNo, (List<Map>) map.get("Traces"));
         }
         return null;
     }

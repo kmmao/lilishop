@@ -14,6 +14,7 @@ import cn.lili.modules.order.order.entity.enums.OrderStatusEnum;
 import cn.lili.modules.order.order.entity.vo.OrderDetailVO;
 import cn.lili.modules.order.order.entity.vo.OrderSimpleVO;
 import cn.lili.modules.order.order.service.OrderService;
+import cn.lili.modules.system.service.LogisticsService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -43,6 +44,9 @@ public class OrderBuyerController {
      */
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private LogisticsService logisticsService;
 
     @ApiOperation(value = "查询会员订单列表")
     @GetMapping
@@ -114,6 +118,18 @@ public class OrderBuyerController {
     public ResultMessage<Object> getTraces(@NotBlank(message = "订单编号不能为空") @PathVariable String orderSn) {
         OperationalJudgment.judgment(orderService.getBySn(orderSn));
         return ResultUtil.data(orderService.getTraces(orderSn));
+    }
+
+    @ApiOperation(value = "查询物流踪迹通过物流code及物流名称")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "logisticsCode", value = "物流公司编码", required = true, dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "logisticsName", value = "物流公司名称", required = true, dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "logisticsNo", value = "物流单号", required = true, dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "customerName", value = "手机号", required = true, dataType = "String", paramType = "query")
+    })
+    @GetMapping(value = "/getTracesByCodeAndName")
+    public ResultMessage<Object> getTracesByCodeAndName(@RequestParam String logisticsCode, @RequestParam String logisticsName, @RequestParam String logisticsNo, @RequestParam String customerName) {
+        return ResultUtil.data(logisticsService.getLogisticByCodeAndName(logisticsCode,logisticsName,logisticsNo,customerName.substring(customerName.length() - 4)));
     }
 
 
