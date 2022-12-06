@@ -13,6 +13,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * 嘟嘟罐儿童优惠券关系表相关联数据处理层
  *
@@ -28,4 +30,13 @@ public interface DdgChildUnionCouponMapper extends BaseMapper<DdgChildUnionCoupo
      */
     @Select("SELECT mc.*,mc.discount AS couponDiscount FROM ddg_child_union_coupon dcuc INNER JOIN li_member_coupon mc ON dcuc.member_coupon_id = mc.id ${ew.customSqlSegment}")
     IPage<MemberCouponVO> getCouponByChildId(Page<MemberCouponVO> initPage, @Param(Constants.WRAPPER) QueryWrapper<MemberCouponVO> queryMemberCouponWrapper);
+
+
+    /**
+     * 通过儿童id获取儿童已领取的优惠券分页列表
+     *
+     * @return
+     */
+    @Select("SELECT mc.*,mc.discount AS couponDiscount FROM ddg_child_union_coupon dcuc INNER JOIN li_member_coupon mc ON dcuc.member_coupon_id = mc.id ${ew.customSqlSegment}")
+    List<MemberCouponVO> getCouponByChildIdList(Page<MemberCouponVO> initPage, @Param(Constants.WRAPPER) QueryWrapper<MemberCouponVO> queryMemberCouponWrapper);
 }

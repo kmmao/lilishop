@@ -69,7 +69,7 @@ public class CouponDdgController {
      */
     @ApiOperation(value = "下单最优优惠券选择")
     @GetMapping("/getBestCouponByDdg")
-    public ResultMessage<MemberCoupon> getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
+    public ResultMessage<MemberCouponVO> getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
         return ResultUtil.data(ddgChildUnionCouponService.getBestCouponByDdg(searchParams));
     }
 

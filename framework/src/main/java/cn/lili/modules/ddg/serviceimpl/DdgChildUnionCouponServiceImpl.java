@@ -21,6 +21,7 @@ import cn.lili.modules.order.cart.entity.vo.PriceDetailVO;
 import cn.lili.modules.promotion.entity.dos.Coupon;
 import cn.lili.modules.promotion.entity.dos.MemberCoupon;
 import cn.lili.modules.promotion.entity.enums.CouponTypeEnum;
+import cn.lili.modules.promotion.entity.enums.MemberCouponStatusEnum;
 import cn.lili.modules.promotion.entity.enums.PromotionsScopeTypeEnum;
 import cn.lili.modules.promotion.entity.vos.MemberCouponVO;
 import cn.lili.modules.promotion.service.CouponService;
@@ -68,17 +69,18 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     }
 
     @Override
-    public MemberCoupon getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
+    public MemberCouponVO getBestCouponByDdg(GoodsDdgSearchParams searchParams) {
         String memberIdByDdgId = memberService.getMemberIdByDdgId(searchParams.getParentId());
+        searchParams.setMemberCouponStatus(MemberCouponStatusEnum.NEW.name());
         // 判断最优解，然后返回
-        List<MemberCoupon> memberCouponList = memberCouponService.getMemberCoupons(memberIdByDdgId);
+        List<MemberCouponVO> memberCouponVOList = this.baseMapper.getCouponByChildIdList(PageUtil.initPage(searchParams), searchParams.queryMemberCouponWrapper());
 
         //获取最新优惠券
-        memberCouponList = memberCouponList.stream()
+        memberCouponVOList = memberCouponVOList.stream()
                 .filter(item -> item.getStartTime().before(new Date()) && item.getEndTime().after(new Date()))
                 .collect(Collectors.toList());
 
-        if (memberCouponList.isEmpty()) {
+        if (memberCouponVOList.isEmpty()) {
             return null;
         }
         GoodsSku goodsSkuByIdFromCache = goodsSkuService.getGoodsSkuByIdFromCache(searchParams.getGoodsSkuId());
@@ -94,9 +96,9 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
         tradeDTO.setSkuList(cartSkuVOS);
         priceDetailVO.setDiscountPrice(0D);
         tradeDTO.setPriceDetailVO(priceDetailVO);
-        MemberCoupon returnMemberCoupon = new MemberCoupon();
-        memberCouponList.forEach(memberCoupon -> available(tradeDTO, memberCoupon, searchParams.getFinalePrice(), returnMemberCoupon));
-        return returnMemberCoupon;
+        MemberCouponVO returnMemberCouponVO = new MemberCouponVO();
+        memberCouponVOList.forEach(memberCouponVO -> available(tradeDTO, memberCouponVO, searchParams.getFinalePrice(), returnMemberCouponVO));
+        return returnMemberCouponVO;
     }
 
     /**
@@ -104,35 +106,35 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
      *
      * @param tradeDTO           交易dto
      * @param finalePrice        最终成交金额，未进行优惠券渲染
-     * @param returnMemberCoupon
+     * @param returnMemberCouponVO
      */
-    private void available(TradeDTO tradeDTO, MemberCoupon memberCoupon, Double finalePrice, MemberCoupon returnMemberCoupon) {
+    private void available(TradeDTO tradeDTO, MemberCouponVO memberCouponVO, Double finalePrice, MemberCouponVO returnMemberCouponVO) {
 
-        List<CartSkuVO> filterSku = filterSkuVo(tradeDTO.getSkuList(), memberCoupon);
+        List<CartSkuVO> filterSku = filterSkuVo(tradeDTO.getSkuList(), memberCouponVO);
         if (filterSku == null || filterSku.isEmpty()) {
             return;
         }
 
         //满足条件判定
-        if (finalePrice >= memberCoupon.getConsumeThreshold()) {
+        if (finalePrice >= memberCouponVO.getConsumeThreshold()) {
             Double discountCouponPrice = 0D;
-            if (memberCoupon.getCouponType().equals(CouponTypeEnum.PRICE.name())) {
-                discountCouponPrice = CurrencyUtil.sub(finalePrice, memberCoupon.getPrice());
+            if (memberCouponVO.getCouponType().equals(CouponTypeEnum.PRICE.name())) {
+                discountCouponPrice = CurrencyUtil.sub(finalePrice, memberCouponVO.getPrice());
             } else {
                 // 打折金额=商品金额*折扣/10
                 discountCouponPrice = CurrencyUtil.mul(finalePrice,
-                        CurrencyUtil.sub(1, CurrencyUtil.div(memberCoupon.getDiscount(), 10, 3)));
+                        CurrencyUtil.sub(1, CurrencyUtil.div(memberCouponVO.getDiscount(), 10, 3)));
             }
 
             if (tradeDTO.getPriceDetailVO().getDiscountPrice() == 0D) {
                 tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
-                BeanUtil.copyProperties(memberCoupon, returnMemberCoupon);
+                BeanUtil.copyProperties(memberCouponVO, returnMemberCouponVO);
             } else if (tradeDTO.getPriceDetailVO().getDiscountPrice() >= discountCouponPrice) {
                 tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
-                BeanUtil.copyProperties(memberCoupon, returnMemberCoupon);
+                BeanUtil.copyProperties(memberCouponVO, returnMemberCouponVO);
             }
         }else {
-            returnMemberCoupon = null;
+            returnMemberCouponVO = null;
         }
 
     }
@@ -141,31 +143,31 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
      * 过滤购物车商品信息，按照优惠券的适用范围过滤
      *
      * @param cartSkuVOS   购物车中的产品列表
-     * @param memberCoupon 会员优惠券
+     * @param memberCouponVO 会员优惠券
      * @return 按照优惠券的适用范围过滤的购物车商品信息
      */
-    private List<CartSkuVO> filterSkuVo(List<CartSkuVO> cartSkuVOS, MemberCoupon memberCoupon) {
+    private List<CartSkuVO> filterSkuVo(List<CartSkuVO> cartSkuVOS, MemberCouponVO memberCouponVO) {
 
         List<CartSkuVO> filterSku = Collections.emptyList();
         //平台店铺过滤
-        if (Boolean.TRUE.equals(memberCoupon.getPlatformFlag())) {
+        if (Boolean.TRUE.equals(memberCouponVO.getPlatformFlag())) {
             filterSku = cartSkuVOS;
         }
         if (filterSku == null || filterSku.isEmpty()) {
             return Collections.emptyList();
         }
         //优惠券类型判定
-        switch (PromotionsScopeTypeEnum.valueOf(memberCoupon.getScopeType())) {
+        switch (PromotionsScopeTypeEnum.valueOf(memberCouponVO.getScopeType())) {
             case ALL:
                 return filterSku;
             case PORTION_GOODS:
                 //按照商品过滤
-                filterSku = filterSku.stream().filter(cartSkuVO -> memberCoupon.getScopeId().contains(cartSkuVO.getGoodsSku().getId())).collect(Collectors.toList());
+                filterSku = filterSku.stream().filter(cartSkuVO -> memberCouponVO.getScopeId().contains(cartSkuVO.getGoodsSku().getId())).collect(Collectors.toList());
                 break;
 
             case PORTION_SHOP_CATEGORY:
                 //按照店铺分类过滤
-                filterSku = this.filterPromotionShopCategory(filterSku, memberCoupon);
+                filterSku = this.filterPromotionShopCategory(filterSku, memberCouponVO);
                 break;
 
             case PORTION_GOODS_CATEGORY:
@@ -176,7 +178,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
                     String[] categoryPath = cartSkuVO.getGoodsSku().getCategoryPath().split(",");
                     //平台三级分类
                     String categoryId = categoryPath[categoryPath.length - 1];
-                    return memberCoupon.getScopeId().contains(categoryId);
+                    return memberCouponVO.getScopeId().contains(categoryId);
                 }).collect(Collectors.toList());
                 break;
             default:
@@ -189,17 +191,17 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
      * 优惠券按照店铺分类过滤
      *
      * @param filterSku    过滤的购物车商品信息
-     * @param memberCoupon 会员优惠
+     * @param memberCouponVO 会员优惠
      * @return 优惠券按照店铺分类过滤的购物车商品信息
      */
-    private List<CartSkuVO> filterPromotionShopCategory(List<CartSkuVO> filterSku, MemberCoupon memberCoupon) {
+    private List<CartSkuVO> filterPromotionShopCategory(List<CartSkuVO> filterSku, MemberCouponVO memberCouponVO) {
         return filterSku.stream().filter(cartSkuVO -> {
             if (CharSequenceUtil.isNotEmpty(cartSkuVO.getGoodsSku().getStoreCategoryPath())) {
                 //获取店铺分类
                 String[] storeCategoryPath = cartSkuVO.getGoodsSku().getStoreCategoryPath().split(",");
                 for (String category : storeCategoryPath) {
                     //店铺分类只要有一项吻合，即可返回true
-                    if (memberCoupon.getScopeId().contains(category)) {
+                    if (memberCouponVO.getScopeId().contains(category)) {
                         return true;
                     }
                 }

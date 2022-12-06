@@ -1,7 +1,6 @@
 package cn.lili.modules.ddg.mapper;
 
 
-import cn.lili.modules.ddg.entity.dos.DdgChildApplyBuy;
 import cn.lili.modules.ddg.entity.dos.DdgChildCollect;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;

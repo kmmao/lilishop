@@ -34,5 +34,5 @@ public interface DdgChildUnionCouponService extends IService<DdgChildUnionCoupon
      * 下单最优优惠券选择
      * @return 最优的优惠券信息
      */
-    MemberCoupon getBestCouponByDdg(GoodsDdgSearchParams searchParams);
+    MemberCouponVO getBestCouponByDdg(GoodsDdgSearchParams searchParams);
 }
