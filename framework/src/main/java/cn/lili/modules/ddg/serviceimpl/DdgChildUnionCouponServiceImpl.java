@@ -104,8 +104,8 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     /**
      * 判定优惠券是否可用
      *
-     * @param tradeDTO           交易dto
-     * @param finalePrice        最终成交金额，未进行优惠券渲染
+     * @param tradeDTO             交易dto
+     * @param finalePrice          最终成交金额，未进行优惠券渲染
      * @param returnMemberCouponVO
      */
     private void available(TradeDTO tradeDTO, MemberCouponVO memberCouponVO, Double finalePrice, MemberCouponVO returnMemberCouponVO) {
@@ -119,7 +119,11 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
         if (finalePrice >= memberCouponVO.getConsumeThreshold()) {
             Double discountCouponPrice = 0D;
             if (memberCouponVO.getCouponType().equals(CouponTypeEnum.PRICE.name())) {
-                discountCouponPrice = CurrencyUtil.sub(finalePrice, memberCouponVO.getPrice());
+                if (finalePrice <= memberCouponVO.getPrice()) {
+                    discountCouponPrice = finalePrice;
+                } else {
+                    discountCouponPrice = memberCouponVO.getPrice();
+                }
             } else {
                 // 打折金额=商品金额*折扣/10
                 discountCouponPrice = CurrencyUtil.mul(finalePrice,
@@ -129,20 +133,20 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
             if (tradeDTO.getPriceDetailVO().getDiscountPrice() == 0D) {
                 tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
                 BeanUtil.copyProperties(memberCouponVO, returnMemberCouponVO);
-            } else if (tradeDTO.getPriceDetailVO().getDiscountPrice() >= discountCouponPrice) {
+            } else if (tradeDTO.getPriceDetailVO().getDiscountPrice() < discountCouponPrice) {
+                tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
+                BeanUtil.copyProperties(memberCouponVO, returnMemberCouponVO);
+            }else if(tradeDTO.getPriceDetailVO().getDiscountPrice() == discountCouponPrice && memberCouponVO.getEndTime().after(returnMemberCouponVO.getEndTime())){
                 tradeDTO.getPriceDetailVO().setDiscountPrice(discountCouponPrice);
                 BeanUtil.copyProperties(memberCouponVO, returnMemberCouponVO);
             }
-        }else {
-            returnMemberCouponVO = null;
         }
-
     }
 
     /**
      * 过滤购物车商品信息，按照优惠券的适用范围过滤
      *
-     * @param cartSkuVOS   购物车中的产品列表
+     * @param cartSkuVOS     购物车中的产品列表
      * @param memberCouponVO 会员优惠券
      * @return 按照优惠券的适用范围过滤的购物车商品信息
      */
@@ -190,7 +194,7 @@ public class DdgChildUnionCouponServiceImpl extends ServiceImpl<DdgChildUnionCou
     /**
      * 优惠券按照店铺分类过滤
      *
-     * @param filterSku    过滤的购物车商品信息
+     * @param filterSku      过滤的购物车商品信息
      * @param memberCouponVO 会员优惠
      * @return 优惠券按照店铺分类过滤的购物车商品信息
      */

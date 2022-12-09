@@ -33,11 +33,11 @@ class DdgChildUnionCouponServiceImplTest {
     @Test
     void getBestCouponByDdg() {
         GoodsDdgSearchParams goodsDdgSearchParams = new GoodsDdgSearchParams();
-        goodsDdgSearchParams.setGoodsSkuId("1588758591231217667");
-        goodsDdgSearchParams.setChildId("1595675783827861505");
+        goodsDdgSearchParams.setGoodsSkuId("1588759245941100548");
+        goodsDdgSearchParams.setChildId("1600751912616042497");
         goodsDdgSearchParams.setParentId("1534070009595609089");
         goodsDdgSearchParams.setMemberCouponStatus(MemberCouponStatusEnum.NEW.name());
-        goodsDdgSearchParams.setFinalePrice(30D);
+        goodsDdgSearchParams.setFinalePrice(54D);
         MemberCouponVO bestCouponByDdg = ddgChildUnionCouponService.getBestCouponByDdg(goodsDdgSearchParams);
         System.out.println(JSONUtil.toJsonStr(bestCouponByDdg));
     }
