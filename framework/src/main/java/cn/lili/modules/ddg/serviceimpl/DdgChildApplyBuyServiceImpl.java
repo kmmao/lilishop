@@ -1,5 +1,6 @@
 package cn.lili.modules.ddg.serviceimpl;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.utils.BeanUtil;
@@ -53,6 +54,21 @@ public class DdgChildApplyBuyServiceImpl extends ServiceImpl<DdgChildApplyBuyMap
         ddgChildApplyBuy.setOrderTime(new Date());
         if (this.baseMapper.insert(ddgChildApplyBuy) <= 0) {
             throw new ServiceException(ResultCode.DDG_CHILD_APPLY_ORDER_INSERT_ERROR);
+        }
+        return ddgChildApplyBuy;
+    }
+
+    /**
+     * 儿童根据订单编号获取申请采购记录
+     *
+     * @param sn
+     * @return 儿童申请采购记录
+     */
+    @Override
+    public DdgChildApplyBuy getChildApplyBySN(String sn) {
+        DdgChildApplyBuy ddgChildApplyBuy = this.lambdaQuery().eq(DdgChildApplyBuy::getOrderNo,sn).last(" limit 1").one();
+        if (ObjectUtil.isEmpty(ddgChildApplyBuy)) {
+            throw new ServiceException(ResultCode.DDG_CHILD_APPLY_NOT_IN_ERROR);
         }
         return ddgChildApplyBuy;
     }

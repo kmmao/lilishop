@@ -80,6 +80,12 @@ public class GoodsDdgController {
         return ResultUtil.data(ddgChildApplyBuyService.addChildApplyBuy(ddgChildApplyBuyVO));
     }
 
+    @ApiOperation(value = "儿童根据订单编号获取申请采购记录")
+    @PostMapping("/getChildApplyBySN")
+    public ResultMessage<DdgChildApplyBuy> getChildApplyBySN(DdgChildApplyBuyVO ddgChildApplyBuyVO) {
+        return ResultUtil.data(ddgChildApplyBuyService.getChildApplyBySN(ddgChildApplyBuyVO.getOrderNo()));
+    }
+
     @ApiOperation(value = "通过儿童申请采购ID获取商品SKU信息接口")
     @PostMapping("/getGoodsSkuByChildApplyBuy")
     public ResultMessage<GoodsSkuVO> getGoodsSkuByChildApplyBuy(GoodsDdgSearchParams searchParams) {

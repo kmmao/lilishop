@@ -27,6 +27,12 @@ public interface DdgChildApplyBuyService extends IService<DdgChildApplyBuy> {
     DdgChildApplyBuy addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO);
 
     /**
+     * 儿童根据订单编号获取申请采购记录
+     * @return 儿童申请采购记录
+     */
+    DdgChildApplyBuy getChildApplyBySN(String sn);
+
+    /**
      * 通过儿童id获取儿童采购申请分页列表
      * @return
      */
