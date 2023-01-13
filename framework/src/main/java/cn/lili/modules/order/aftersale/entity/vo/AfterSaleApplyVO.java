@@ -57,7 +57,8 @@ public class AfterSaleApplyVO {
     @ApiModelProperty(value = "会员ID")
     private String memberId;
 
-
+    @ApiModelProperty(value = "订单用户实付价格")
+    private Double flowPrice;
 
 
 }

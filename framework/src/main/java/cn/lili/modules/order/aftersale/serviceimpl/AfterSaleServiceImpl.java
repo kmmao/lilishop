@@ -163,6 +163,7 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
         afterSaleApplyVO.setGoodsPrice(orderItem.getGoodsPrice());
         afterSaleApplyVO.setSkuId(orderItem.getSkuId());
         afterSaleApplyVO.setMemberId(order.getMemberId());
+        afterSaleApplyVO.setFlowPrice(order.getFlowPrice());
         return afterSaleApplyVO;
     }
 
