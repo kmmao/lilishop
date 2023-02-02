@@ -8,6 +8,9 @@ import cn.lili.modules.order.cart.entity.enums.CartTypeEnum;
 import cn.lili.modules.order.cart.entity.vo.TradeParams;
 import cn.lili.modules.order.cart.service.CartService;
 import cn.lili.modules.payment.service.PaymentService;
+import cn.lili.modules.system.entity.vo.Traces;
+import cn.lili.modules.system.service.LogisticsService;
+import com.alibaba.fastjson.JSON;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,12 +37,25 @@ class CartTest {
     @Autowired
     private PaymentService paymentService;
 
+    @Autowired
+    private LogisticsService logisticsService;
+
 
     @Test
     void getAll() {
         TradeDTO allTradeDTO = cartService.getAllTradeDTO();
         Assertions.assertNotNull(allTradeDTO);
         System.out.println(JSONUtil.toJsonStr(allTradeDTO));
+    }
+
+    @Test
+    void getTracesByCodeAndName(){
+        String logisticsCode = "YTO";
+        String logisticsName = "圆通快递";
+        String logisticsNo = "YT6772617631829";
+        String customerName = "13606046207";
+        Traces logisticByCodeAndName = logisticsService.getLogisticByCodeAndName(logisticsCode, logisticsName, logisticsNo, customerName.substring(customerName.length() - 4));
+        System.out.println(JSON.toJSON(logisticByCodeAndName));
     }
 
     @Test
