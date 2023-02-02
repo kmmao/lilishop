@@ -1,5 +1,6 @@
 package cn.lili.controller.order;
 
+import cn.hutool.json.JSONUtil;
 import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
@@ -14,7 +15,11 @@ import cn.lili.modules.order.order.entity.enums.OrderStatusEnum;
 import cn.lili.modules.order.order.entity.vo.OrderDetailVO;
 import cn.lili.modules.order.order.entity.vo.OrderSimpleVO;
 import cn.lili.modules.order.order.service.OrderService;
+import cn.lili.modules.system.entity.dos.Setting;
+import cn.lili.modules.system.entity.dto.OrderSetting;
+import cn.lili.modules.system.entity.enums.SettingEnum;
 import cn.lili.modules.system.service.LogisticsService;
+import cn.lili.modules.system.service.SettingService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -47,6 +52,12 @@ public class OrderBuyerController {
 
     @Autowired
     private LogisticsService logisticsService;
+
+    /**
+     * 设置
+     */
+    @Autowired
+    private SettingService settingService;
 
     @ApiOperation(value = "查询会员订单列表")
     @GetMapping
@@ -130,6 +141,14 @@ public class OrderBuyerController {
     @GetMapping(value = "/getTracesByCodeAndName")
     public ResultMessage<Object> getTracesByCodeAndName(@RequestParam String logisticsCode, @RequestParam String logisticsName, @RequestParam String logisticsNo, @RequestParam String customerName) {
         return ResultUtil.data(logisticsService.getLogisticByCodeAndName(logisticsCode,logisticsName,logisticsNo,customerName.substring(customerName.length() - 4)));
+    }
+
+    @ApiOperation(value = "查询订单自动取消时间")
+    @GetMapping(value = "/getOrderAutoCancel")
+    public ResultMessage<Object> getOrderAutoCancel() {
+        Setting setting = settingService.get(SettingEnum.ORDER_SETTING.name());
+        OrderSetting orderSetting = JSONUtil.toBean(setting.getSettingValue(), OrderSetting.class);
+        return ResultUtil.data(orderSetting.getAutoCancel());
     }
 
 
