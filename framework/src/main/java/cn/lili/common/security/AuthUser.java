@@ -94,4 +94,15 @@ public class AuthUser implements Serializable {
         this.clerkId = clerkId;
         this.face = face;
     }
+
+    public AuthUser(String username, String id, UserEnums manager, String nickName,String storeName, Boolean isSuper, String clerkId,String face) {
+        this.username = username;
+        this.id = id;
+        this.role = manager;
+        this.isSuper = isSuper;
+        this.nickName = nickName;
+        this.storeName = storeName;
+        this.clerkId = clerkId;
+        this.face = face;
+    }
 }

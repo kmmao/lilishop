@@ -21,6 +21,7 @@ import cn.lili.modules.member.entity.dos.Clerk;
 import cn.lili.modules.member.entity.vo.StoreUserMenuVO;
 import cn.lili.modules.member.service.ClerkService;
 import cn.lili.modules.member.service.StoreMenuRoleService;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +62,7 @@ public class StoreTokenGenerate extends AbstractTokenGenerate<Member> {
             throw new ServiceException(ResultCode.CLERK_DISABLED_ERROR);
         }
         //获取当前用户权限
-        List<StoreUserMenuVO> storeUserMenuVOS = storeMenuRoleService.findAllMenu(clerk.getId(),member.getId());
+        List<StoreUserMenuVO> storeUserMenuVOS = storeMenuRoleService.findAllMenu(clerk.getId(), member.getId());
         //缓存权限列表
         cache.put(CachePrefix.PERMISSION_LIST.getPrefix(UserEnums.STORE) + member.getId(), this.permissionList(storeUserMenuVOS));
         //查询店铺信息
@@ -69,7 +70,7 @@ public class StoreTokenGenerate extends AbstractTokenGenerate<Member> {
         if (store == null) {
             throw new ServiceException(ResultCode.STORE_NOT_OPEN);
         }
-        AuthUser authUser = new AuthUser(member.getUsername(), member.getId(), UserEnums.STORE, member.getNickName(), clerk.getIsSuper(), clerk.getId(),store.getStoreLogo());
+        AuthUser authUser = new AuthUser(member.getUsername(), member.getId(), UserEnums.STORE, member.getNickName(), store.getStoreName(), clerk.getIsSuper(), clerk.getId(), store.getStoreLogo());
 
         authUser.setStoreId(store.getId());
         authUser.setStoreName(store.getStoreName());
@@ -145,14 +146,12 @@ public class StoreTokenGenerate extends AbstractTokenGenerate<Member> {
         superPermissions.add("/store/passport/login*");
 
 
-
         //店铺设置
         queryPermissions.add("/store/settings/storeSettings*");
         //文章接口
         queryPermissions.add("/store/other/article*");
         //首页统计
         queryPermissions.add("/store/statistics/index*");
-
 
 
     }
