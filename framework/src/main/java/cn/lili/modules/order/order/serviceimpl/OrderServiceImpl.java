@@ -435,7 +435,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         Order order = OperationalJudgment.judgment(this.getBySn(orderSn));
 
         //要记录之前的收货地址，所以需要以代码方式进行调用 不采用注解
-        String message = "订单[" + orderSn + "]收货信息修改，由["+ order.getConsigneeName() + "," + order.getConsigneeMobile() + "," + order.getConsigneeDetail() + "]修改为["+ memberAddressDTO.getConsigneeName() + "," + memberAddressDTO.getConsigneeMobile() + "," + memberAddressDTO.getConsigneeDetail() + "]";
+        String message = "订单[" + orderSn + "]收货信息修改，由["+ order.getConsigneeName() + "," + order.getConsigneeMobile() + "," + order.getConsigneeAddressPath() + "," + order.getConsigneeDetail() + "]修改为["+ memberAddressDTO.getConsigneeName() + "," + memberAddressDTO.getConsigneeMobile() + "," + memberAddressDTO.getConsigneeAddressPath() + "," + memberAddressDTO.getConsigneeDetail() + "]";
         //记录订单操作日志
         BeanUtil.copyProperties(memberAddressDTO, order);
         this.updateById(order);
