@@ -81,7 +81,7 @@ public class AllowOperation implements Serializable {
         this.rog = status.equals(OrderStatusEnum.DELIVERED.name());
 
         //是否允许查看物流信息
-        this.showLogistics = order.getDeliverStatus().equals(DeliverStatusEnum.DELIVERED.name()) && status.equals(OrderStatusEnum.DELIVERED.name());
+        this.showLogistics = order.getDeliverStatus().equals(DeliverStatusEnum.DELIVERED.name()) || order.getDeliverStatus().equals(DeliverStatusEnum.RECEIVED.name());
 
         this.take = order.getOrderType().equals(OrderTypeEnum.VIRTUAL.name()) && order.getOrderStatus().equals(OrderStatusEnum.TAKE.name());
     }
@@ -119,7 +119,7 @@ public class AllowOperation implements Serializable {
         this.rog = status.equals(OrderStatusEnum.DELIVERED.name());
 
         //是否允许查看物流信息
-        this.showLogistics = order.getDeliverStatus().equals(DeliverStatusEnum.DELIVERED.name()) && status.equals(OrderStatusEnum.DELIVERED.name());
+        this.showLogistics = order.getDeliverStatus().equals(DeliverStatusEnum.DELIVERED.name()) || order.getDeliverStatus().equals(DeliverStatusEnum.RECEIVED.name());
 
         this.take = order.getOrderType().equals(OrderTypeEnum.VIRTUAL.name()) && order.getOrderStatus().equals(OrderStatusEnum.TAKE.name());
     }
