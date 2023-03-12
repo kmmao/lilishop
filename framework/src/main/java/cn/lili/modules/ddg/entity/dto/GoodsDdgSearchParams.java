@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 
+import java.util.Date;
+
 
 /**
  * 商品查询条件-嘟嘟罐
@@ -79,6 +81,10 @@ public class GoodsDdgSearchParams extends PageVO {
         queryWrapper.eq(StrUtil.isNotEmpty(memberCouponStatus), "mc.member_coupon_status", memberCouponStatus);
         queryWrapper.eq(StrUtil.isNotEmpty(couponId), "mc.coupon_id", couponId);
         queryWrapper.eq(StrUtil.isNotEmpty(parentId), "dcuc.parent_id", parentId);
+        // 增加当前时间为过滤时间节点，防止过期的优惠券也可以用,指针对领取的
+        if(MemberCouponStatusEnum.NEW.name().equals(memberCouponStatus)){
+            queryWrapper.le("end_time", new Date());
+        }
         return queryWrapper;
     }
 
