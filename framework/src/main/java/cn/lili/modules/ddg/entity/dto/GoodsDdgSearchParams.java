@@ -81,9 +81,9 @@ public class GoodsDdgSearchParams extends PageVO {
         queryWrapper.eq(StrUtil.isNotEmpty(memberCouponStatus), "mc.member_coupon_status", memberCouponStatus);
         queryWrapper.eq(StrUtil.isNotEmpty(couponId), "mc.coupon_id", couponId);
         queryWrapper.eq(StrUtil.isNotEmpty(parentId), "dcuc.parent_id", parentId);
-        // 增加当前时间为过滤时间节点，防止过期的优惠券也可以用,指针对领取的
+        // 增加当前时间为过滤时间节点，防止过期的优惠券也可以用,指针对领取的,结束时间要大于当前日期
         if(MemberCouponStatusEnum.NEW.name().equals(memberCouponStatus)){
-            queryWrapper.le("end_time", new Date());
+            queryWrapper.gt("end_time", new Date());
         }
         return queryWrapper;
     }
