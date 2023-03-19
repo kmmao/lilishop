@@ -23,7 +23,7 @@ public class CouponExecute implements EveryDayExecute {
     /**
      * 过期常量，过期后或者使用后一定时间内，删除无效的优惠券，物理删除
      */
-    static final int EXPIRATION_DAY = 3;
+    static final int EXPIRATION_DAY = 30;
 
     @Autowired
     private MemberCouponService memberCouponService;
