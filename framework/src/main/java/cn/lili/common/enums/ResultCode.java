@@ -199,6 +199,7 @@ public enum ResultCode {
     ORDER_BATCH_DELIVER_ERROR(31013, "批量发货,文件读取失败"),
     ORDER_ITEM_NOT_EXIST(31014, "当前订单项不存在！"),
     POINT_NOT_ENOUGH(31015, "当前会员积分不足购买当前积分商品！"),
+    ORDER_ONLY_ONE(31016, "当前活动只能采购一件商品！"),
 
 
     /**

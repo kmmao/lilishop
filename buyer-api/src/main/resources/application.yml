@@ -234,9 +234,10 @@ lili:
     wap: https://h5.zmshops.xycloud.info
     store: https://seller.zmshops.xycloud.info
     admin: https://manager.zmshops.xycloud.info
-  #api地址
+  #api地址 (测试环境是buyer: https://buyer.zmshops.xycloud.info/buyer-api)
   api:
-    buyer: https://buyer.zmshops.xycloud.info/buyer-api
+    buyer: https://buyer.zmshops.zmddg.com/buyer-api
+#    buyer: https://buyer.zmshops.xycloud.info/buyer-api
     common: https://common-api.zmshops.xycloud.info
     manager: https://admin-api.zmshops.xycloud.info
     store: https://store-api.zmshops.xycloud.info

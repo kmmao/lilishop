@@ -5,14 +5,20 @@ import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.exception.ServiceException;
+import cn.lili.common.security.AuthUser;
+import cn.lili.common.security.context.UserContext;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.order.cart.entity.dto.StoreRemarkDTO;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.cart.entity.enums.CartTypeEnum;
 import cn.lili.modules.order.cart.entity.vo.TradeParams;
 import cn.lili.modules.order.cart.service.CartService;
+import cn.lili.modules.order.order.entity.dto.OrderSearchParams;
+import cn.lili.modules.order.order.entity.vo.OrderSimpleVO;
 import cn.lili.modules.order.order.entity.vo.ReceiptVO;
+import cn.lili.modules.order.order.service.OrderService;
 import com.alibaba.fastjson.JSONObject;
+import com.sun.xml.bind.v2.TODO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -25,6 +31,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static cn.lili.common.enums.ResultCode.ORDER_ONLY_ONE;
 
 /**
  * 买家端，购物车接口
@@ -44,6 +54,12 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
+    /**
+     * 订单
+     */
+    @Autowired
+    private OrderService orderService;
+
 
     @ApiOperation(value = "向购物车中添加一个产品")
     @PostMapping
@@ -56,6 +72,28 @@ public class CartController {
                                      @NotNull(message = "购买数量不能为空") @Min(value = 1, message = "加入购物车数量必须大于0") Integer num,
                                      String cartType) {
         try {
+            //TODO lk 临时做活动加入的
+            AuthUser currentUser = Objects.requireNonNull(UserContext.getCurrentUser());
+            OrderSearchParams orderSearchParams = new OrderSearchParams();
+            orderSearchParams.setMemberId(currentUser.getId());
+            orderSearchParams.setPageSize(10000);
+//            orderSearchParams.setPayStatus("PAID");
+            List<OrderSimpleVO> orderSimpleVOList = orderService.queryByParams(orderSearchParams).getRecords();
+            AtomicBoolean isOderOnlyOne = new AtomicBoolean(false);
+            if("1661268707559743490".equals(skuId) || "1688843584465313793".equals(skuId)){
+                if(orderSimpleVOList != null && orderSimpleVOList.size()>0){
+                    orderSimpleVOList.forEach(item->{
+                        item.getOrderItems().forEach(orderItem->{
+                            if(skuId.equals(orderItem.getSkuId())){
+                                isOderOnlyOne.set(true);
+                            }
+                        });
+                    });
+                }
+            }
+            if(isOderOnlyOne.get()){
+                return ResultUtil.success(ORDER_ONLY_ONE);
+            }
             //读取选中的列表
             cartService.add(skuId, num, cartType, false);
             return ResultUtil.success();

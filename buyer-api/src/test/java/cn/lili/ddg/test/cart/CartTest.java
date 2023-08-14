@@ -3,6 +3,7 @@ package cn.lili.ddg.test.cart;
 import cn.hutool.json.JSONUtil;
 import cn.lili.modules.goods.entity.vos.CategoryVO;
 import cn.lili.modules.goods.service.CategoryService;
+import cn.lili.modules.order.aftersale.aop.AfterSaleLogPoint;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
 import cn.lili.modules.order.cart.entity.enums.CartTypeEnum;
 import cn.lili.modules.order.cart.entity.vo.TradeParams;
@@ -56,6 +57,17 @@ class CartTest {
         String customerName = "13606046207";
         Traces logisticByCodeAndName = logisticsService.getLogisticByCodeAndName(logisticsCode, logisticsName, logisticsNo, customerName.substring(customerName.length() - 4));
         System.out.println(JSON.toJSON(logisticByCodeAndName));
+    }
+
+    @Test
+    void testLog(){
+        log("A202302021621074316574785536","PASS");
+    }
+
+    @AfterSaleLogPoint(sn = "#afterSaleSn", description = "'售后-商家收货:单号['+#afterSaleSn+']" +
+            ",处理结果['+#serviceStatus=='PASS'?'商家收货':'商家拒收'+']'")
+    private void log(String afterSaleSn,String serviceStatus){
+        System.out.println("pass");
     }
 
     @Test
