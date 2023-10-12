@@ -68,6 +68,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -405,6 +406,21 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         OrderLog orderLog = new OrderLog(orderSn, "-1", UserEnums.SYSTEM.getRole(), "系统操作", message);
         orderLogService.save(orderLog);
 
+        List<OrderItem> orderItems = this.orderItemService.getByOrderSn(orderSn);
+        List<GoodsCompleteMessage> goodsCompleteMessageList = new ArrayList<>();
+        for (OrderItem orderItem : orderItems) {
+            GoodsCompleteMessage goodsCompleteMessage = new GoodsCompleteMessage();
+            goodsCompleteMessage.setGoodsId(orderItem.getGoodsId());
+            goodsCompleteMessage.setSkuId(orderItem.getSkuId());
+            goodsCompleteMessage.setBuyNum(orderItem.getNum());
+            goodsCompleteMessage.setMemberId(order.getMemberId());
+            goodsCompleteMessageList.add(goodsCompleteMessage);
+        }
+        if (!goodsCompleteMessageList.isEmpty()) {
+            String destination = this.rocketmqCustomProperties.getGoodsTopic() + ":" + GoodsTagsEnum.BUY_GOODS_COMPLETE.name();
+            this.rocketMQTemplate.asyncSend(destination, JSONUtil.toJsonStr(goodsCompleteMessageList), (SendCallback)RocketmqSendCallbackBuilder.commonCallback());
+        }
+
     }
 
     @Override
@@ -554,24 +570,24 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         orderMessage.setNewStatus(OrderStatusEnum.COMPLETED);
         orderMessage.setOrderSn(order.getSn());
         this.sendUpdateStatusMessage(orderMessage);
-
-        //发送当前商品购买完成的信息（用于更新商品数据）
-        List<OrderItem> orderItems = orderItemService.getByOrderSn(orderSn);
-        List<GoodsCompleteMessage> goodsCompleteMessageList = new ArrayList<>();
-        for (OrderItem orderItem : orderItems) {
-            GoodsCompleteMessage goodsCompleteMessage = new GoodsCompleteMessage();
-            goodsCompleteMessage.setGoodsId(orderItem.getGoodsId());
-            goodsCompleteMessage.setSkuId(orderItem.getSkuId());
-            goodsCompleteMessage.setBuyNum(orderItem.getNum());
-            goodsCompleteMessage.setMemberId(order.getMemberId());
-            goodsCompleteMessageList.add(goodsCompleteMessage);
-        }
-        //发送商品购买消息
-        if (!goodsCompleteMessageList.isEmpty()) {
-            String destination = rocketmqCustomProperties.getGoodsTopic() + ":" + GoodsTagsEnum.BUY_GOODS_COMPLETE.name();
-            //发送订单变更mq消息
-            rocketMQTemplate.asyncSend(destination, JSONUtil.toJsonStr(goodsCompleteMessageList), RocketmqSendCallbackBuilder.commonCallback());
-        }
+        //TODO lk 商品本来是完成才增加,变成付款完就增加销售数量
+//        //发送当前商品购买完成的信息（用于更新商品数据）
+//        List<OrderItem> orderItems = orderItemService.getByOrderSn(orderSn);
+//        List<GoodsCompleteMessage> goodsCompleteMessageList = new ArrayList<>();
+//        for (OrderItem orderItem : orderItems) {
+//            GoodsCompleteMessage goodsCompleteMessage = new GoodsCompleteMessage();
+//            goodsCompleteMessage.setGoodsId(orderItem.getGoodsId());
+//            goodsCompleteMessage.setSkuId(orderItem.getSkuId());
+//            goodsCompleteMessage.setBuyNum(orderItem.getNum());
+//            goodsCompleteMessage.setMemberId(order.getMemberId());
+//            goodsCompleteMessageList.add(goodsCompleteMessage);
+//        }
+//        //发送商品购买消息
+//        if (!goodsCompleteMessageList.isEmpty()) {
+//            String destination = rocketmqCustomProperties.getGoodsTopic() + ":" + GoodsTagsEnum.BUY_GOODS_COMPLETE.name();
+//            //发送订单变更mq消息
+//            rocketMQTemplate.asyncSend(destination, JSONUtil.toJsonStr(goodsCompleteMessageList), RocketmqSendCallbackBuilder.commonCallback());
+//        }
     }
 
     @Override
