@@ -135,17 +135,17 @@ public class OrderBuyerController {
         return ResultUtil.data(orderService.getTraces(orderSn));
     }
 
-    @ApiOperation(value = "查询物流踪迹通过物流code及物流名称")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "logisticsCode", value = "物流公司编码", required = true, dataType = "String", paramType = "query"),
-            @ApiImplicitParam(name = "logisticsName", value = "物流公司名称", required = true, dataType = "String", paramType = "query"),
-            @ApiImplicitParam(name = "logisticsNo", value = "物流单号", required = true, dataType = "String", paramType = "query"),
-            @ApiImplicitParam(name = "customerName", value = "手机号", required = true, dataType = "String", paramType = "query")
-    })
-    @GetMapping(value = "/getTracesByCodeAndName")
-    public ResultMessage<Object> getTracesByCodeAndName(@RequestParam String logisticsCode, @RequestParam String logisticsName, @RequestParam String logisticsNo, @RequestParam String customerName) {
-        return ResultUtil.data(logisticsService.getLogisticByCodeAndName(logisticsCode,logisticsName,logisticsNo,customerName.substring(customerName.length() - 4)));
-    }
+//    @ApiOperation(value = "查询物流踪迹通过物流code及物流名称")
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name = "logisticsCode", value = "物流公司编码", required = true, dataType = "String", paramType = "query"),
+//            @ApiImplicitParam(name = "logisticsName", value = "物流公司名称", required = true, dataType = "String", paramType = "query"),
+//            @ApiImplicitParam(name = "logisticsNo", value = "物流单号", required = true, dataType = "String", paramType = "query"),
+//            @ApiImplicitParam(name = "customerName", value = "手机号", required = true, dataType = "String", paramType = "query")
+//    })
+//    @GetMapping(value = "/getTracesByCodeAndName")
+//    public ResultMessage<Object> getTracesByCodeAndName(@RequestParam String logisticsCode, @RequestParam String logisticsName, @RequestParam String logisticsNo, @RequestParam String customerName) {
+//        return ResultUtil.data(logisticsService.getLogisticByCodeAndName(logisticsCode,logisticsName,logisticsNo,customerName.substring(customerName.length() - 4)));
+//    }
 
     @ApiOperation(value = "查询订单自动取消时间")
     @GetMapping(value = "/getOrderAutoCancel")
@@ -153,6 +153,8 @@ public class OrderBuyerController {
         Setting setting = settingService.get(SettingEnum.ORDER_SETTING.name());
         OrderSetting orderSetting = JSONUtil.toBean(setting.getSettingValue(), OrderSetting.class);
         return ResultUtil.data(orderSetting.getAutoCancel());
+    }
+
     @ApiOperation(value = "查询地图版物流踪迹")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "orderSn", value = "订单编号", required = true, dataType = "String", paramType = "path")

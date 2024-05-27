@@ -55,8 +55,8 @@ class CartTest {
         String logisticsName = "圆通快递";
         String logisticsNo = "YT6772617631829";
         String customerName = "13606046207";
-        Traces logisticByCodeAndName = logisticsService.getLogisticByCodeAndName(logisticsCode, logisticsName, logisticsNo, customerName.substring(customerName.length() - 4));
-        System.out.println(JSON.toJSON(logisticByCodeAndName));
+//        Traces logisticByCodeAndName = logisticsService.getLogisticByCodeAndName(logisticsCode, logisticsName, logisticsNo, customerName.substring(customerName.length() - 4));
+//        System.out.println(JSON.toJSON(logisticByCodeAndName));
     }
 
     @Test

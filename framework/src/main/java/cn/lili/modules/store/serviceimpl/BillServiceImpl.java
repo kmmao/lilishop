@@ -142,7 +142,7 @@ public class BillServiceImpl extends ServiceImpl<BillMapper, Bill> implements Bi
         }
 
         //最终结算金额=入款结算金额-退款结算金额-退货平台优惠券补贴返还
-        Double finalPrice = CurrencyUtil.sub(orderPrice, refundPrice, bill.getSiteCouponRefundCommission() == null ? 0 : bill.getSiteCouponRefundCommission());
+        Double finalPrice = CurrencyUtil.sub(orderBill.getBillPrice(), refundBill.getBillPrice(), bill.getSiteCouponRefundCommission() == null ? 0 : bill.getSiteCouponRefundCommission());
 
         //最终结算金额=入款结算金额-退款结算金额
         // Double finalPrice = CurrencyUtil.sub(orderBill.getBillPrice(), refundBill.getBillPrice());
