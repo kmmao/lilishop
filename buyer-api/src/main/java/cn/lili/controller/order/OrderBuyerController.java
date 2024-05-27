@@ -10,16 +10,19 @@ import cn.lili.common.security.OperationalJudgment;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.order.order.entity.dos.Order;
+import cn.lili.modules.order.order.entity.dos.OrderPackage;
 import cn.lili.modules.order.order.entity.dto.OrderSearchParams;
 import cn.lili.modules.order.order.entity.enums.OrderStatusEnum;
 import cn.lili.modules.order.order.entity.vo.OrderDetailVO;
 import cn.lili.modules.order.order.entity.vo.OrderSimpleVO;
+import cn.lili.modules.order.order.service.OrderPackageService;
 import cn.lili.modules.order.order.service.OrderService;
 import cn.lili.modules.system.entity.dos.Setting;
 import cn.lili.modules.system.entity.dto.OrderSetting;
 import cn.lili.modules.system.entity.enums.SettingEnum;
 import cn.lili.modules.system.service.LogisticsService;
 import cn.lili.modules.system.service.SettingService;
+import cn.lili.modules.system.entity.vo.Traces;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -58,6 +61,7 @@ public class OrderBuyerController {
      */
     @Autowired
     private SettingService settingService;
+    private OrderPackageService orderPackageService;
 
     @ApiOperation(value = "查询会员订单列表")
     @GetMapping
@@ -149,6 +153,14 @@ public class OrderBuyerController {
         Setting setting = settingService.get(SettingEnum.ORDER_SETTING.name());
         OrderSetting orderSetting = JSONUtil.toBean(setting.getSettingValue(), OrderSetting.class);
         return ResultUtil.data(orderSetting.getAutoCancel());
+    @ApiOperation(value = "查询地图版物流踪迹")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "orderSn", value = "订单编号", required = true, dataType = "String", paramType = "path")
+    })
+    @PostMapping(value = "/getMapTraces/{orderSn}")
+    public ResultMessage<Object> getMapTraces(@NotBlank(message = "订单编号不能为空") @PathVariable String orderSn) {
+        OperationalJudgment.judgment(orderService.getBySn(orderSn));
+        return ResultUtil.data(orderService.getMapTraces(orderSn));
     }
 
 
@@ -163,5 +175,21 @@ public class OrderBuyerController {
         return ResultUtil.data(orderService.invoice(orderSn));
     }
 
+    @ApiOperation(value = "查询物流踪迹")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "orderSn", value = "订单编号", required = true, dataType = "String", paramType = "path")
+    })
+    @GetMapping(value = "/getTracesList/{orderSn}")
+    public ResultMessage<Object> getTracesList(@NotBlank(message = "订单编号不能为空") @PathVariable String orderSn) {
+        return ResultUtil.data(orderPackageService.getOrderPackageVOList(orderSn));
+    }
 
+    @ApiOperation(value = "查看包裹列表")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "orderSn", value = "订单编号", required = true, dataType = "String", paramType = "path")
+    })
+    @GetMapping(value = "/getPackage/{orderSn}")
+    public ResultMessage<Object> getPackage(@NotBlank(message = "订单编号不能为空") @PathVariable String orderSn) {
+        return ResultUtil.data(orderPackageService.getOrderPackageVOList(orderSn));
+    }
 }

@@ -1,10 +1,13 @@
 package cn.lili.modules.promotion.serviceimpl;
 
+import cn.hutool.core.map.MapBuilder;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import cn.lili.common.enums.PromotionTypeEnum;
 import cn.lili.common.enums.ResultCode;
+import cn.lili.common.event.TransactionCommitSendMQEvent;
 import cn.lili.common.exception.ServiceException;
+import cn.lili.common.properties.RocketmqCustomProperties;
 import cn.lili.common.utils.DateUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
@@ -24,15 +27,18 @@ import cn.lili.modules.promotion.mapper.CouponMapper;
 import cn.lili.modules.promotion.service.*;
 import cn.lili.modules.promotion.tools.PromotionTools;
 import cn.lili.mybatis.util.PageUtil;
+import cn.lili.rocketmq.tags.GoodsTagsEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -69,6 +75,12 @@ public class CouponServiceImpl extends AbstractPromotionsServiceImpl<CouponMappe
      */
     @Autowired
     private CouponActivityItemService couponActivityItemService;
+
+    @Autowired
+    private RocketmqCustomProperties rocketmqCustomProperties;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * 领取优惠券
@@ -166,6 +178,13 @@ public class CouponServiceImpl extends AbstractPromotionsServiceImpl<CouponMappe
             this.update(updateWrapper);
         }
 
+        // 关闭优惠券，删除相关会员优惠券和券活动
+        if (startTime == null && endTime == null) {
+            //删除优惠券信息
+            this.memberCouponService.closeMemberCoupon(ids);
+            //删除优惠券活动关联优惠券
+            this.couponActivityItemService.removeByCouponId(ids);
+        }
         return super.updateStatus(ids, startTime, endTime);
     }
 
@@ -176,36 +195,52 @@ public class CouponServiceImpl extends AbstractPromotionsServiceImpl<CouponMappe
     }
 
     @Override
-    public void checkPromotions(Coupon promotions) {
-        if (promotions.getRangeDayType() == null) {
-            super.checkPromotions(promotions);
+    public void checkPromotions(Coupon coupon) {
+        if (coupon.getRangeDayType() == null) {
+            super.checkPromotions(coupon);
         }
         //优惠券限制领取数量
-        if (promotions.getCouponLimitNum() < 0) {
+        if (coupon.getCouponLimitNum() < 0) {
             throw new ServiceException(ResultCode.COUPON_LIMIT_NUM_LESS_THAN_0);
         }
         //如果发行数量是0则判断领取限制数量
-        if (promotions.getPublishNum() != 0 && promotions.getCouponLimitNum() > promotions.getPublishNum()) {
+        if (coupon.getPublishNum() != 0 && coupon.getCouponLimitNum() > coupon.getPublishNum()) {
             throw new ServiceException(ResultCode.COUPON_LIMIT_GREATER_THAN_PUBLISH);
         }
         //打折优惠券大于10折
-        boolean discountCoupon = (promotions.getCouponType().equals(CouponTypeEnum.DISCOUNT.name())
-                && (promotions.getCouponDiscount() < 0 || promotions.getCouponDiscount() > 10));
+        boolean discountCoupon = (coupon.getCouponType().equals(CouponTypeEnum.DISCOUNT.name())
+                && (coupon.getCouponDiscount() < 0 || coupon.getCouponDiscount() > 10));
         if (discountCoupon) {
             throw new ServiceException(ResultCode.COUPON_DISCOUNT_ERROR);
         }
 
-        //优惠券为固定时间类型
-        if (promotions.getRangeDayType() != null && promotions.getRangeDayType().equals(CouponRangeDayEnum.FIXEDTIME.name())) {
-            long nowTime = DateUtil.getDateline() * 1000;
-            //固定时间的优惠券不能小于当前时间
-            if (promotions.getEndTime().getTime() < nowTime) {
-                throw new ServiceException(ResultCode.PROMOTION_END_TIME_ERROR);
-            }
+        //如果优惠券使用时间类型不合法，抛出异常，抛出异常
+        if (!CouponRangeDayEnum.exist(coupon.getRangeDayType())) {
+            throw new ServiceException(ResultCode.COUPON_RANGE_ERROR);
+        }
+
+        switch (CouponRangeDayEnum.valueOf(coupon.getRangeDayType())) {
+            case FIXEDTIME:
+                //如果优惠券为固定时间，则开始结束时间不能为空
+                if (coupon.getEndTime() == null || coupon.getStartTime() == null) {
+                    throw new ServiceException(ResultCode.PROMOTION_TIME_ERROR);
+                }
+                long nowTime = DateUtil.getDateline() * 1000;
+                //固定时间的优惠券不能小于当前时间
+                if (coupon.getEndTime().getTime() < nowTime) {
+                    throw new ServiceException(ResultCode.PROMOTION_END_TIME_ERROR);
+                }
+                break;
+            case DYNAMICTIME:
+                //固定时间的优惠券不能小于当前时间
+                if (coupon.getEffectiveDays() == null || coupon.getEffectiveDays() < 0) {
+                    throw new ServiceException(ResultCode.PROMOTION_END_TIME_ERROR);
+                }
+                break;
         }
 
 
-        this.checkCouponScope((CouponVO) promotions);
+        this.checkCouponScope((CouponVO) coupon);
     }
 
     @Override
@@ -247,9 +282,16 @@ public class CouponServiceImpl extends AbstractPromotionsServiceImpl<CouponMappe
      * @param promotions 优惠券信息
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateEsGoodsIndex(Coupon promotions) {
         Coupon coupon = JSONUtil.parse(promotions).toBean(Coupon.class);
-        super.updateEsGoodsIndex(coupon);
+        if (!CouponRangeDayEnum.DYNAMICTIME.name().equals(coupon.getRangeDayType()) && promotions.getStartTime() == null && promotions.getEndTime() == null) {
+            Map<Object, Object> build = MapBuilder.create().put("promotionKey", this.getPromotionType() + "-" + promotions.getId()).put("scopeId", promotions.getScopeId()).build();
+            //删除商品促销消息
+            applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("删除商品促销事件", rocketmqCustomProperties.getGoodsTopic(), GoodsTagsEnum.DELETE_GOODS_INDEX_PROMOTIONS.name(), JSONUtil.toJsonStr(build)));
+        } else {
+            super.sendUpdateEsGoodsMsg(promotions);
+        }
     }
 
     @Override
@@ -287,11 +329,11 @@ public class CouponServiceImpl extends AbstractPromotionsServiceImpl<CouponMappe
      */
     private void checkCouponPortionGoods(CouponVO coupon) {
         String[] split = coupon.getScopeId().split(",");
-        if (split.length <= 0) {
+        if (split.length == 0) {
             throw new ServiceException(ResultCode.COUPON_SCOPE_ERROR);
         }
         for (String id : split) {
-            GoodsSku goodsSku = goodsSkuService.getCanPromotionGoodsSkuByIdFromCache(id);
+            GoodsSku goodsSku = goodsSkuService.getGoodsSkuByIdFromCache(id);
             if (goodsSku == null) {
                 throw new ServiceException(ResultCode.GOODS_NOT_EXIST);
             }

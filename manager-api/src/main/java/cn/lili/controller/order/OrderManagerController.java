@@ -1,6 +1,9 @@
 package cn.lili.controller.order;
 
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.NumberUtil;
 import cn.lili.common.aop.annotation.PreventDuplicateSubmissions;
+import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.member.entity.dto.MemberAddressDTO;
@@ -96,7 +99,11 @@ public class OrderManagerController {
     @PutMapping(value = "/update/{orderSn}/price")
     public ResultMessage<Order> updateOrderPrice(@PathVariable String orderSn,
                                                  @NotNull(message = "订单价格不能为空") @RequestParam Double price) {
-        return ResultUtil.data(orderPriceService.updatePrice(orderSn, price));
+        if (NumberUtil.isGreater(Convert.toBigDecimal(price), Convert.toBigDecimal(0))) {
+            return ResultUtil.data(orderPriceService.updatePrice(orderSn, price));
+        } else {
+            return ResultUtil.error(ResultCode.ORDER_PRICE_ERROR);
+        }
     }
 
 
@@ -119,5 +126,12 @@ public class OrderManagerController {
     @PostMapping(value = "/getTraces/{orderSn}")
     public ResultMessage<Object> getTraces(@NotBlank(message = "订单编号不能为空") @PathVariable String orderSn) {
         return ResultUtil.data(orderService.getTraces(orderSn));
+    }
+
+    @ApiOperation(value = "卖家订单备注")
+    @PutMapping("/{orderSn}/sellerRemark")
+    public ResultMessage<Object> sellerRemark(@PathVariable String orderSn, @RequestParam String sellerRemark) {
+        orderService.updateSellerRemark(orderSn, sellerRemark);
+        return ResultUtil.success();
     }
 }

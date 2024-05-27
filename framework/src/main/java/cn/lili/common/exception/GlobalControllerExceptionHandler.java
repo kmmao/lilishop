@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 异常处理
@@ -59,6 +60,18 @@ public class GlobalControllerExceptionHandler {
                 message += ":" + serviceException.getMsg();
             }
 
+            // 对一些特殊异常处理，不再打印error级别的日志
+            assert serviceException.getResultCode() != null;
+            if (serviceException.getResultCode().equals(ResultCode.DEMO_SITE_EXCEPTION)) {
+                log.debug("[DEMO_SITE_EXCEPTION]:{}", serviceException.getResultCode().message(), e);
+                return ResultUtil.error(code, message);
+            }
+            if (serviceException.getResultCode().equals(ResultCode.USER_AUTH_EXPIRED)) {
+                log.debug("403 :{}", serviceException.getResultCode().message(), e);
+                return ResultUtil.error(code, message);
+            }
+
+
             log.error("全局异常[ServiceException]:{}-{}", serviceException.getResultCode().code(), serviceException.getResultCode().message(), e);
             return ResultUtil.error(code, message);
 
@@ -100,7 +113,8 @@ public class GlobalControllerExceptionHandler {
 //   protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
 //       if (ex instanceof MethodArgumentNotValidException) {
 //           MethodArgumentNotValidException exception = (MethodArgumentNotValidException) ex;
-//           return new ResponseEntity<>(new ResultUtil<>().setErrorMsg(exception.getBindingResult().getAllErrors().get(0).getDefaultMessage()), status);
+//           return new ResponseEntity<>(new ResultUtil<>().setErrorMsg(exception.getBindingResult().getAllErrors().get(0).getDefaultMessage()),
+//           status);
 //       }
 //       if (ex instanceof MethodArgumentTypeMismatchException) {
 //           MethodArgumentTypeMismatchException exception = (MethodArgumentTypeMismatchException) ex;
@@ -126,10 +140,18 @@ public class GlobalControllerExceptionHandler {
 
         BindException exception = (BindException) e;
         List<FieldError> fieldErrors = exception.getBindingResult().getFieldErrors();
-        for (FieldError error : fieldErrors) {
-            return ResultUtil.error(ResultCode.PARAMS_ERROR.code(), error.getDefaultMessage());
+        // 错误消息处理
+        try {
+            if (!fieldErrors.isEmpty()) {
+                return ResultUtil.error(ResultCode.PARAMS_ERROR.code(),
+                        fieldErrors.stream()
+                                .map(FieldError::getDefaultMessage) // 获取每个对象的名称字段
+                                .collect(Collectors.joining(", ")));
+            }
+            return ResultUtil.error(ResultCode.PARAMS_ERROR);
+        } catch (Exception ex) {
+            return ResultUtil.error(ResultCode.PARAMS_ERROR);
         }
-        return ResultUtil.error(ResultCode.PARAMS_ERROR);
     }
 
     /**

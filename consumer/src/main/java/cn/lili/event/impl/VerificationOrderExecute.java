@@ -31,7 +31,7 @@ public class VerificationOrderExecute implements OrderStatusChangeEvent {
     @Override
     public void orderChange(OrderMessage orderMessage) {
         //订单状态为待核验，添加订单添加核验码
-        if (orderMessage.getNewStatus().equals(OrderStatusEnum.TAKE)) {
+        if (orderMessage.getNewStatus().equals(OrderStatusEnum.TAKE) || orderMessage.getNewStatus().equals(OrderStatusEnum.STAY_PICKED_UP)) {
             //获取订单信息
             Order order = orderService.getBySn(orderMessage.getOrderSn());
             //获取随机数，判定是否存在
@@ -43,7 +43,7 @@ public class VerificationOrderExecute implements OrderStatusChangeEvent {
             //修改虚拟订单货物可以进行售后、投诉
             orderItemService.update(new LambdaUpdateWrapper<OrderItem>().eq(OrderItem::getOrderSn, orderMessage.getOrderSn())
                     .set(OrderItem::getAfterSaleStatus, OrderItemAfterSaleStatusEnum.NOT_APPLIED)
-                    .set(OrderItem::getCommentStatus, OrderComplaintStatusEnum.NO_APPLY));
+                    .set(OrderItem::getComplainStatus, OrderComplaintStatusEnum.COMPLETE));
         }
     }
 

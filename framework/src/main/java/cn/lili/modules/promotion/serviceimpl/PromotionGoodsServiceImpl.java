@@ -1,9 +1,11 @@
 package cn.lili.modules.promotion.serviceimpl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import cn.lili.cache.Cache;
 import cn.lili.common.enums.PromotionTypeEnum;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.goods.entity.dos.GoodsSku;
@@ -24,11 +26,12 @@ import cn.lili.modules.promotion.service.SeckillApplyService;
 import cn.lili.modules.promotion.tools.PromotionTools;
 import cn.lili.modules.search.entity.dos.EsGoodsIndex;
 import cn.lili.modules.search.service.EsGoodsIndexService;
+import cn.lili.modules.system.aspect.annotation.SystemLogPoint;
 import cn.lili.mybatis.util.PageUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -71,6 +74,9 @@ public class PromotionGoodsServiceImpl extends ServiceImpl<PromotionGoodsMapper,
     @Autowired
     private EsGoodsIndexService goodsIndexService;
 
+    @Autowired
+    private Cache cache;
+
     @Override
     public List<PromotionGoods> findSkuValidPromotion(String skuId, String storeIds) {
 
@@ -94,19 +100,24 @@ public class PromotionGoodsServiceImpl extends ServiceImpl<PromotionGoodsMapper,
         List<String> categories = skus.stream().map(GoodsSku::getCategoryPath).collect(Collectors.toList());
         List<String> skuIds = skus.stream().map(GoodsSku::getId).collect(Collectors.toList());
         List<String> categoriesPath = new ArrayList<>();
-        categories.forEach(i -> categoriesPath.addAll(Arrays.asList(i.split(","))));
+        categories.forEach(i -> {
+                    if (CharSequenceUtil.isNotEmpty(i)) {
+                        categoriesPath.addAll(Arrays.asList(i.split(",")));
+                    }
+                }
+        );
         QueryWrapper<PromotionGoods> queryWrapper = new QueryWrapper<>();
 
         queryWrapper.and(i -> i.or(j -> j.in(SKU_ID_COLUMN, skuIds))
                 .or(n -> n.eq("scope_type", PromotionsScopeTypeEnum.ALL.name()))
                 .or(n -> n.and(k -> k.eq("scope_type", PromotionsScopeTypeEnum.PORTION_GOODS_CATEGORY.name())
-                        .and(l -> l.in("scope_id", categoriesPath)))));
+                        .and(l -> l.in(CollUtil.isNotEmpty(categoriesPath), "scope_id", categoriesPath)))));
         queryWrapper.and(i -> i.or(PromotionTools.queryPromotionStatus(PromotionsStatusEnum.START)).or(PromotionTools.queryPromotionStatus(PromotionsStatusEnum.NEW)));
         return this.list(queryWrapper);
     }
 
     @Override
-    public IPage<PromotionGoods> pageFindAll(PromotionGoodsSearchParams searchParams, PageVO pageVo) {
+    public Page<PromotionGoods> pageFindAll(PromotionGoodsSearchParams searchParams, PageVO pageVo) {
         return this.page(PageUtil.initPage(pageVo), searchParams.queryWrapper());
     }
 
@@ -184,10 +195,10 @@ public class PromotionGoodsServiceImpl extends ServiceImpl<PromotionGoodsMapper,
     @Override
     public Integer getPromotionGoodsStock(PromotionTypeEnum typeEnum, String promotionId, String skuId) {
         String promotionStockKey = PromotionGoodsService.getPromotionGoodsStockCacheKey(typeEnum, promotionId, skuId);
-        String promotionGoodsStock = stringRedisTemplate.opsForValue().get(promotionStockKey);
+        Object promotionGoodsStock = cache.get(promotionStockKey);
 
         //库存如果不为空，则直接返回
-        if (promotionGoodsStock != null && CharSequenceUtil.isNotEmpty(promotionGoodsStock)) {
+        if (promotionGoodsStock != null) {
             return Convert.toInt(promotionGoodsStock);
         }
         //如果为空
@@ -202,7 +213,7 @@ public class PromotionGoodsServiceImpl extends ServiceImpl<PromotionGoodsMapper,
                 return 0;
             }
             //否则写入新的促销商品库存
-            stringRedisTemplate.opsForValue().set(promotionStockKey, promotionGoods.getQuantity().toString());
+            cache.put(promotionStockKey, promotionGoods.getQuantity());
             return promotionGoods.getQuantity();
         }
     }
@@ -258,8 +269,25 @@ public class PromotionGoodsServiceImpl extends ServiceImpl<PromotionGoodsMapper,
             updateWrapper.set(PromotionGoods::getQuantity, promotionGoods.getQuantity()).set(PromotionGoods::getNum, promotionGoods.getNum());
 
             this.update(updateWrapper);
-            stringRedisTemplate.opsForValue().set(promotionStockKey, promotionGoods.getQuantity().toString());
+            cache.put(promotionStockKey, promotionGoods.getQuantity());
         }
+    }
+
+    @Override
+    @SystemLogPoint(description = "更新促销活动商品库存", customerLog = "'操作的skuId:['+#skuId+']，修改后的库存:['+#quantity+']'")
+    public void updatePromotionGoodsStock(String skuId, Integer quantity) {
+        LambdaQueryWrapper<PromotionGoods> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.notIn(PromotionGoods::getPromotionType, Arrays.stream(PromotionTypeEnum.haveIndependanceStockPromotion).map(Enum::name).collect(Collectors.toList()));
+        queryWrapper.eq(PromotionGoods::getSkuId, skuId);
+        this.list(queryWrapper).forEach(promotionGoods -> {
+            String promotionStockKey = PromotionGoodsService.getPromotionGoodsStockCacheKey(PromotionTypeEnum.valueOf(promotionGoods.getPromotionType()), promotionGoods.getPromotionId(), promotionGoods.getSkuId());
+            cache.remove(promotionStockKey);
+        });
+        LambdaUpdateWrapper<PromotionGoods> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.notIn(PromotionGoods::getPromotionType, Arrays.stream(PromotionTypeEnum.haveIndependanceStockPromotion).map(Enum::name).collect(Collectors.toList()));
+        updateWrapper.eq(PromotionGoods::getSkuId, skuId);
+        updateWrapper.set(PromotionGoods::getQuantity, quantity);
+        this.update(updateWrapper);
     }
 
     /**
@@ -282,6 +310,7 @@ public class PromotionGoodsServiceImpl extends ServiceImpl<PromotionGoodsMapper,
      * @param skuIds      skuId
      */
     @Override
+    @SystemLogPoint(description = "删除促销商品", customerLog = "'删除的skuId:['+#skuIds+']，促销活动ID:['+#promotionId+']'")
     public void deletePromotionGoods(String promotionId, List<String> skuIds) {
         LambdaQueryWrapper<PromotionGoods> queryWrapper = new LambdaQueryWrapper<PromotionGoods>()
                 .eq(PromotionGoods::getPromotionId, promotionId).in(PromotionGoods::getSkuId, skuIds);

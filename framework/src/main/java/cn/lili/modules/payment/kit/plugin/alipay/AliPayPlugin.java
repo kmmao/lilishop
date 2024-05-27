@@ -26,11 +26,13 @@ import cn.lili.modules.system.entity.dos.Setting;
 import cn.lili.modules.system.entity.dto.payment.AlipayPaymentSetting;
 import cn.lili.modules.system.entity.enums.SettingEnum;
 import cn.lili.modules.system.service.SettingService;
+import cn.lili.modules.wallet.entity.dos.MemberWithdrawApply;
+import cn.lili.modules.wallet.entity.dto.TransferResultDTO;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.*;
 import com.alipay.api.internal.util.AlipaySignature;
-import com.alipay.api.response.AlipayTradeCancelResponse;
+import com.alipay.api.response.AlipayFundTransUniTransferResponse;
 import com.alipay.api.response.AlipayTradeRefundResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -169,7 +171,8 @@ public class AliPayPlugin implements Payment {
             payModel.setTimeoutExpress("3m");
             payModel.setOutTradeNo(outTradeNo);
             log.info("支付宝扫码：{}", payModel);
-            String resultStr = AliPayRequest.tradePrecreatePayToResponse(payModel, notifyUrl(apiProperties.getBuyer(), PaymentMethodEnum.ALIPAY)).getBody();
+            String resultStr =
+                    AliPayRequest.tradePrecreatePayToResponse(payModel, notifyUrl(apiProperties.getBuyer(), PaymentMethodEnum.ALIPAY)).getBody();
 
             log.info("支付宝扫码交互返回：{}", resultStr);
             JSONObject jsonObject = JSONObject.parseObject(resultStr);
@@ -201,7 +204,8 @@ public class AliPayPlugin implements Payment {
                 refundLog.setIsRefund(true);
                 refundLog.setReceivableNo(refundLog.getOutOrderNo());
             } else {
-                refundLog.setErrorMessage(String.format("错误码：%s,错误原因：%s", alipayTradeRefundResponse.getSubCode(), alipayTradeRefundResponse.getSubMsg()));
+                refundLog.setErrorMessage(String.format("错误码：%s,错误原因：%s", alipayTradeRefundResponse.getSubCode(),
+                        alipayTradeRefundResponse.getSubMsg()));
             }
             refundLogService.save(refundLog);
         } catch (Exception e) {
@@ -219,7 +223,7 @@ public class AliPayPlugin implements Payment {
     @Override
     public void callBack(HttpServletRequest request) {
         log.info("支付同步回调：");
-        callback(request);
+        checkPaymentResult(request);
 
     }
 
@@ -230,11 +234,49 @@ public class AliPayPlugin implements Payment {
     }
 
     /**
+     * 支付宝提现
+     * 文档地址：https://opendocs.alipay.com/open/02byuo?scene=ca56bca529e64125a2786703c6192d41&ref=api
+     *
+     * @param memberWithdrawApply 会员提现申请
+     */
+    @Override
+    public TransferResultDTO transfer(MemberWithdrawApply memberWithdrawApply) {
+        AlipayFundTransUniTransferModel model = new AlipayFundTransUniTransferModel();
+        model.setOutBizNo(SnowFlake.createStr("T"));
+        model.setRemark("用户提现");
+        model.setBusinessParams("{\"payer_show_name_use_alias\":\"true\"}");
+        model.setBizScene("DIRECT_TRANSFER");
+        Participant payeeInfo = new Participant();
+        payeeInfo.setIdentity(memberWithdrawApply.getConnectNumber());
+        payeeInfo.setIdentityType("ALIPAY_LOGON_ID");
+        payeeInfo.setName(memberWithdrawApply.getRealName());
+        model.setPayeeInfo(payeeInfo);
+
+        model.setTransAmount(memberWithdrawApply.getApplyMoney().toString());
+        model.setProductCode("TRANS_ACCOUNT_NO_PWD");
+        model.setOrderTitle("用户提现");
+        //交互退款
+        try {
+            AlipayFundTransUniTransferResponse alipayFundTransUniTransferResponse = AliPayApi.uniTransferToResponse(model, null);
+            log.error("支付宝退款，参数：{},支付宝响应：{}", JSONUtil.toJsonStr(model), JSONUtil.toJsonStr(alipayFundTransUniTransferResponse));
+            if (alipayFundTransUniTransferResponse.isSuccess()) {
+                return TransferResultDTO.builder().result(true).build();
+            } else {
+                log.error(alipayFundTransUniTransferResponse.getSubMsg());
+                return TransferResultDTO.builder().result(false).response(alipayFundTransUniTransferResponse.getSubMsg()).build();
+            }
+        } catch (Exception e) {
+            log.error("用户提现异常：", e);
+            return TransferResultDTO.builder().result(false).response(e.getMessage()).build();
+        }
+    }
+
+    /**
      * 验证支付结果
      *
-     * @param request
+     * @param request 请求
      */
-    private void callback(HttpServletRequest request) {
+    private void checkPaymentResult(HttpServletRequest request) {
         try {
             AlipayPaymentSetting alipayPaymentSetting = alipayPaymentSetting();
             //获取支付宝反馈信息

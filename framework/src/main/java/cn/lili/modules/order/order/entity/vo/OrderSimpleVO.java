@@ -4,6 +4,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.common.enums.ClientTypeEnum;
 import cn.lili.common.security.sensitive.Sensitive;
 import cn.lili.common.security.sensitive.enums.SensitiveStrategy;
+import cn.lili.modules.order.order.entity.enums.OrderItemAfterSaleStatusEnum;
+import cn.lili.modules.order.order.entity.enums.OrderPromotionTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -148,6 +150,15 @@ public class OrderSimpleVO {
     @ApiModelProperty(value = "订单促销类型")
     private String orderPromotionType;
 
+    @ApiModelProperty(value = "是否退款")
+    private String groupIsRefund;
+
+    @ApiModelProperty(value = "退款金额")
+    private String groupRefundPrice;
+
+    @ApiModelProperty(value = "卖家订单备注")
+    private String sellerRemark;
+
     public List<OrderItemVO> getOrderItems() {
         if (CharSequenceUtil.isEmpty(groupGoodsId)) {
             return new ArrayList<>();
@@ -183,7 +194,11 @@ public class OrderSimpleVO {
             orderItemVO.setImage(groupImages.split(",")[i]);
         }
         if (CharSequenceUtil.isNotEmpty(groupAfterSaleStatus) && groupAfterSaleStatus.split(",").length == groupGoodsId.split(",").length) {
-            orderItemVO.setAfterSaleStatus(groupAfterSaleStatus.split(",")[i]);
+            if (OrderPromotionTypeEnum.isAfterSale(this.orderPromotionType)) {
+                orderItemVO.setAfterSaleStatus(OrderItemAfterSaleStatusEnum.EXPIRED.name());
+            } else {
+                orderItemVO.setAfterSaleStatus(groupAfterSaleStatus.split(",")[i]);
+            }
         }
         if (CharSequenceUtil.isNotEmpty(groupComplainStatus) && groupComplainStatus.split(",").length == groupGoodsId.split(",").length) {
             orderItemVO.setComplainStatus(groupComplainStatus.split(",")[i]);
@@ -193,6 +208,12 @@ public class OrderSimpleVO {
         }
         if (CharSequenceUtil.isNotEmpty(groupGoodsPrice) && groupGoodsPrice.split(",").length == groupGoodsId.split(",").length) {
             orderItemVO.setGoodsPrice(Double.parseDouble(groupGoodsPrice.split(",")[i]));
+        }
+        if (CharSequenceUtil.isNotEmpty(groupIsRefund) && groupIsRefund.split(",").length == groupGoodsId.split(",").length) {
+            orderItemVO.setIsRefund(groupIsRefund.split(",")[i]);
+        }
+        if (CharSequenceUtil.isNotEmpty(groupRefundPrice) && groupRefundPrice.split(",").length == groupGoodsId.split(",").length) {
+            orderItemVO.setRefundPrice(groupRefundPrice.split(",")[i]);
         }
         return orderItemVO;
     }
@@ -205,5 +226,11 @@ public class OrderSimpleVO {
         return new AllowOperation(this);
     }
 
-
+    public String getGroupAfterSaleStatus() {
+        // 不可售后的订单类型集合
+        if (OrderPromotionTypeEnum.isAfterSale(this.orderPromotionType)) {
+            return OrderItemAfterSaleStatusEnum.EXPIRED.name();
+        }
+        return groupAfterSaleStatus;
+    }
 }

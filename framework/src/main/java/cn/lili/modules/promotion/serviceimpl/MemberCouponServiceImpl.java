@@ -136,9 +136,11 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
     public IPage<MemberCoupon> getMemberCoupons(MemberCouponSearchParams param, PageVO pageVo) {
         QueryWrapper<MemberCoupon> queryWrapper = param.queryWrapper();
         Page<MemberCoupon> page = this.page(PageUtil.initPage(pageVo), queryWrapper);
-        if (page.getRecords().stream().anyMatch(i -> i.getEndTime().before(new Date()))) {
-            this.expireInvalidMemberCoupon(param.getMemberId());
-            return this.page(PageUtil.initPage(pageVo), queryWrapper);
+        if (page.getRecords() != null && page.getRecords().size() > 0) {
+            if (page.getRecords().stream().anyMatch(i -> i.getEndTime().before(new Date()))) {
+                this.expireInvalidMemberCoupon(param.getMemberId());
+                return this.page(PageUtil.initPage(pageVo), queryWrapper);
+            }
         }
         return page;
     }
@@ -331,7 +333,46 @@ public class MemberCouponServiceImpl extends ServiceImpl<MemberCouponMapper, Mem
         LambdaUpdateWrapper<MemberCoupon> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(MemberCoupon::getId, memberCouponIds);
         updateWrapper.set(MemberCoupon::getMemberCouponStatus, MemberCouponStatusEnum.NEW.name());
+        updateWrapper.set(MemberCoupon::getConsumptionTime, null);
         return this.update(updateWrapper);
+    }
+
+    @Override
+    public void voidCoupon(String couponId) {
+        LambdaUpdateWrapper<MemberCoupon> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(MemberCoupon::getCouponId, couponId);
+        updateWrapper.set(MemberCoupon::getMemberCouponStatus, MemberCouponStatusEnum.CLOSED.name());
+        updateWrapper.set(MemberCoupon::getDeleteFlag, true);
+        this.update(updateWrapper);
+    }
+
+    @Override
+    public Page<MemberCouponVO> getMemberCouponsPage(Page<MemberCoupon> page, MemberCouponSearchParams param) {
+        QueryWrapper<MemberCouponVO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(CharSequenceUtil.isNotEmpty(param.getMemberId()), "mc.member_id", param.getMemberId());
+        queryWrapper.eq(CharSequenceUtil.isNotEmpty(param.getStoreId()), "c.store_id", param.getStoreId());
+        queryWrapper.like(CharSequenceUtil.isNotEmpty(param.getMemberName()), "mc.member_name", param.getMemberName());
+        queryWrapper.eq(CharSequenceUtil.isNotEmpty(param.getCouponId()), "mc.coupon_id", param.getCouponId());
+        queryWrapper.like(CharSequenceUtil.isNotEmpty(param.getCouponName()), "c.coupon_name", param.getCouponName());
+        queryWrapper.eq(CharSequenceUtil.isNotEmpty(param.getGetType()), "mc.get_type", param.getGetType());
+        queryWrapper.eq(CharSequenceUtil.isNotEmpty(param.getScopeType()), "mc.scope_type", param.getPromotionStatus());
+        queryWrapper.eq(CharSequenceUtil.isNotEmpty(param.getCouponType()), "mc.coupon_type", param.getCouponType());
+        queryWrapper.eq(CharSequenceUtil.isNotEmpty(param.getMemberCouponStatus()), "mc.member_coupon_status", param.getMemberCouponStatus());
+        if (param.getStartTime() != null) {
+            queryWrapper.ge("mc.start_time", new Date(param.getStartTime()));
+        }
+        if (param.getEndTime() != null) {
+            queryWrapper.le("mc.end_time", new Date(param.getEndTime()));
+        }
+        return this.baseMapper.getMemberCoupons(page, queryWrapper);
+    }
+
+    @Override
+    public long getMemberCouponNum(String memberId, String couponId) {
+        LambdaQueryWrapper<MemberCoupon> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MemberCoupon::getMemberId, memberId);
+        queryWrapper.eq(MemberCoupon::getCouponId, couponId);
+        return this.count(queryWrapper);
     }
 
     /**

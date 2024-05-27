@@ -16,9 +16,27 @@ public enum WithdrawStatusEnum {
      */
     VIA_AUDITING("审核通过"),
     /**
+     * 分销提现
+     * 审核成功即提现成功
+     */
+    D_VIA_AUDITING("分销提现审核通过"),
+    /**
      * 审核未通过
      */
-    FAIL_AUDITING("审核未通过");
+    FAIL_AUDITING("审核未通过"),
+    /**
+     * 分销提现
+     * 审核未通过
+     */
+    D_FAIL_AUDITING("分销提现审核未通过"),
+    /**
+     * 提现成功
+     */
+    SUCCESS("提现成功"),
+    /**
+     * 提现失败
+     */
+    ERROR("提现失败");
 
     private String description;
 

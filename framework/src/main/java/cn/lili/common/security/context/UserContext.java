@@ -11,6 +11,7 @@ import cn.lili.common.security.token.SecretKeyUtil;
 import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.service.MemberService;
 import com.beust.ah.A;
+import cn.lili.common.utils.StringUtils;
 import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -97,6 +98,10 @@ public class UserContext {
     public static AuthUser getAuthUser(Cache cache, String accessToken) {
         try {
             if (cache.keys("*" + accessToken).isEmpty()) {
+            AuthUser authUser = getAuthUser(accessToken);
+            assert authUser != null;
+
+            if (!cache.hasKey(CachePrefix.ACCESS_TOKEN.getPrefix(authUser.getRole(), authUser.getId()) + accessToken)) {
                 throw new ServiceException(ResultCode.USER_AUTHORITY_ERROR);
             }
             return getAuthUser(accessToken);
@@ -133,4 +138,21 @@ public class UserContext {
             return null;
         }
     }
+
+
+    /**
+     * 写入邀请人信息
+     */
+    public static void settingInviter(String memberId, Cache cache) {
+        if (RequestContextHolder.getRequestAttributes() != null) {
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+            //邀请人id
+            String inviterId = request.getHeader(SecurityEnum.INVITER.getValue());
+            if (StringUtils.isNotEmpty(inviterId)) {
+                cache.put(CachePrefix.INVITER.getPrefix() + memberId, inviterId);
+            }
+        }
+    }
+
+
 }

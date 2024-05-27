@@ -12,8 +12,8 @@ import cn.lili.modules.member.entity.dto.MemberAddDTO;
 import cn.lili.modules.member.entity.dto.MemberEditDTO;
 import cn.lili.modules.member.entity.vo.MemberSearchVO;
 import cn.lili.modules.member.entity.vo.MemberVO;
-import cn.lili.modules.member.entity.vo.QRLoginResultVo;
 import cn.lili.modules.member.entity.vo.QRCodeLoginSessionVo;
+import cn.lili.modules.member.entity.vo.QRLoginResultVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -82,6 +82,14 @@ public interface MemberService extends IService<Member> {
      * @return token
      */
     Token usernameStoreLogin(String username, String password);
+
+    /**
+     * 商家登录：用户名、密码登录
+     *
+     * @param mobilePhone 用户名
+     * @return token
+     */
+    Token mobilePhoneStoreLogin(String mobilePhone);
 
     /**
      * 注册：手机号、验证码登录
@@ -167,10 +175,9 @@ public interface MemberService extends IService<Member> {
     /**
      * 注销账号
      *
-     * @param password 密码
      * @return 操作结果
      */
-    void cancellation(String password);
+    void cancellation();
     /**
      * 修改当前会员的手机号
      *
@@ -178,6 +185,14 @@ public interface MemberService extends IService<Member> {
      * @return 操作结果
      */
     boolean changeMobile(String mobile);
+
+    /**
+     * 修改用户手机号
+     * @param memberId 会员ID
+     * @param mobile 手机号
+     * @return
+     */
+    boolean changeMobile(String memberId,String mobile);
 
 
     /**
@@ -215,12 +230,12 @@ public interface MemberService extends IService<Member> {
     IPage<MemberVO> getMemberPage(MemberSearchVO memberSearchVO, PageVO page);
 
 
-    /**
-     * 一键注册会员
-     *
-     * @return
-     */
-    Token autoRegister();
+//    /**
+//     * 一键注册会员
+//     *
+//     * @return
+//     */
+//    Token autoRegister();
 
     /**
      * 一键注册会员
@@ -228,7 +243,7 @@ public interface MemberService extends IService<Member> {
      * @param authUser 联合登录用户
      * @return Token
      */
-    Token autoRegister(ConnectAuthUser authUser);
+    Member autoRegister(ConnectAuthUser authUser);
 
     /**
      * 刷新token
@@ -292,7 +307,13 @@ public interface MemberService extends IService<Member> {
     void logout(UserEnums userEnums);
 
     /**
-     * <<<<<<< HEAD
+     * 登出
+     *
+     * @param userId 用户id
+     */
+    void logout(String userId);
+
+    /**
      * 修改会员是否拥有店铺
      *
      * @param haveStore 是否拥有店铺

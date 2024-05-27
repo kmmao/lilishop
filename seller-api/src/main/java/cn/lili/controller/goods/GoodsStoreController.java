@@ -1,7 +1,10 @@
 package cn.lili.controller.goods;
 
 import cn.lili.common.aop.annotation.DemoSite;
+import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
+import cn.lili.common.exception.RetryException;
+import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.OperationalJudgment;
 import cn.lili.common.security.context.UserContext;
 import cn.lili.common.vo.ResultMessage;
@@ -16,19 +19,28 @@ import cn.lili.modules.goods.entity.vos.GoodsVO;
 import cn.lili.modules.goods.entity.vos.StockWarningVO;
 import cn.lili.modules.goods.service.GoodsService;
 import cn.lili.modules.goods.service.GoodsSkuService;
+import cn.lili.modules.search.service.EsGoodsIndexService;
+import cn.lili.modules.statistics.aop.PageViewPoint;
+import cn.lili.modules.statistics.aop.enums.PageViewEnum;
 import cn.lili.modules.store.entity.dos.StoreDetail;
 import cn.lili.modules.store.service.StoreDetailService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -39,6 +51,7 @@ import java.util.stream.Collectors;
  * @since 2020-02-23 15:18:56
  */
 @RestController
+@Slf4j
 @Api(tags = "店铺端,商品接口")
 @RequestMapping("/store/goods/goods")
 public class GoodsStoreController {
@@ -58,6 +71,9 @@ public class GoodsStoreController {
      */
     @Autowired
     private StoreDetailService storeDetailService;
+
+    @Autowired
+    private EsGoodsIndexService esGoodsIndexService;
 
     @ApiOperation(value = "分页获取商品列表")
     @GetMapping(value = "/list")
@@ -79,17 +95,36 @@ public class GoodsStoreController {
 
     @ApiOperation(value = "分页获取库存告警商品列表")
     @GetMapping(value = "/list/stock")
-    public ResultMessage<StockWarningVO> getWarningStockByPage(GoodsSearchParams goodsSearchParams) {
+    public ResultMessage<IPage<GoodsSku>> getWarningStockByPage(GoodsSearchParams goodsSearchParams) {
         //获取当前登录商家账号
         String storeId = Objects.requireNonNull(UserContext.getCurrentUser()).getStoreId();
-        StoreDetail storeDetail = OperationalJudgment.judgment(storeDetailService.getStoreDetail(storeId));
-        Integer stockWarnNum = storeDetail.getStockWarning();
         goodsSearchParams.setStoreId(storeId);
-        goodsSearchParams.setLeQuantity(stockWarnNum);
+        goodsSearchParams.setAlertQuantity(true);
         goodsSearchParams.setMarketEnable(GoodsStatusEnum.UPPER.name());
-        IPage<GoodsSku> goodsSku = goodsSkuService.getGoodsSkuByPage(goodsSearchParams);
-        StockWarningVO stockWarning = new StockWarningVO(stockWarnNum, goodsSku);
-        return ResultUtil.data(stockWarning);
+        IPage<GoodsSku> goodsSkuPage = goodsSkuService.getGoodsSkuByPage(goodsSearchParams);
+        return ResultUtil.data(goodsSkuPage);
+    }
+
+    @ApiOperation(value = "批量修改商品预警库存")
+    @PutMapping(value = "/batch/update/alert/stocks", consumes = "application/json")
+    public ResultMessage<Object> batchUpdateAlertQuantity(@RequestBody List<GoodsSkuStockDTO> updateStockList) {
+        String storeId = Objects.requireNonNull(UserContext.getCurrentUser()).getStoreId();
+        // 获取商品skuId集合
+        List<String> goodsSkuIds = updateStockList.stream().map(GoodsSkuStockDTO::getSkuId).collect(Collectors.toList());
+        // 根据skuId集合查询商品信息
+        List<GoodsSku> goodsSkuList = goodsSkuService.list(new LambdaQueryWrapper<GoodsSku>().in(GoodsSku::getId, goodsSkuIds).eq(GoodsSku::getStoreId, storeId));
+        // 过滤不符合当前店铺的商品
+        List<String> filterGoodsSkuIds = goodsSkuList.stream().map(GoodsSku::getId).collect(Collectors.toList());
+        List<GoodsSkuStockDTO> collect = updateStockList.stream().filter(i -> filterGoodsSkuIds.contains(i.getSkuId())).collect(Collectors.toList());
+        goodsSkuService.batchUpdateAlertQuantity(collect);
+        return ResultUtil.success();
+    }
+
+    @ApiOperation(value = "修改商品预警库存")
+    @PutMapping(value = "/update/alert/stocks", consumes = "application/json")
+    public ResultMessage<Object> updateAlertQuantity(@RequestBody GoodsSkuStockDTO goodsSkuStockDTO) {
+        goodsSkuService.updateAlertQuantity(goodsSkuStockDTO);
+        return ResultUtil.success();
     }
 
 
@@ -109,7 +144,7 @@ public class GoodsStoreController {
 
     @ApiOperation(value = "修改商品")
     @PutMapping(value = "/update/{goodsId}", consumes = "application/json", produces = "application/json")
-    public ResultMessage<GoodsOperationDTO> update(@RequestBody GoodsOperationDTO goodsOperationDTO, @PathVariable String goodsId) {
+    public ResultMessage<GoodsOperationDTO> update(@Valid @RequestBody GoodsOperationDTO goodsOperationDTO, @PathVariable String goodsId) {
         goodsService.editGoods(goodsOperationDTO, goodsId);
         return ResultUtil.success();
     }
@@ -172,6 +207,28 @@ public class GoodsStoreController {
         List<GoodsSkuStockDTO> collect = updateStockList.stream().filter(i -> filterGoodsSkuIds.contains(i.getSkuId())).collect(Collectors.toList());
         goodsSkuService.updateStocks(collect);
         return ResultUtil.success();
+    }
+    @ApiOperation(value = "通过id获取商品信息")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "goodsId", value = "商品ID", required = true, paramType = "path"),
+            @ApiImplicitParam(name = "skuId", value = "skuId", required = true, paramType = "path")
+    })
+    @GetMapping(value = "/sku/{goodsId}/{skuId}")
+    @PageViewPoint(type = PageViewEnum.SKU, id = "#id")
+    public ResultMessage<Map<String, Object>> getSku(@NotNull(message = "商品ID不能为空") @PathVariable("goodsId") String goodsId,
+                                                     @NotNull(message = "SKU ID不能为空") @PathVariable("skuId") String skuId) {
+        try {
+            // 读取选中的列表
+            Map<String, Object> map = goodsSkuService.getGoodsSkuDetail(goodsId, skuId);
+            return ResultUtil.data(map);
+        } catch (ServiceException se) {
+            log.info(se.getMsg(), se);
+            throw se;
+        } catch (Exception e) {
+            log.error(ResultCode.GOODS_ERROR.message(), e);
+            return ResultUtil.error(ResultCode.GOODS_ERROR);
+        }
+
     }
 
 }

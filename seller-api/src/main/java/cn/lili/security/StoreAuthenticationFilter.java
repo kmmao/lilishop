@@ -10,6 +10,10 @@ import cn.lili.common.security.enums.SecurityEnum;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.security.token.SecretKeyUtil;
 import cn.lili.common.utils.ResponseUtil;
+import cn.lili.modules.member.entity.dos.Clerk;
+import cn.lili.modules.member.service.ClerkService;
+import cn.lili.modules.member.service.StoreMenuRoleService;
+import cn.lili.modules.member.token.StoreTokenGenerate;
 import com.google.gson.Gson;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -43,15 +47,28 @@ public class StoreAuthenticationFilter extends BasicAuthenticationFilter {
 
     private final Cache cache;
 
+    private final StoreTokenGenerate storeTokenGenerate;
+
+    private final StoreMenuRoleService storeMenuRoleService;
+
+    private final ClerkService clerkService;
+
     public StoreAuthenticationFilter(AuthenticationManager authenticationManager,
+                                     StoreTokenGenerate storeTokenGenerate,
+                                     StoreMenuRoleService storeMenuRoleService,
+                                     ClerkService clerkService,
                                      Cache cache) {
         super(authenticationManager);
+        this.storeTokenGenerate = storeTokenGenerate;
+        this.storeMenuRoleService = storeMenuRoleService;
+        this.clerkService = clerkService;
         this.cache = cache;
     }
 
     @SneakyThrows
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException,
+            ServletException {
         //从header中获取jwt
         String jwt = request.getHeader(SecurityEnum.HEADER_TOKEN.getValue());
         //如果没有token 则return
@@ -89,7 +106,7 @@ public class StoreAuthenticationFilter extends BasicAuthenticationFilter {
             AuthUser authUser = new Gson().fromJson(json, AuthUser.class);
 
             //校验redis中是否有权限
-            if (cache.hasKey(CachePrefix.ACCESS_TOKEN.getPrefix(UserEnums.STORE) + jwt)) {
+            if (cache.hasKey(CachePrefix.ACCESS_TOKEN.getPrefix(UserEnums.STORE, authUser.getId()) + jwt)) {
                 //用户角色
                 List<GrantedAuthority> auths = new ArrayList<>();
                 auths.add(new SimpleGrantedAuthority("ROLE_" + authUser.getRole().name()));
@@ -122,15 +139,25 @@ public class StoreAuthenticationFilter extends BasicAuthenticationFilter {
 
 
         //如果不是超级管理员， 则鉴权
-        if (!authUser.getIsSuper()) {
-            //获取缓存中的权限
-            Map<String, List<String>> permission = (Map<String, List<String>>) cache.get(CachePrefix.PERMISSION_LIST.getPrefix(UserEnums.STORE) + authUser.getId());
+        if (Boolean.FALSE.equals(authUser.getIsSuper())) {
 
+            String permissionCacheKey = CachePrefix.PERMISSION_LIST.getPrefix(UserEnums.STORE) + authUser.getId();
+            //获取缓存中的权限
+            Map<String, List<String>> permission =
+                    (Map<String, List<String>>) cache.get(permissionCacheKey);
+            if (permission == null || permission.isEmpty()) {
+                //根据会员id查询店员信息
+                Clerk clerk = clerkService.getClerkByMemberId(authUser.getId());
+                if (clerk != null) {
+                    permission = storeTokenGenerate.permissionList(storeMenuRoleService.findAllMenu(clerk.getId(), authUser.getId()));
+                    cache.put(permissionCacheKey, permission);
+                }
+            }
             //获取数据(GET 请求)权限
             if (request.getMethod().equals(RequestMethod.GET.name())) {
                 //如果用户的超级权限和查阅权限都不包含当前请求的api
                 if (match(permission.get(PermissionEnum.SUPER.name()), requestUrl)
-                        ||match(permission.get(PermissionEnum.QUERY.name()), requestUrl)) {
+                        || match(permission.get(PermissionEnum.QUERY.name()), requestUrl)) {
                 } else {
                     ResponseUtil.output(response, ResponseUtil.resultMap(false, 400, "权限不足"));
                     log.error("当前请求路径：{},所拥有权限：{}", requestUrl, JSONUtil.toJsonStr(permission));

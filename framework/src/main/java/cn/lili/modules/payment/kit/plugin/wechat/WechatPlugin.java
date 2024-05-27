@@ -21,7 +21,7 @@ import cn.lili.common.utils.SnowFlake;
 import cn.lili.common.utils.StringUtils;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.connect.entity.Connect;
-import cn.lili.modules.connect.entity.enums.ConnectEnum;
+import cn.lili.modules.connect.entity.enums.SourceEnum;
 import cn.lili.modules.connect.service.ConnectService;
 import cn.lili.modules.member.entity.dto.ConnectQueryDTO;
 import cn.lili.modules.order.order.entity.dos.Order;
@@ -44,12 +44,18 @@ import cn.lili.modules.payment.kit.plugin.wechat.model.*;
 import cn.lili.modules.payment.service.PaymentService;
 import cn.lili.modules.payment.service.RefundLogService;
 import cn.lili.modules.system.entity.dos.Setting;
+import cn.lili.modules.system.entity.dto.WithdrawalSetting;
+import cn.lili.modules.system.entity.dto.connect.WechatConnectSetting;
+import cn.lili.modules.system.entity.dto.connect.dto.WechatConnectSettingItem;
 import cn.lili.modules.system.entity.dto.payment.WechatPaymentSetting;
 import cn.lili.modules.system.entity.enums.SettingEnum;
 import cn.lili.modules.system.service.SettingService;
 import cn.lili.rocketmq.RocketmqSendCallbackBuilder;
 import cn.lili.rocketmq.tags.OrderTagsEnum;
+import cn.lili.modules.wallet.entity.dos.MemberWithdrawApply;
+import cn.lili.modules.wallet.entity.dto.TransferResultDTO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +67,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -188,7 +196,7 @@ public class WechatPlugin implements Payment {
 
         try {
             Connect connect = connectService.queryConnect(
-                    ConnectQueryDTO.builder().userId(UserContext.getCurrentUser().getId()).unionType(ConnectEnum.WECHAT.name()).build()
+                    ConnectQueryDTO.builder().userId(UserContext.getCurrentUser().getId()).unionType(SourceEnum.WECHAT_OFFIACCOUNT_OPEN_ID.name()).build()
             );
             if (connect == null) {
                 return null;
@@ -393,7 +401,7 @@ public class WechatPlugin implements Payment {
 
         try {
             Connect connect = connectService.queryConnect(
-                    ConnectQueryDTO.builder().userId(UserContext.getCurrentUser().getId()).unionType(ConnectEnum.WECHAT_MP_OPEN_ID.name()).build()
+                    ConnectQueryDTO.builder().userId(UserContext.getCurrentUser().getId()).unionType(SourceEnum.WECHAT_MP_OPEN_ID.name()).build()
             );
             if (connect == null) {
                 return null;
@@ -481,6 +489,92 @@ public class WechatPlugin implements Payment {
         } catch (Exception e) {
             log.error("支付异常", e);
         }
+    }
+
+    /**
+     * 微信提现
+     * 文档地址：https://pay.weixin.qq.com/docs/merchant/apis/batch-transfer-to-balance/transfer-batch/initiate-batch-transfer.html
+     *
+     * @param memberWithdrawApply 会员提现申请
+     */
+    @Override
+    public TransferResultDTO transfer(MemberWithdrawApply memberWithdrawApply) {
+        try {
+            //获取提现设置
+            WithdrawalSetting withdrawalSetting = new Gson().fromJson(settingService.get(SettingEnum.WITHDRAWAL_SETTING.name()).getSettingValue(),
+                    WithdrawalSetting.class);
+
+            //获取用户OPENID
+            WechatConnectSetting wechatConnectSetting = new Gson().fromJson(settingService.get(SettingEnum.WECHAT_CONNECT.name()).getSettingValue()
+                    , WechatConnectSetting.class);
+            String source = "";
+            for (WechatConnectSettingItem wechatConnectSettingItem : wechatConnectSetting.getWechatConnectSettingItems()) {
+                if (wechatConnectSettingItem.getAppId().equals(withdrawalSetting.getWechatAppId())) {
+                    switch (wechatConnectSettingItem.getClientType()) {
+                        case "PC":
+                            source = SourceEnum.WECHAT_PC_OPEN_ID.name();
+                            break;
+                        case "H5":
+                            source = SourceEnum.WECHAT_OFFIACCOUNT_OPEN_ID.name();
+                            break;
+                        case "MP":
+                            source = SourceEnum.WECHAT_MP_OPEN_ID.name();
+                            break;
+                        case "APP":
+                            source = SourceEnum.WECHAT_APP_OPEN_ID.name();
+                            break;
+                    }
+                }
+            }
+
+            //获取微信设置
+            WechatPaymentSetting wechatPaymentSetting = wechatPaymentSetting();
+            //获取用户openId
+            Connect connect = connectService.queryConnect(
+                    ConnectQueryDTO.builder().userId(memberWithdrawApply.getMemberId())
+                            .unionType(source).build()
+            );
+            //构建提现，发起申请
+            TransferModel transferModel = new TransferModel()
+                    .setAppid(withdrawalSetting.getWechatAppId())
+                    .setOut_batch_no(SnowFlake.createStr("T"))
+                    .setBatch_name("用户提现")
+                    .setBatch_remark("用户提现")
+                    .setTotal_amount(CurrencyUtil.fen(memberWithdrawApply.getApplyMoney()))
+                    .setTotal_num(1)
+                    .setTransfer_scene_id("1000");
+            List<TransferDetailInput> transferDetailListList = new ArrayList<>();
+            {
+                TransferDetailInput transferDetailInput = new TransferDetailInput();
+                transferDetailInput.setOut_detail_no(SnowFlake.createStr("TD"));
+                transferDetailInput.setTransfer_amount(CurrencyUtil.fen(memberWithdrawApply.getApplyMoney()));
+                transferDetailInput.setTransfer_remark("用户提现");
+                transferDetailInput.setOpenid(connect.getUnionId());
+                transferDetailListList.add(transferDetailInput);
+            }
+            transferModel.setTransfer_detail_list(transferDetailListList);
+
+            PaymentHttpResponse response = WechatApi.v3(
+                    RequestMethodEnums.POST,
+                    WechatDomain.CHINA.toString(),
+                    WechatApiEnum.TRANSFER_BATCHES.toString(),
+                    wechatPaymentSetting.getMchId(),
+                    wechatPaymentSetting.getSerialNumber(),
+                    null,
+                    wechatPaymentSetting.getApiclient_key(),
+                    JSONUtil.toJsonStr(transferModel)
+            );
+            log.info("微信提现响应 {}", response);
+            String body = response.getBody();
+            JSONObject jsonObject = JSONUtil.parseObj(body);
+
+            return TransferResultDTO.builder().result(jsonObject.getStr("batch_id") != null).response(body).build();
+            //根据自身业务进行接下来的任务处理
+        } catch (Exception e) {
+            e.printStackTrace();
+            return TransferResultDTO.builder().result(false).response(e.getMessage()).build();
+        }
+
     }
 
     /**
@@ -596,7 +690,8 @@ public class WechatPlugin implements Payment {
                 String transactionId = jsonObject.getStr("transaction_id");
                 String refundId = jsonObject.getStr("refund_id");
 
-                RefundLog refundLog = refundLogService.getOne(new LambdaQueryWrapper<RefundLog>().eq(RefundLog::getPaymentReceivableNo, transactionId));
+                RefundLog refundLog = refundLogService.getOne(new LambdaQueryWrapper<RefundLog>().eq(RefundLog::getPaymentReceivableNo,
+                        transactionId));
                 if (refundLog != null) {
                     refundLog.setIsRefund(true);
                     refundLog.setReceivableNo(refundId);
@@ -616,7 +711,8 @@ public class WechatPlugin implements Payment {
                 String transactionId = jsonObject.getStr("transaction_id");
                 String refundId = jsonObject.getStr("refund_id");
 
-                RefundLog refundLog = refundLogService.getOne(new LambdaQueryWrapper<RefundLog>().eq(RefundLog::getPaymentReceivableNo, transactionId));
+                RefundLog refundLog = refundLogService.getOne(new LambdaQueryWrapper<RefundLog>().eq(RefundLog::getPaymentReceivableNo,
+                        transactionId));
                 if (refundLog != null) {
                     refundLog.setReceivableNo(refundId);
                     refundLog.setErrorMessage(ciphertext.getStr("summary"));

@@ -82,7 +82,7 @@ public class Store extends BaseEntity {
     @ApiModelProperty(value = "服务评分")
     private Double serviceScore;
 
-    @ApiModelProperty(value = "物流描述")
+    @ApiModelProperty(value = "物流评分")
     private Double deliveryScore;
 
     @ApiModelProperty(value = "商品数量")
@@ -100,8 +100,25 @@ public class Store extends BaseEntity {
     @ApiModelProperty(value = "udesk IM标识")
     private String merchantEuid;
 
+    public Boolean getPageShow() {
+        if(pageShow == null){
+            return false;
+        }
+        return pageShow;
+    }
+
+    public Boolean getSelfPickFlag() {
+        if(selfPickFlag == null){
+            return false;
+        }
+        return selfPickFlag;
+    }
+
     @ApiModelProperty(value = "默认页面是否开启")
     private Boolean pageShow;
+
+    @ApiModelProperty(value = "是否开启自提")
+    private Boolean selfPickFlag;
 
     public Store(Member member) {
         this.memberId = member.getId();
@@ -113,6 +130,8 @@ public class Store extends BaseEntity {
         descriptionScore = 5.0;
         goodsNum = 0;
         collectionNum = 0;
+        this.selfPickFlag = false;
+        this.pageShow = false;
     }
 
     public Store(Member member, AdminStoreApplyDTO adminStoreApplyDTO) {
@@ -127,6 +146,8 @@ public class Store extends BaseEntity {
         descriptionScore = 5.0;
         goodsNum = 0;
         collectionNum = 0;
+        this.selfPickFlag = false;
+        this.pageShow = false;
     }
 
 }

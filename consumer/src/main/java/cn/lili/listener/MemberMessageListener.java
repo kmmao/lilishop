@@ -1,10 +1,9 @@
 package cn.lili.listener;
 
 import cn.hutool.json.JSONUtil;
-import cn.lili.event.MemberLoginEvent;
-import cn.lili.event.MemberPointChangeEvent;
-import cn.lili.event.MemberRegisterEvent;
-import cn.lili.event.MemberWithdrawalEvent;
+import cn.lili.event.*;
+import cn.lili.event.impl.ImTalkExecute;
+import cn.lili.modules.connect.entity.dto.MemberConnectLoginMessage;
 import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.entity.dos.MemberSign;
 import cn.lili.modules.member.entity.dto.MemberPointMessage;
@@ -57,7 +56,10 @@ public class MemberMessageListener implements RocketMQListener<MessageExt> {
      */
     @Autowired
     private List<MemberLoginEvent> memberLoginEvents;
-
+    @Autowired
+    private List<MemberInfoChangeEvent> memberInfoChangeEvents;
+    @Autowired
+    private List<MemberConnectLoginEvent> memberConnectLoginEvents;
 
     @Override
     public void onMessage(MessageExt messageExt) {
@@ -76,7 +78,7 @@ public class MemberMessageListener implements RocketMQListener<MessageExt> {
                     }
                 }
                 break;
-
+            //用户登录
             case MEMBER_LOGIN:
 
                 for (MemberLoginEvent memberLoginEvent : memberLoginEvents) {
@@ -110,6 +112,20 @@ public class MemberMessageListener implements RocketMQListener<MessageExt> {
                     }
                 }
                 break;
+            //会员信息更改
+            case MEMBER_INFO_EDIT:
+                for (MemberInfoChangeEvent memberInfoChangeEvent : memberInfoChangeEvents) {
+                    try {
+                        Member member = JSONUtil.toBean(new String(messageExt.getBody()), Member.class);
+                        memberInfoChangeEvent.memberInfoChange(member);
+                    } catch (Exception e) {
+                        log.error("会员{},在{}业务中，提现事件执行异常",
+                                new String(messageExt.getBody()),
+                                memberInfoChangeEvent.getClass().getName(),
+                                e);
+                    }
+                }
+                break;
             //会员提现
             case MEMBER_WITHDRAWAL:
                 for (MemberWithdrawalEvent memberWithdrawalEvent : memberWithdrawalEvents) {
@@ -120,6 +136,20 @@ public class MemberMessageListener implements RocketMQListener<MessageExt> {
                         log.error("会员{},在{}业务中，提现事件执行异常",
                                 new String(messageExt.getBody()),
                                 memberWithdrawalEvent.getClass().getName(),
+                                e);
+                    }
+                }
+                break;
+            //用户第三方登录
+            case MEMBER_CONNECT_LOGIN:
+                for (MemberConnectLoginEvent memberConnectLoginEvent : memberConnectLoginEvents) {
+                    try {
+                        MemberConnectLoginMessage memberConnectLoginMessage = JSONUtil.toBean(new String(messageExt.getBody()), MemberConnectLoginMessage.class);
+                        memberConnectLoginEvent.memberConnectLogin(memberConnectLoginMessage.getMember(), memberConnectLoginMessage.getConnectAuthUser());
+                    } catch (Exception e) {
+                        log.error("会员{},在{}业务中，状态修改事件执行异常",
+                                new String(messageExt.getBody()),
+                                memberConnectLoginEvent.getClass().getName(),
                                 e);
                     }
                 }

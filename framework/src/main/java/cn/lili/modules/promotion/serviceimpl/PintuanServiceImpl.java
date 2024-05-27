@@ -31,12 +31,10 @@ import cn.lili.trigger.interfaces.TimeTrigger;
 import cn.lili.trigger.model.TimeExecuteConstant;
 import cn.lili.trigger.model.TimeTriggerMsg;
 import cn.lili.trigger.util.DelayQueueTools;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -157,48 +155,6 @@ public class PintuanServiceImpl extends AbstractPromotionsServiceImpl<PintuanMap
     }
 
     /**
-     * 更新促销状态
-     * 如果要更新促销状态为关闭，startTime和endTime置为空即可
-     *
-     * @param ids       促销id集合
-     * @param startTime 开始时间
-     * @param endTime   结束时间
-     * @return 是否更新成功
-     */
-    @Override
-    public boolean updateStatus(List<String> ids, Long startTime, Long endTime) {
-        if (startTime != null && endTime != null) {
-            for (String id : ids) {
-                Pintuan pintuan = this.getById(id);
-                QueryWrapper<Pintuan> queryWrapper = PromotionTools.checkActiveTime(new Date(startTime), new Date(endTime), PromotionTypeEnum.PINTUAN, pintuan.getStoreId(), id);
-                long sameNum = this.count(queryWrapper);
-                //当前时间段是否存在同类活动
-                if (sameNum > 0) {
-                    throw new ServiceException(ResultCode.PROMOTION_SAME_ACTIVE_EXIST);
-                }
-            }
-        }
-
-        return super.updateStatus(ids, startTime, endTime);
-    }
-
-    /**
-     * 检查促销参数
-     *
-     * @param promotions 促销实体
-     */
-    @Override
-    public void checkPromotions(Pintuan promotions) {
-        QueryWrapper<Pintuan> queryWrapper = PromotionTools.checkActiveTime(promotions.getStartTime(), promotions.getEndTime(), PromotionTypeEnum.PINTUAN, promotions.getStoreId(), promotions.getId());
-        long sameNum = this.count(queryWrapper);
-        //当前时间段是否存在同类活动
-        if (sameNum > 0) {
-            throw new ServiceException(ResultCode.PROMOTION_SAME_ACTIVE_EXIST);
-        }
-        super.checkPromotions(promotions);
-    }
-
-    /**
      * 更新促销商品信息
      *
      * @param promotions 促销实体
@@ -257,6 +213,9 @@ public class PintuanServiceImpl extends AbstractPromotionsServiceImpl<PintuanMap
      */
     private void setPintuanOrderInfo(List<Order> orders, PintuanShareVO pintuanShareVO, String skuId) {
         for (Order order : orders) {
+            if (pintuanShareVO.getPintuanMemberVOS().stream().anyMatch(i -> i.getMemberId().equals(order.getMemberId()))) {
+                continue;
+            }
             Member member = memberService.getById(order.getMemberId());
             PintuanMemberVO memberVO = new PintuanMemberVO(member);
             if (CharSequenceUtil.isEmpty(order.getParentOrderSn())) {

@@ -257,10 +257,6 @@ public class SeckillApplyServiceImpl extends ServiceImpl<SeckillApplyMapper, Sec
     }
 
     /**
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/master
      * 更新秒杀活动时间
      *
      * @param seckill 秒杀活动
@@ -397,13 +393,6 @@ public class SeckillApplyServiceImpl extends ServiceImpl<SeckillApplyMapper, Sec
                     goodsVO.setGoodsImage(goodsSku.getThumbnail());
                     goodsVO.setGoodsId(goodsSku.getGoodsId());
                     goodsVO.setGoodsName(goodsSku.getGoodsName());
-                    String promotionGoodsStockCacheKey = PromotionGoodsService.getPromotionGoodsStockCacheKey(
-                            PromotionTypeEnum.SECKILL,
-                            seckillId, seckillApply.getSkuId());
-                    Object quantity = cache.get(promotionGoodsStockCacheKey);
-                    if (quantity != null) {
-                        goodsVO.setQuantity((Integer) quantity);
-                    }
                     seckillGoodsVoS.add(goodsVO);
                 }
             }

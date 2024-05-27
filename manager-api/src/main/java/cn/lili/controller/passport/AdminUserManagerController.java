@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -161,16 +162,17 @@ public class AdminUserManagerController {
     @ApiOperation(value = "添加用户")
     public ResultMessage<Object> register(@Valid AdminUserDTO adminUser,
                                           @RequestParam(required = false) List<String> roles) {
-        int rolesMaxSize=10;
+        int rolesMaxSize = 10;
         try {
             if (roles != null && roles.size() >= rolesMaxSize) {
                 throw new ServiceException(ResultCode.PERMISSION_BEYOND_TEN);
             }
             adminUserService.saveAdminUser(adminUser, roles);
+            return ResultUtil.success();
         } catch (Exception e) {
             log.error("添加用户错误", e);
+            return ResultUtil.error(ResultCode.USER_ADD_ERROR);
         }
-        return ResultUtil.success();
     }
 
     @PutMapping(value = "/enable/{userId}")
@@ -183,6 +185,14 @@ public class AdminUserManagerController {
         }
         user.setStatus(status);
         adminUserService.updateById(user);
+
+        //登出用户
+        if (Boolean.FALSE.equals(status)) {
+            List<String> userIds = new ArrayList<>();
+            userIds.add(userId);
+            adminUserService.logout(userIds);
+        }
+
         return ResultUtil.success();
     }
 

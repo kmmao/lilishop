@@ -1,6 +1,8 @@
 package cn.lili.modules.order.order.service;
 
+import cn.hutool.core.date.DateTime;
 import cn.lili.modules.order.order.entity.dos.OrderItem;
+import cn.lili.modules.order.order.entity.dto.OrderItemOperationDTO;
 import cn.lili.modules.order.order.entity.enums.CommentStatusEnum;
 import cn.lili.modules.order.order.entity.enums.OrderComplaintStatusEnum;
 import cn.lili.modules.order.order.entity.enums.OrderItemAfterSaleStatusEnum;
@@ -31,6 +33,12 @@ public interface OrderItemService extends IService<OrderItem> {
      * @param orderItemAfterSaleStatusEnum 售后状态枚举
      */
     void updateAfterSaleStatus(String orderItemSn, OrderItemAfterSaleStatusEnum orderItemAfterSaleStatusEnum);
+
+    /**
+     * 更新售后状态
+     * @param orderItem
+     */
+    void updateByAfterSale(OrderItem orderItem);
 
     /**
      * 更新订单可投诉状态
@@ -66,4 +74,8 @@ public interface OrderItemService extends IService<OrderItem> {
      * @return 子订单
      */
     OrderItem getByOrderSnAndSkuId(String orderSn, String skuId);
+
+    List<OrderItem> waitOperationOrderItem(OrderItemOperationDTO orderItemOperationDTO);
+
+    void expiredAfterSaleStatus(DateTime expiredTime);
 }

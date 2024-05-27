@@ -2,6 +2,7 @@ package cn.lili.modules.order.aftersale.serviceimpl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
@@ -22,10 +23,7 @@ import cn.lili.modules.order.aftersale.mapper.AfterSaleMapper;
 import cn.lili.modules.order.aftersale.service.AfterSaleService;
 import cn.lili.modules.order.order.entity.dos.Order;
 import cn.lili.modules.order.order.entity.dos.OrderItem;
-import cn.lili.modules.order.order.entity.enums.OrderItemAfterSaleStatusEnum;
-import cn.lili.modules.order.order.entity.enums.OrderStatusEnum;
-import cn.lili.modules.order.order.entity.enums.OrderTypeEnum;
-import cn.lili.modules.order.order.entity.enums.PayStatusEnum;
+import cn.lili.modules.order.order.entity.enums.*;
 import cn.lili.modules.order.order.service.OrderItemService;
 import cn.lili.modules.order.order.service.OrderService;
 import cn.lili.modules.order.trade.entity.enums.AfterSaleRefundWayEnum;
@@ -156,6 +154,10 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
 
         afterSaleApplyVO.setAccountType(order.getPaymentMethod());
         afterSaleApplyVO.setApplyRefundPrice(CurrencyUtil.div(orderItem.getFlowPrice(), orderItem.getNum()));
+        //如果已经退货或者退款过，则返回最大售后数量重新设置
+        if (orderItem.getReturnGoodsNumber() != null) {
+            afterSaleApplyVO.setNum(orderItem.getNum() - orderItem.getReturnGoodsNumber());
+        }
         afterSaleApplyVO.setNum(orderItem.getNum());
         afterSaleApplyVO.setGoodsId(orderItem.getGoodsId());
         afterSaleApplyVO.setGoodsName(orderItem.getGoodsName());
@@ -270,14 +272,15 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
 
         //根据售后单号获取售后单
         AfterSale afterSale = OperationalJudgment.judgment(this.getBySn(afterSaleSn));
-        String str=storeDetailService.getStoreDetail(afterSale.getStoreId()).getSalesConsigneeMobile();
-        return logisticsService.getLogistic(afterSale.getMLogisticsCode(), afterSale.getMLogisticsNo(), str.substring(str.length()-4));
+        return logisticsService.getLogisticTrack(afterSale.getMLogisticsCode(), afterSale.getMLogisticsNo(),
+                storeDetailService.getStoreDetail(afterSale.getStoreId()).getSalesConsigneeMobile());
     }
 
     @Override
-    @AfterSaleLogPoint(sn = "#afterSaleSn", description = "'售后-商家收货:单号['+#afterSaleSn+'],处理结果['+#serviceStatus+']'")
-    @SystemLogPoint(description = "售后-商家收货", customerLog = "'售后-商家收货:单号['+#afterSaleSn+']" +
-            ",处理结果['+#serviceStatus=='PASS'?'商家收货':'商家拒收'+']'")
+    @AfterSaleLogPoint(sn = "#afterSaleSn", description = "#serviceStatus.equals('PASS')?" +
+            "'售后-商家收货:单号['+#afterSaleSn+'],处理结果[商家收货]':'售后-商家收货:单号['+#afterSaleSn+'],处理结果[商家拒收],原因['+#remark+']'")
+    @SystemLogPoint(description = "售后-商家收货", customerLog = "#serviceStatus.equals('PASS')?" +
+            "'售后-商家收货:单号['+#afterSaleSn+'],处理结果[商家收货]':'售后-商家收货:单号['+#afterSaleSn+'],处理结果[商家拒收],原因['+#remark+']'")
     @Transactional(rollbackFor = Exception.class)
     public AfterSale storeConfirm(String afterSaleSn, String serviceStatus, String remark) {
         //根据售后单号获取售后单
@@ -288,7 +291,7 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
             throw new ServiceException(ResultCode.AFTER_STATUS_ERROR);
         }
         AfterSaleStatusEnum afterSaleStatusEnum;
-        String pass = "PASS";
+        String pass = AfterSaleStatusEnum.PASS.name();
         //判断审核状态
         //在线支付 则直接进行退款
         if (pass.equals(serviceStatus) &&
@@ -455,7 +458,11 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
         switch (afterSaleStatusEnum) {
             //判断当前售后的状态---申请中
             case APPLY: {
+//                买家申请售后时已经输入了订单售后数量，这里不需要(+x)处理
                 orderItem.setReturnGoodsNumber(orderItem.getReturnGoodsNumber() + afterSale.getNum());
+                orderItem.setRefundPrice(CurrencyUtil.add(orderItem.getRefundPrice(), afterSale.getApplyRefundPrice()));
+                //修改orderItem订单
+                this.updateOrderItem(orderItem, afterSale);
                 break;
             }
 
@@ -464,13 +471,14 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
             case BUYER_CANCEL:
             case SELLER_TERMINATION: {
                 orderItem.setReturnGoodsNumber(orderItem.getReturnGoodsNumber() - afterSale.getNum());
+                orderItem.setRefundPrice(CurrencyUtil.sub(orderItem.getRefundPrice(), afterSale.getApplyRefundPrice()));
+                //修改orderItem订单
+                this.updateOrderItem(orderItem, afterSale);
                 break;
             }
             default:
                 break;
         }
-        //修改orderItem订单
-        this.updateOrderItem(orderItem);
     }
 
 
@@ -513,7 +521,8 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
                 break;
             case RETURN_GOODS:
                 //是否为有效状态
-                boolean availableStatus = CharSequenceUtil.equalsAny(order.getOrderStatus(), OrderStatusEnum.DELIVERED.name(), OrderStatusEnum.COMPLETED.name());
+                boolean availableStatus = CharSequenceUtil.equalsAny(order.getOrderStatus(), OrderStatusEnum.DELIVERED.name(),
+                        OrderStatusEnum.COMPLETED.name());
                 if (!PayStatusEnum.PAID.name().equals(order.getPayStatus()) && availableStatus) {
                     throw new ServiceException(ResultCode.AFTER_SALES_BAN);
                 }
@@ -619,7 +628,7 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
      * @return void
      * @author ftyy
      **/
-    private void updateOrderItem(OrderItem orderItem) {
+    private void updateOrderItem(OrderItem orderItem, AfterSale afterSale) {
         //订单状态不能为新订单,已失效订单或未申请订单才可以去修改订单信息
         OrderItemAfterSaleStatusEnum afterSaleTypeEnum = OrderItemAfterSaleStatusEnum.valueOf(orderItem.getAfterSaleStatus());
         switch (afterSaleTypeEnum) {
@@ -644,10 +653,27 @@ public class AfterSaleServiceImpl extends ServiceImpl<AfterSaleMapper, AfterSale
             default:
                 break;
         }
-        orderItemService.update(new LambdaUpdateWrapper<OrderItem>()
+
+        LambdaUpdateWrapper<OrderItem> lambdaUpdateWrapper = new LambdaUpdateWrapper<OrderItem>()
                 .eq(OrderItem::getSn, orderItem.getSn())
                 .set(OrderItem::getAfterSaleStatus, orderItem.getAfterSaleStatus())
-                .set(OrderItem::getReturnGoodsNumber, orderItem.getReturnGoodsNumber()));
+                .set(OrderItem::getReturnGoodsNumber, orderItem.getReturnGoodsNumber());
+
+        if (afterSale.getServiceStatus().equals(AfterSaleStatusEnum.COMPLETE.name())) {
+            if (orderItem.getReturnGoodsNumber().equals(orderItem.getNum())) {
+                lambdaUpdateWrapper.set(OrderItem::getIsRefund, RefundStatusEnum.ALL_REFUND.name());
+            } else {
+                lambdaUpdateWrapper.set(OrderItem::getIsRefund, RefundStatusEnum.PART_REFUND.name());
+            }
+        } else if (afterSale.getServiceStatus().equals(AfterSaleStatusEnum.APPLY.name())) {
+            lambdaUpdateWrapper.set(OrderItem::getIsRefund, RefundStatusEnum.REFUNDING.name());
+        } else if (afterSale.getServiceStatus().equals(AfterSaleStatusEnum.REFUSE.name()) ||
+                afterSale.getServiceStatus().equals(AfterSaleStatusEnum.BUYER_CANCEL.name()) ||
+                afterSale.getServiceStatus().equals(AfterSaleStatusEnum.SELLER_TERMINATION.name())) {
+            lambdaUpdateWrapper.set(OrderItem::getIsRefund, RefundStatusEnum.NO_REFUND.name());
+        }
+
+        orderItemService.update(lambdaUpdateWrapper);
     }
 
 }

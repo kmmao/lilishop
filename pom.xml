@@ -18,19 +18,19 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <revision>4.2.5</revision>
+        <revision>4.3</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipTests>true</skipTests>
         <docker-registry>registry.cn-beijing.aliyuncs.com/lili-images</docker-registry>
         <images-version>1</images-version>
         <alipay-sdk-version>4.22.32.ALL</alipay-sdk-version>
-        <mybatis-plus-version>3.5.2</mybatis-plus-version>
-        <Hutool-version>5.8.0</Hutool-version>
+        <mybatis-plus-version>3.5.5</mybatis-plus-version>
+        <Hutool-version>5.8.24</Hutool-version>
         <TinyPinyin-verions>2.0.3.RELEASE</TinyPinyin-verions>
         <jasypt-version>3.0.4</jasypt-version>
         <neetl-version>2.9.10</neetl-version>
-        <lombok-version>1.18.24</lombok-version>
+        <lombok-version>1.18.30</lombok-version>
         <redisson>3.15.6</redisson>
         <aliyun-version>4.5.18</aliyun-version>
         <aliyun-sdk-oss-version>3.11.1</aliyun-sdk-oss-version>
@@ -41,7 +41,7 @@
         <rocketmq-version>2.2.2</rocketmq-version>
         <jwt-version>0.11.2</jwt-version>
         <sharding-jdbc-version>4.0.0</sharding-jdbc-version>
-        <druid-version>1.2.8</druid-version>
+        <druid-version>1.2.16</druid-version>
         <simple-http-version>1.0.3</simple-http-version>
         <antlr4-version>4.7.2</antlr4-version>
         <antlr4-runtime-version>4.7.2</antlr4-runtime-version>
@@ -61,6 +61,10 @@
         <spring-boot-admin>2.3.1</spring-boot-admin>
         <owasp-java-html-sanitizer>20211018.2</owasp-java-html-sanitizer>
         <minio.version>8.0.3</minio.version>
+        <huaweicloud-obs.version>3.20.6.2</huaweicloud-obs.version>
+        <cos.version>5.6.97</cos.version>
+        <tencentcloud.version>3.1.693</tencentcloud.version>
+        <kuaidi100-api.version>1.0.11</kuaidi100-api.version>
     </properties>
 
     <modules>
@@ -72,6 +76,7 @@
         <module>common-api</module>
         <module>consumer</module>
         <module>admin</module>
+        <module>im-api</module>
     </modules>
 
     <build>

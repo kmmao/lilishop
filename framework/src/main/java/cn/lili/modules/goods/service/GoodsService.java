@@ -153,16 +153,16 @@ public interface GoodsService extends IService<Goods> {
      * 修改商品库存数量
      *
      * @param goodsId  商品ID
-     * @param quantity 库存数量
      */
-    void updateStock(String goodsId, Integer quantity);
+    void updateStock(String goodsId);
 
     /**
      * 更新商品评价数量
      *
      * @param goodsId 商品ID
+     * @param skuId skuID
      */
-    void updateGoodsCommentNum(String goodsId);
+    void updateGoodsCommentNum(String goodsId, String skuId);
 
     /**
      * 更新商品的购买数量
@@ -184,4 +184,13 @@ public interface GoodsService extends IService<Goods> {
      */
     long countStoreGoodsNum(String storeId);
 
+    /**
+     * 同步商品分类名称
+     *
+     * @param categoryId 分类ID
+     */
+    void categoryGoodsName(String categoryId);
+
+
+    void addGoodsCommentNum(Integer commentNum, String goodsId);
 }

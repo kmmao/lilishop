@@ -2,6 +2,7 @@ package cn.lili.modules.order.order.entity.dos;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
+import cn.lili.common.enums.PromotionTypeEnum;
 import cn.lili.common.utils.BeanUtil;
 import cn.lili.common.utils.SnowFlake;
 import cn.lili.modules.order.cart.entity.dto.TradeDTO;
@@ -11,6 +12,7 @@ import cn.lili.modules.order.order.entity.dto.PriceDetailDTO;
 import cn.lili.modules.order.order.entity.enums.CommentStatusEnum;
 import cn.lili.modules.order.order.entity.enums.OrderComplaintStatusEnum;
 import cn.lili.modules.order.order.entity.enums.OrderItemAfterSaleStatusEnum;
+import cn.lili.modules.order.order.entity.enums.RefundStatusEnum;
 import cn.lili.modules.promotion.entity.vos.PromotionSkuVO;
 import cn.lili.mybatis.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -115,6 +117,24 @@ public class OrderItem extends BaseEntity {
     @ApiModelProperty(value = "退货商品数量")
     private Integer returnGoodsNumber;
 
+    /**
+     * @see cn.lili.modules.order.order.entity.enums.RefundStatusEnum
+     */
+    @ApiModelProperty(value = "退款状态")
+    private String isRefund;
+
+    @ApiModelProperty(value = "退款金额")
+    private Double refundPrice;
+
+    @ApiModelProperty(value = "已发货数量")
+    private Integer deliverNumber;
+
+    public Integer getDeliverNumber() {
+        if(deliverNumber == null){
+            return 0;
+        }
+        return deliverNumber;
+    }
 
     public OrderItem(CartSkuVO cartSkuVO, CartVO cartVO, TradeDTO tradeDTO) {
         String oldId = this.getId();
@@ -146,6 +166,20 @@ public class OrderItem extends BaseEntity {
 
     }
 
+    public String getIsRefund() {
+        if (isRefund == null) {
+            return RefundStatusEnum.NO_REFUND.name();
+        }
+        return isRefund;
+    }
+
+    public double getRefundPrice() {
+        if (refundPrice == null) {
+            return 0;
+        }
+        return refundPrice;
+    }
+
     public PriceDetailDTO getPriceDetailDTO() {
         return JSONUtil.toBean(priceDetail, PriceDetailDTO.class);
     }
@@ -154,4 +188,10 @@ public class OrderItem extends BaseEntity {
         this.priceDetail = JSONUtil.toJsonStr(priceDetail);
     }
 
+    public String getAfterSaleStatus() {
+        if (PromotionTypeEnum.isAfterSale(this.getPromotionType())) {
+            return OrderItemAfterSaleStatusEnum.EXPIRED.name();
+        }
+        return afterSaleStatus;
+    }
 }

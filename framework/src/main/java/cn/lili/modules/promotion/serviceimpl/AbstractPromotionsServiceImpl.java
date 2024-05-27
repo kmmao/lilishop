@@ -114,6 +114,7 @@ public abstract class AbstractPromotionsServiceImpl<M extends BaseMapper<T>, T e
             if (startTime != null && endTime != null) {
                 t.setStartTime(new Date(startTime));
                 t.setEndTime(new Date(endTime));
+                this.checkPromotions(t);
             } else {
                 t.setStartTime(null);
                 t.setEndTime(null);
@@ -192,6 +193,9 @@ public abstract class AbstractPromotionsServiceImpl<M extends BaseMapper<T>, T e
     @Override
     public void checkPromotions(T promotions) {
         PromotionTools.checkPromotionTime(promotions.getStartTime(), promotions.getEndTime());
+        if (!this.allowExistSame()) {
+            this.checkSamePromotions(promotions);
+        }
     }
 
     /**
@@ -251,16 +255,39 @@ public abstract class AbstractPromotionsServiceImpl<M extends BaseMapper<T>, T e
             //删除商品促销消息
             applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("删除商品促销事件", rocketmqCustomProperties.getGoodsTopic(), GoodsTagsEnum.DELETE_GOODS_INDEX_PROMOTIONS.name(), JSONUtil.toJsonStr(build)));
         } else {
+            this.sendUpdateEsGoodsMsg(promotions);
+        }
+    }
 
-            String esPromotionKey = this.getPromotionType().name() + "-" + promotions.getId();
-            Map<String, Object> map = new HashMap<>();
-            // es促销key
-            map.put("esPromotionKey", esPromotionKey);
-            // 促销类型全路径名
-            map.put("promotionsType", promotions.getClass().getName());
-            // 促销实体
-            map.put("promotions", promotions);
-            applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("更新商品索引促销事件", rocketmqCustomProperties.getGoodsTopic(), GoodsTagsEnum.UPDATE_GOODS_INDEX_PROMOTIONS.name(), JSONUtil.toJsonStr(map)));
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void sendUpdateEsGoodsMsg(T promotions) {
+
+        String esPromotionKey = this.getPromotionType().name() + "-" + promotions.getId();
+        Map<String, Object> map = new HashMap<>();
+        // es促销key
+        map.put("esPromotionKey", esPromotionKey);
+        // 促销类型全路径名
+        map.put("promotionsType", promotions.getClass().getName());
+        // 促销实体
+        map.put("promotions", promotions);
+        applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("更新商品索引促销事件", rocketmqCustomProperties.getGoodsTopic(), GoodsTagsEnum.UPDATE_GOODS_INDEX_PROMOTIONS.name(), JSONUtil.toJsonStr(map)));
+    }
+
+    @Override
+    public boolean allowExistSame() {
+        return false;
+    }
+
+    public void checkSamePromotions(T promotions) {
+        if (promotions.getStartTime() == null || promotions.getEndTime() == null) {
+            return;
+        }
+        QueryWrapper<T> queryWrapper = PromotionTools.checkActiveTime(promotions.getStartTime(), promotions.getEndTime(), this.getPromotionType(), promotions.getStoreId(), promotions.getId());
+        long sameNum = this.count(queryWrapper);
+        //当前时间段是否存在同类活动
+        if (sameNum > 0) {
+            throw new ServiceException(ResultCode.PROMOTION_SAME_ACTIVE_EXIST);
         }
     }
 

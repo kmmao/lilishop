@@ -92,6 +92,7 @@ public class CustomWordsServiceImpl extends ServiceImpl<CustomWordsMapper, Custo
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteBathByName(List<String> names) {
         LambdaQueryWrapper<CustomWords> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(CustomWords::getName, names);
@@ -99,8 +100,9 @@ public class CustomWordsServiceImpl extends ServiceImpl<CustomWordsMapper, Custo
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public long insertBatchCustomWords(List<CustomWords> customWordsList) {
-        return this.baseMapper.insertBatchSomeColumn(customWordsList);
+        return this.baseMapper.insertIgnoreBatchAllColumn(customWordsList);
     }
 
     /**

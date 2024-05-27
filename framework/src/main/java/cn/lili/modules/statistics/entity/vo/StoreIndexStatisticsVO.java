@@ -47,5 +47,11 @@ public class StoreIndexStatisticsVO {
     @ApiModelProperty(value = "未对账结算单数量")
     private Long waitPayBill;
 
+    @ApiModelProperty(value = "待自提数量")
+    private Long selfPickNum;
+
+    @ApiModelProperty(value = "警告库存")
+    private Long alertQuantityNum;
+
 
 }

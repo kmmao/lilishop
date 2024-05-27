@@ -1,10 +1,13 @@
 package cn.lili.modules.permission.serviceimpl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.lili.cache.Cache;
+import cn.lili.cache.CachePrefix;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.context.UserContext;
+import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.security.token.Token;
 import cn.lili.common.utils.BeanUtil;
 import cn.lili.common.utils.StringUtils;
@@ -43,6 +46,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser> implements AdminUserService {
+    /**
+     * 角色长度
+     */
+    private final int rolesMaxSize = 10;
     @Autowired
     private UserRoleService userRoleService;
     @Autowired
@@ -53,10 +60,8 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
     private MenuService menuService;
     @Autowired
     private ManagerTokenGenerate managerTokenGenerate;
-    /**
-     * 角色长度
-     */
-    private final int rolesMaxSize = 10;
+    @Autowired
+    private Cache cache;
 
     @Override
     public IPage<AdminUserVO> adminUserPage(Page initPage, QueryWrapper<AdminUser> initWrapper) {
@@ -78,7 +83,7 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
                                     .getTitle()
                     );
                 } catch (Exception e) {
-                    log.error("填充部门信息异常", e);
+                    log.debug("权限部门信息异常", e);
                 }
             }
             if (!CharSequenceUtil.isEmpty(adminUser.getRoleIds())) {
@@ -90,12 +95,12 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
                                     .collect(Collectors.toList())
                     );
                 } catch (Exception e) {
-                    log.error("填充部门信息异常", e);
+                    log.debug("权限色信息异常", e);
                 }
             }
             result.add(adminUserVO);
         });
-        Page<AdminUserVO> pageResult = new Page(adminUserPage.getCurrent(), adminUserPage.getSize(), adminUserPage.getTotal());
+        Page<AdminUserVO> pageResult = new Page<>(adminUserPage.getCurrent(), adminUserPage.getSize(), adminUserPage.getTotal());
         pageResult.setRecords(result);
         return pageResult;
 
@@ -132,16 +137,31 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
         return managerTokenGenerate.refreshToken(refreshToken);
     }
 
+    @Override
+    public void logout(UserEnums userEnums) {
+        String currentUserToken = UserContext.getCurrentUserToken();
+        AuthUser authUser = UserContext.getAuthUser(currentUserToken);
+
+        if (CharSequenceUtil.isNotEmpty(currentUserToken)) {
+            cache.remove(CachePrefix.ACCESS_TOKEN.getPrefix(userEnums, authUser.getId()) + currentUserToken);
+            cache.vagueDel(CachePrefix.REFRESH_TOKEN.getPrefix(userEnums, authUser.getId()));
+        }
+    }
+
+    @Override
+    public void logout(List<String> adminUserIds) {
+        if (adminUserIds == null || adminUserIds.isEmpty()) {
+            return;
+        }
+        adminUserIds.forEach(adminUserId -> {
+            cache.vagueDel(CachePrefix.ACCESS_TOKEN.getPrefix(UserEnums.MANAGER, adminUserId));
+            cache.vagueDel(CachePrefix.REFRESH_TOKEN.getPrefix(UserEnums.MANAGER, adminUserId));
+        });
+    }
 
     @Override
     public AdminUser findByUsername(String username) {
-
-        AdminUser user = getOne(new LambdaQueryWrapper<AdminUser>().eq(AdminUser::getUsername, username));
-
-        if (user == null) {
-            return null;
-        }
-        return user;
+        return getOne(new LambdaQueryWrapper<AdminUser>().eq(AdminUser::getUsername, username), false);
     }
 
 
@@ -157,11 +177,11 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
             }
             adminUser.setRoleIds(CharSequenceUtil.join(",", roles));
 
+            updateRole(adminUser.getId(), roles);
         } else {
             adminUser.setRoleIds("");
         }
 
-        updateRole(adminUser.getId(), roles);
         this.updateById(adminUser);
         return true;
     }
@@ -180,8 +200,9 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void resetPassword(List<String> ids) {
-        LambdaQueryWrapper<AdminUser> lambdaQueryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<AdminUser> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.in(AdminUser::getId, ids);
         List<AdminUser> adminUsers = this.list(lambdaQueryWrapper);
         String password = StringUtils.md5("123456");
@@ -211,6 +232,7 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteCompletely(List<String> ids) {
         //彻底删除超级管理员
         this.removeByIds(ids);
@@ -219,6 +241,8 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
         QueryWrapper<UserRole> queryWrapper = new QueryWrapper<>();
         queryWrapper.in("user_id", ids);
         userRoleService.remove(queryWrapper);
+
+        this.logout(ids);
     }
 
     /**
@@ -239,5 +263,7 @@ public class AdminUserServiceImpl extends ServiceImpl<AdminUserMapper, AdminUser
         List<UserRole> userRoles = new ArrayList<>(roles.size());
         roles.forEach(id -> userRoles.add(new UserRole(userId, id)));
         userRoleService.updateUserRole(userId, userRoles);
+        cache.vagueDel(CachePrefix.USER_MENU.getPrefix(UserEnums.MANAGER));
+        cache.vagueDel(CachePrefix.PERMISSION_LIST.getPrefix(UserEnums.MANAGER));
     }
 }

@@ -12,11 +12,15 @@ import lombok.Data;
 @Data
 public class GoodsSkuStockDTO {
 
+    @ApiModelProperty(value = "商品id")
+    private String goodsId;
+
     @ApiModelProperty(value = "商品skuId")
     private String skuId;
 
     @ApiModelProperty(value = "库存")
     private Integer quantity;
 
-
+    @ApiModelProperty(value = "预警库存")
+    private Integer alertQuantity;
 }

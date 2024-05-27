@@ -135,9 +135,9 @@ public class IndexStatisticsServiceImpl implements IndexStatisticsService {
         //下单统计
         Map<String, Object> map = storeFlowStatisticsService.getOrderStatisticsPrice();
         //今日下单数
-        indexStatisticsVO.setTodayOrderNum(map.get("num") == null ? 0L : (Long) map.get("num"));
+        indexStatisticsVO.setTodayOrderNum(map.get("num") == null ? 0L : Long.parseLong(map.get("num").toString()));
         //今日下单金额
-        indexStatisticsVO.setTodayOrderPrice(map.get("price") == null ? 0D : (Double) map.get("price"));
+        indexStatisticsVO.setTodayOrderPrice(map.get("price") == null ? 0D : Double.parseDouble(map.get("price").toString()));
 
         //今日新增会员数量
         indexStatisticsVO.setTodayMemberNum(memberStatisticsService.todayMemberNum());
@@ -186,7 +186,7 @@ public class IndexStatisticsServiceImpl implements IndexStatisticsService {
         Map<String, Object> map = storeFlowStatisticsService.getOrderStatisticsPrice();
         storeIndexStatisticsVO.setOrderNum(Convert.toInt(map.get("num").toString()));
         storeIndexStatisticsVO.setOrderPrice(map.get("price") != null ? Double.parseDouble(map.get("price").toString()) : 0.0);
-
+        storeIndexStatisticsVO.setAlertQuantityNum(goodsStatisticsService.alertQuantityNum());
         //访问量
         StatisticsQueryParam queryParam = new StatisticsQueryParam();
         queryParam.setSearchType(SearchTypeEnum.TODAY.name());
@@ -200,7 +200,8 @@ public class IndexStatisticsServiceImpl implements IndexStatisticsService {
         storeIndexStatisticsVO.setUnDeliveredOrder(orderStatisticsService.orderNum(OrderStatusEnum.UNDELIVERED.name()));
         //待收货订单数量
         storeIndexStatisticsVO.setDeliveredOrder(orderStatisticsService.orderNum(OrderStatusEnum.DELIVERED.name()));
-
+        //待自提数量
+        storeIndexStatisticsVO.setSelfPickNum(orderStatisticsService.orderNum(OrderStatusEnum.STAY_PICKED_UP.name()));
         //待处理退货数量
         storeIndexStatisticsVO.setReturnGoods(afterSaleStatisticsService.applyNum(AfterSaleTypeEnum.RETURN_GOODS.name()));
         //待处理退款数量

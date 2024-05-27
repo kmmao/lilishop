@@ -1,5 +1,6 @@
 package cn.lili.modules.goods.entity.dto;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.goods.entity.enums.GoodsAuthEnum;
@@ -9,6 +10,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 商品查询条件
@@ -33,6 +35,9 @@ public class GoodsSearchParams extends PageVO {
 
     @ApiModelProperty(value = "商品编号")
     private String id;
+
+    @ApiModelProperty(value = "商品编号")
+    private List<String> ids;
 
     @ApiModelProperty(value = "商家ID")
     private String storeId;
@@ -85,6 +90,9 @@ public class GoodsSearchParams extends PageVO {
     @ApiModelProperty(value = "销售模式", required = true)
     private String salesModel;
 
+    @ApiModelProperty(value = "预警库存")
+    private Boolean alertQuantity;
+
     public <T> QueryWrapper<T> queryWrapper() {
         QueryWrapper<T> queryWrapper = new QueryWrapper<>();
         if (CharSequenceUtil.isNotEmpty(goodsId)) {
@@ -95,6 +103,9 @@ public class GoodsSearchParams extends PageVO {
         }
         if (CharSequenceUtil.isNotEmpty(id)) {
             queryWrapper.in("id", Arrays.asList(id.split(",")));
+        }
+        if (CollUtil.isNotEmpty(ids)) {
+            queryWrapper.in("id", ids);
         }
         if (CharSequenceUtil.isNotEmpty(storeId)) {
             queryWrapper.eq("store_id", storeId);
@@ -121,7 +132,7 @@ public class GoodsSearchParams extends PageVO {
             queryWrapper.le("quantity", leQuantity);
         }
         if (geQuantity != null) {
-            queryWrapper.ge("quantity", geQuantity);
+            queryWrapper.gt("quantity", geQuantity);
         }
         if (recommend != null) {
             queryWrapper.le("recommend", recommend);
@@ -132,6 +143,11 @@ public class GoodsSearchParams extends PageVO {
         if (CharSequenceUtil.isNotEmpty(salesModel)) {
             queryWrapper.eq("sales_model", salesModel);
         }
+        if(alertQuantity != null && alertQuantity){
+            queryWrapper.apply("quantity <= alert_quantity");
+            queryWrapper.ge("alert_quantity", 0);
+        }
+        queryWrapper.in(CollUtil.isNotEmpty(ids), "id", ids);
 
         queryWrapper.eq("delete_flag", false);
         this.betweenWrapper(queryWrapper);

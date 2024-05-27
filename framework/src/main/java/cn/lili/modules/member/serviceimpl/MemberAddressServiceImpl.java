@@ -1,6 +1,8 @@
 package cn.lili.modules.member.serviceimpl;
 
+import cn.lili.common.security.AuthUser;
 import cn.lili.common.security.context.UserContext;
+import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.vo.PageVO;
 import cn.lili.modules.member.entity.dos.MemberAddress;
 import cn.lili.modules.member.mapper.MemberAddressMapper;
@@ -35,10 +37,15 @@ public class MemberAddressServiceImpl extends ServiceImpl<MemberAddressMapper, M
 
     @Override
     public MemberAddress getMemberAddress(String id) {
-        return this.getOne(
-                new QueryWrapper<MemberAddress>()
-                        .eq("member_id", Objects.requireNonNull(UserContext.getCurrentUser()).getId())
-                        .eq("id", id));
+        AuthUser authUser = UserContext.getCurrentUser();
+        if (authUser.getIsSuper() || UserEnums.MANAGER.equals(authUser.getRole())){
+            return this.getOne(new QueryWrapper<MemberAddress>().eq("id", id));
+        }else{
+            return this.getOne(
+                    new QueryWrapper<MemberAddress>()
+                            .eq("member_id", Objects.requireNonNull(UserContext.getCurrentUser()).getId())
+                            .eq("id", id));
+        }
     }
 
     /**
@@ -111,9 +118,7 @@ public class MemberAddressServiceImpl extends ServiceImpl<MemberAddressMapper, M
     @Transactional(rollbackFor = Exception.class)
     public MemberAddress updateMemberAddress(MemberAddress memberAddress) {
         MemberAddress originalMemberAddress = this.getMemberAddress(memberAddress.getId());
-        if (originalMemberAddress != null &&
-                originalMemberAddress.getMemberId().equals(Objects.requireNonNull(UserContext.getCurrentUser()).getId())) {
-
+        if (originalMemberAddress != null) {
             if (memberAddress.getIsDefault() == null) {
                 memberAddress.setIsDefault(false);
             }

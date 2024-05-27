@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -134,10 +135,6 @@ public class SeckillServiceImpl extends AbstractPromotionsServiceImpl<SeckillMap
     }
 
     /**
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/master
      * 通用促销更新
      * 调用顺序:
      * 1. checkStatus 检查促销状态
@@ -154,10 +151,15 @@ public class SeckillServiceImpl extends AbstractPromotionsServiceImpl<SeckillMap
     public boolean updatePromotions(Seckill promotions) {
         this.checkStatus(promotions);
         this.checkPromotions(promotions);
+        //如果申请结束时间在当前时间之前
+        if (promotions.getApplyEndTime().before(new Date()) || promotions.getApplyEndTime().after(promotions.getStartTime())) {
+            throw new ServiceException(ResultCode.APPLY_END_TIME_ERROR);
+        }
         boolean result = this.updateById(promotions);
         seckillApplyService.updateSeckillApplyTime(promotions);
         return result;
     }
+
 
     /**
      * 更新商品索引限时抢购信息
@@ -243,6 +245,9 @@ public class SeckillServiceImpl extends AbstractPromotionsServiceImpl<SeckillMap
         if (promotions.getStartTime() != null && promotions.getEndTime() == null) {
             promotions.setEndTime(DateUtil.endOfDay(promotions.getStartTime()));
         }
+        if (promotions.getApplyEndTime() == null && promotions.getStartTime() != null) {
+            promotions.setApplyEndTime(promotions.getStartTime());
+        }
     }
 
     /**
@@ -260,17 +265,6 @@ public class SeckillServiceImpl extends AbstractPromotionsServiceImpl<SeckillMap
             promotions.setStartTime(DateUtil.parse(startTimeStr, DatePattern.NORM_DATETIME_MINUTE_PATTERN));
             promotions.setEndTime(DateUtil.endOfDay(promotions.getStartTime()));
         }
-        if (promotions.getStartTime() != null && promotions.getEndTime() != null) {
-            //同一时间段内相同的活动
-            QueryWrapper<Seckill> queryWrapper = PromotionTools.checkActiveTime(promotions.getStartTime(), promotions.getEndTime(), PromotionTypeEnum.SECKILL, null, promotions.getId());
-            long sameNum = this.count(queryWrapper);
-            //当前时间段是否存在同类活动
-            if (sameNum > 0) {
-                throw new ServiceException(ResultCode.PROMOTION_SAME_ACTIVE_EXIST);
-            }
-        }
-
-
     }
 
     /**

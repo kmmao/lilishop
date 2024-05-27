@@ -32,7 +32,10 @@ public class Distribution extends BaseEntity {
     public Distribution(String memberId, String memberName, DistributionApplyDTO distributionApplyDTO) {
         this.memberId = memberId;
         this.memberName = memberName;
-        distributionOrderCount=0;
+        this.distributionOrderCount=0;
+        this.rebateTotal=0D;
+        this.canRebate=0D;
+        this.commissionFrozen=0D;
         this.distributionStatus = DistributionStatusEnum.APPLY.name();
         BeanUtil.copyProperties(distributionApplyDTO, this);
     }

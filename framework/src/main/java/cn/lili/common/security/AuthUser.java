@@ -2,7 +2,9 @@ package cn.lili.common.security;
 
 import cn.lili.common.security.enums.UserEnums;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -10,7 +12,9 @@ import java.io.Serializable;
  * @author Chopper
  */
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class AuthUser implements Serializable {
 
     private static final long serialVersionUID = 582441893336003319L;
@@ -68,6 +72,12 @@ public class AuthUser implements Serializable {
      */
     private Boolean isSuper = false;
 
+    /**
+     * 租户id
+     */
+    private String tenantId;
+
+
     public AuthUser(String username, String id, String nickName, String face, UserEnums role) {
         this.username = username;
         this.face = face;
@@ -76,24 +86,7 @@ public class AuthUser implements Serializable {
         this.nickName = nickName;
     }
 
-    public AuthUser(String username, String id, String face, UserEnums manager, String nickName, Boolean isSuper) {
-        this.username = username;
-        this.id = id;
-        this.face = face;
-        this.role = manager;
-        this.isSuper = isSuper;
-        this.nickName = nickName;
-    }
 
-    public AuthUser(String username, String id, UserEnums manager, String nickName, Boolean isSuper, String clerkId,String face) {
-        this.username = username;
-        this.id = id;
-        this.role = manager;
-        this.isSuper = isSuper;
-        this.nickName = nickName;
-        this.clerkId = clerkId;
-        this.face = face;
-    }
 
     public AuthUser(String username, String id, UserEnums manager, String nickName,String storeName, Boolean isSuper, String clerkId,String face) {
         this.username = username;

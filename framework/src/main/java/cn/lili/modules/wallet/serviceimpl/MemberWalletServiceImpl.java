@@ -11,6 +11,8 @@ import cn.lili.common.utils.SnowFlake;
 import cn.lili.common.utils.StringUtils;
 import cn.lili.modules.member.entity.dos.Member;
 import cn.lili.modules.member.service.MemberService;
+import cn.lili.modules.payment.entity.enums.PaymentMethodEnum;
+import cn.lili.modules.payment.kit.CashierSupport;
 import cn.lili.modules.system.entity.dos.Setting;
 import cn.lili.modules.system.entity.dto.WithdrawalSetting;
 import cn.lili.modules.system.entity.enums.SettingEnum;
@@ -20,8 +22,8 @@ import cn.lili.modules.wallet.entity.dos.MemberWithdrawApply;
 import cn.lili.modules.wallet.entity.dos.WalletLog;
 import cn.lili.modules.wallet.entity.dto.MemberWalletUpdateDTO;
 import cn.lili.modules.wallet.entity.dto.MemberWithdrawalMessage;
+import cn.lili.modules.wallet.entity.dto.TransferResultDTO;
 import cn.lili.modules.wallet.entity.enums.DepositServiceTypeEnum;
-import cn.lili.modules.wallet.entity.enums.MemberWithdrawalDestinationEnum;
 import cn.lili.modules.wallet.entity.enums.WithdrawStatusEnum;
 import cn.lili.modules.wallet.entity.vo.MemberWalletVO;
 import cn.lili.modules.wallet.mapper.MemberWalletMapper;
@@ -77,6 +79,8 @@ public class MemberWalletServiceImpl extends ServiceImpl<MemberWalletMapper, Mem
      */
     @Autowired
     private MemberWithdrawApplyService memberWithdrawApplyService;
+    @Autowired
+    private CashierSupport cashierSupport;
 
     @Override
     public MemberWalletVO getMemberWallet(String memberId) {
@@ -244,71 +248,105 @@ public class MemberWalletServiceImpl extends ServiceImpl<MemberWalletMapper, Mem
 
     /**
      * 提现方法
-     * 1、先执行平台逻辑，平台逻辑成功后扣减第三方余额，顺序问题为了防止第三方提现成功，平台逻辑失败导致第三方零钱已提现，而我们商城余额未扣减
-     * 2、如果余额扣减失败 则抛出异常，事务回滚
+     * 1、提现申请冻结用户的余额。
+     * 2、判断是否需要平台审核。不需要审核则直接调用第三方提现，需要审核则审核通过后调用第三方提现
      *
      * @param price 提现金额
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean applyWithdrawal(Double price) {
-        MemberWithdrawalMessage memberWithdrawalMessage = new MemberWithdrawalMessage();
+    public Boolean applyWithdrawal(Double price, String realName, String connectNumber) {
+
+        if (price == null || price <= 0 || price > 1000000) {
+            throw new ServiceException(ResultCode.WALLET_WITHDRAWAL_AMOUNT_ERROR);
+        }
         AuthUser authUser = UserContext.getCurrentUser();
+
+        //校验金额是否满足提现，因为是从余额扣减，所以校验的是余额
+        MemberWalletVO memberWalletVO = this.getMemberWallet(authUser.getId());
+        if (memberWalletVO.getMemberWallet() < price) {
+            throw new ServiceException(ResultCode.WALLET_WITHDRAWAL_INSUFFICIENT);
+        }
+        //获取提现设置
+        Setting setting = settingService.get(SettingEnum.WITHDRAWAL_SETTING.name());
+        WithdrawalSetting withdrawalSetting = new Gson().fromJson(setting.getSettingValue(), WithdrawalSetting.class);
+
+        //判断金额是否小于最低提现金额
+        if (price < withdrawalSetting.getMinPrice()) {
+            throw new ServiceException(ResultCode.WALLET_APPLY_MIN_PRICE_ERROR.message());
+        }
+
         //构建审核参数
         MemberWithdrawApply memberWithdrawApply = new MemberWithdrawApply();
         memberWithdrawApply.setMemberId(authUser.getId());
         memberWithdrawApply.setMemberName(authUser.getNickName());
         memberWithdrawApply.setApplyMoney(price);
-        memberWithdrawApply.setApplyStatus(WithdrawStatusEnum.APPLY.name());
-        memberWithdrawApply.setSn("W" + SnowFlake.getId());
-        //校验该次提现是否需要审核,如果未进行配置 默认是需要审核
-        Setting setting = settingService.get(SettingEnum.WITHDRAWAL_SETTING.name());
-        if (setting != null) {
-            //如果不需要审核则审核自动通过
-            WithdrawalSetting withdrawalSetting = new Gson().fromJson(setting.getSettingValue(), WithdrawalSetting.class);
-            if (Boolean.FALSE.equals(withdrawalSetting.getApply())) {
-                memberWithdrawApply.setApplyStatus(WithdrawStatusEnum.VIA_AUDITING.name());
-                memberWithdrawApply.setInspectRemark("系统自动审核通过");
-                //校验金额是否满足提现，因为是从余额扣减，所以校验的是余额
-                MemberWalletVO memberWalletVO = this.getMemberWallet(memberWithdrawApply.getMemberId());
-                if (memberWalletVO.getMemberWallet() < price) {
-                    throw new ServiceException(ResultCode.WALLET_WITHDRAWAL_INSUFFICIENT);
-                }
-                memberWithdrawalMessage.setStatus(WithdrawStatusEnum.VIA_AUDITING.name());
-                //微信零钱提现
-                Boolean result = withdrawal(memberWithdrawApply);
-                if (Boolean.TRUE.equals(result)) {
-                    this.reduce(new MemberWalletUpdateDTO(price, authUser.getId(), "余额提现成功", DepositServiceTypeEnum.WALLET_WITHDRAWAL.name()));
-                }
-            } else {
-                memberWithdrawalMessage.setStatus(WithdrawStatusEnum.APPLY.name());
-                //扣减余额到冻结金额
-                this.reduceWithdrawal(new MemberWalletUpdateDTO(price, authUser.getId(), "提现金额已冻结，审核成功后到账", DepositServiceTypeEnum.WALLET_WITHDRAWAL.name()));
-            }
-            //发送余额提现申请消息
+        memberWithdrawApply.setRealName(realName);
+        memberWithdrawApply.setConnectNumber(connectNumber);
 
-            memberWithdrawalMessage.setMemberId(authUser.getId());
-            memberWithdrawalMessage.setPrice(price);
-            memberWithdrawalMessage.setDestination(MemberWithdrawalDestinationEnum.WECHAT.name());
-            String destination = rocketmqCustomProperties.getMemberTopic() + ":" + MemberTagsEnum.MEMBER_WITHDRAWAL.name();
-            rocketMQTemplate.asyncSend(destination, memberWithdrawalMessage, RocketmqSendCallbackBuilder.commonCallback());
+        //判断提现是否需要审核
+        if (withdrawalSetting.getApply()) {
+            memberWithdrawApply.setApplyStatus(WithdrawStatusEnum.APPLY.name());
+        } else {
+            memberWithdrawApply.setApplyStatus(WithdrawStatusEnum.VIA_AUDITING.name());
         }
-        return memberWithdrawApplyService.save(memberWithdrawApply);
+
+        memberWithdrawApply.setSn("W" + SnowFlake.getId());
+
+        //添加提现申请记录
+        memberWithdrawApplyService.save(memberWithdrawApply);
+
+        //扣减余额到冻结金额
+        this.reduceWithdrawal(new MemberWalletUpdateDTO(price, authUser.getId(), "提现金额已冻结", DepositServiceTypeEnum.WALLET_WITHDRAWAL.name()));
+
+        //发送余额提现申请消息
+        MemberWithdrawalMessage memberWithdrawalMessage = new MemberWithdrawalMessage();
+        memberWithdrawalMessage.setMemberWithdrawApplyId(memberWithdrawApply.getId());
+        memberWithdrawalMessage.setStatus(memberWithdrawApply.getApplyStatus());
+        memberWithdrawalMessage.setMemberId(authUser.getId());
+        memberWithdrawalMessage.setPrice(price);
+        String destination = rocketmqCustomProperties.getMemberTopic() + ":" + MemberTagsEnum.MEMBER_WITHDRAWAL.name();
+        rocketMQTemplate.asyncSend(destination, memberWithdrawalMessage, RocketmqSendCallbackBuilder.commonCallback());
+
+        return true;
     }
 
     @Override
-    public Boolean withdrawal(MemberWithdrawApply memberWithdrawApply) {
+    public void withdrawal(String withdrawApplyId) {
+        MemberWithdrawApply memberWithdrawApply = memberWithdrawApplyService.getById(withdrawApplyId);
         memberWithdrawApply.setInspectTime(new Date());
-        //保存或者修改零钱提现
-        this.memberWithdrawApplyService.saveOrUpdate(memberWithdrawApply);
-        //TODO 调用自动提现接口
-        boolean result = true;
-        //如果微信提现失败 则抛出异常 回滚数据
-        if (!result) {
-            throw new ServiceException(ResultCode.WALLET_ERROR_INSUFFICIENT);
+        //获取提现设置
+        Setting setting = settingService.get(SettingEnum.WITHDRAWAL_SETTING.name());
+        WithdrawalSetting withdrawalSetting = new Gson().fromJson(setting.getSettingValue(), WithdrawalSetting.class);
+
+        //调用提现方法
+        TransferResultDTO transferResultDTO = "WECHAT".equals(withdrawalSetting.getType()) ?
+                cashierSupport.transfer(PaymentMethodEnum.WECHAT, memberWithdrawApply) : cashierSupport.transfer(PaymentMethodEnum.ALIPAY,
+                memberWithdrawApply);
+
+        //成功则扣减冻结金额
+        //失败则恢复冻结金额
+
+        if (transferResultDTO.getResult()) {
+            memberWithdrawApply.setApplyStatus(WithdrawStatusEnum.SUCCESS.name());
+        } else {
+            memberWithdrawApply.setApplyStatus(WithdrawStatusEnum.ERROR.name());
+            memberWithdrawApply.setErrorMessage(transferResultDTO.getResponse());
         }
-        return result;
+        //修改提现申请
+        this.memberWithdrawApplyService.updateById(memberWithdrawApply);
+
+        //发送余额提现申请消息
+        MemberWithdrawalMessage memberWithdrawalMessage = new MemberWithdrawalMessage();
+        memberWithdrawalMessage.setMemberWithdrawApplyId(memberWithdrawApply.getId());
+        memberWithdrawalMessage.setStatus(memberWithdrawApply.getApplyStatus());
+        memberWithdrawalMessage.setMemberId(memberWithdrawApply.getMemberId());
+        memberWithdrawalMessage.setPrice(memberWithdrawApply.getApplyMoney());
+        memberWithdrawalMessage.setStatus(memberWithdrawApply.getApplyStatus());
+
+        String destination = rocketmqCustomProperties.getMemberTopic() + ":" + MemberTagsEnum.MEMBER_WITHDRAWAL.name();
+        rocketMQTemplate.asyncSend(destination, memberWithdrawalMessage, RocketmqSendCallbackBuilder.commonCallback());
     }
 
 }

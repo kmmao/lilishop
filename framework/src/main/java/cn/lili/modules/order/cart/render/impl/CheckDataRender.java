@@ -77,13 +77,17 @@ public class CheckDataRender implements CartRenderStep {
 
     @Override
     public void render(TradeDTO tradeDTO) {
-        //预校验
-        preCalibration(tradeDTO);
+
 
         //校验商品有效性
         checkData(tradeDTO);
 
+        //预校验
+        preCalibration(tradeDTO);
+
+        //批量销售预处理
         preSaleModel(tradeDTO);
+
         //店铺分组数据初始化
         groupStore(tradeDTO);
 
@@ -106,8 +110,10 @@ public class CheckDataRender implements CartRenderStep {
      * @param tradeDTO 购物车视图
      */
     private void checkData(TradeDTO tradeDTO) {
+        List<CartSkuVO> cartSkuVOS = tradeDTO.getSkuList();
+
         //循环购物车中的商品
-        for (CartSkuVO cartSkuVO : tradeDTO.getSkuList()) {
+        for (CartSkuVO cartSkuVO : cartSkuVOS) {
 
             //如果失效，确认sku为未选中状态
             if (Boolean.TRUE.equals(cartSkuVO.getInvalid())) {
@@ -117,26 +123,33 @@ public class CheckDataRender implements CartRenderStep {
 
             //缓存中的商品信息
             GoodsSku dataSku = goodsSkuService.getGoodsSkuByIdFromCache(cartSkuVO.getGoodsSku().getId());
-            //商品有效性判定
-            if (dataSku == null || dataSku.getCreateTime().after(cartSkuVO.getGoodsSku().getCreateTime())) {
-                //设置购物车未选中
-                cartSkuVO.setChecked(false);
-                //设置购物车此sku商品已失效
-                cartSkuVO.setInvalid(true);
-                //设置失效消息
-                cartSkuVO.setErrorMessage("商品信息发生变化,已失效");
-                continue;
+
+            //商品上架状态判定  sku为空、sku非上架状态、sku审核不通过
+            boolean checkGoodsStatus = dataSku == null || !GoodsAuthEnum.PASS.name().equals(dataSku.getAuthFlag()) || !GoodsStatusEnum.UPPER.name().equals(dataSku.getMarketEnable());
+            //商品有效性判定 sku不为空且sku的更新时间不为空且sku的更新时间在购物车sku的更新时间之后
+            boolean checkGoodsValid = dataSku != null &&
+                    dataSku.getUpdateTime() != null &&
+                    cartSkuVO.getGoodsSku() != null &&
+                    cartSkuVO.getGoodsSku().getUpdateTime() != null &&
+                    dataSku.getUpdateTime().after(cartSkuVO.getGoodsSku().getUpdateTime());
+
+
+            if (checkGoodsStatus || checkGoodsValid) {
+                if (checkGoodsValid) {
+                    cartSkuVO.rebuildBySku(dataSku);
+                }
+                if (checkGoodsStatus) {
+                    //设置购物车未选中
+                    cartSkuVO.setChecked(false);
+                    //设置购物车此sku商品已失效
+                    cartSkuVO.setInvalid(true);
+                    //设置失效消息
+                    cartSkuVO.setErrorMessage("商品已下架");
+                    continue;
+                }
+
             }
-            //商品上架状态判定
-            if (!GoodsAuthEnum.PASS.name().equals(dataSku.getAuthFlag()) || !GoodsStatusEnum.UPPER.name().equals(dataSku.getMarketEnable())) {
-                //设置购物车未选中
-                cartSkuVO.setChecked(false);
-                //设置购物车此sku商品已失效
-                cartSkuVO.setInvalid(true);
-                //设置失效消息
-                cartSkuVO.setErrorMessage("商品已下架");
-                continue;
-            }
+
             //商品库存判定
             if (dataSku.getQuantity() < cartSkuVO.getNum()) {
                 //设置购物车未选中
@@ -166,35 +179,37 @@ public class CheckDataRender implements CartRenderStep {
     private void groupStore(TradeDTO tradeDTO) {
         //渲染的购物车
         List<CartVO> cartList = new ArrayList<>();
-
-        //根据店铺分组
-        Map<String, List<CartSkuVO>> storeCollect = tradeDTO.getSkuList().stream().collect(Collectors.groupingBy(CartSkuVO::getStoreId));
-        for (Map.Entry<String, List<CartSkuVO>> storeCart : storeCollect.entrySet()) {
-            if (!storeCart.getValue().isEmpty()) {
-                CartVO cartVO = new CartVO(storeCart.getValue().get(0));
-                if (CharSequenceUtil.isEmpty(cartVO.getDeliveryMethod())) {
-                    cartVO.setDeliveryMethod(DeliveryMethodEnum.LOGISTICS.name());
-                }
-                cartVO.setSkuList(storeCart.getValue());
-                try {
-                    //筛选属于当前店铺的优惠券
-                    storeCart.getValue().forEach(i -> i.getPromotionMap().forEach((key, value) -> {
-                        if (key.contains(PromotionTypeEnum.COUPON.name())) {
-                            JSONObject promotionsObj = JSONUtil.parseObj(value);
-                            Coupon coupon = JSONUtil.toBean(promotionsObj, Coupon.class);
-                            if (key.contains(PromotionTypeEnum.COUPON.name()) && coupon.getStoreId().equals(storeCart.getKey())) {
-                                cartVO.getCanReceiveCoupon().add(new CouponVO(coupon));
+        if (tradeDTO.getCartList() == null || tradeDTO.getCartList().size() == 0) {
+            //根据店铺分组
+            Map<String, List<CartSkuVO>> storeCollect = tradeDTO.getSkuList().stream().collect(Collectors.groupingBy(CartSkuVO::getStoreId));
+            for (Map.Entry<String, List<CartSkuVO>> storeCart : storeCollect.entrySet()) {
+                if (!storeCart.getValue().isEmpty()) {
+                    CartVO cartVO = new CartVO(storeCart.getValue().get(0));
+                    if (CharSequenceUtil.isEmpty(cartVO.getDeliveryMethod())) {
+                        cartVO.setDeliveryMethod(DeliveryMethodEnum.LOGISTICS.name());
+                    }
+                    cartVO.setSkuList(storeCart.getValue());
+                    try {
+                        //筛选属于当前店铺的优惠券
+                        storeCart.getValue().forEach(i -> i.getPromotionMap().forEach((key, value) -> {
+                            if (key.contains(PromotionTypeEnum.COUPON.name())) {
+                                JSONObject promotionsObj = JSONUtil.parseObj(value);
+                                Coupon coupon = JSONUtil.toBean(promotionsObj, Coupon.class);
+                                if (key.contains(PromotionTypeEnum.COUPON.name()) && coupon.getStoreId().equals(storeCart.getKey())) {
+                                    cartVO.getCanReceiveCoupon().add(new CouponVO(coupon));
+                                }
                             }
-                        }
-                    }));
-                } catch (Exception e) {
-                    log.error("筛选属于当前店铺的优惠券发生异常！", e);
+                        }));
+                    } catch (Exception e) {
+                        log.error("筛选属于当前店铺的优惠券发生异常！", e);
+                    }
+                    storeCart.getValue().stream().filter(i -> Boolean.TRUE.equals(i.getChecked())).findFirst().ifPresent(cartSkuVO -> cartVO.setChecked(true));
+                    cartList.add(cartVO);
                 }
-                storeCart.getValue().stream().filter(i -> Boolean.TRUE.equals(i.getChecked())).findFirst().ifPresent(cartSkuVO -> cartVO.setChecked(true));
-                cartList.add(cartVO);
             }
+            tradeDTO.setCartList(cartList);
         }
-        tradeDTO.setCartList(cartList);
+
     }
 
     /**
@@ -259,7 +274,7 @@ public class CheckDataRender implements CartRenderStep {
      */
     private void preSaleModel(TradeDTO tradeDTO) {
         // 寻找同goods下销售模式为批发的商品
-        Map<String, List<CartSkuVO>> goodsGroup = tradeDTO.getSkuList().stream().filter(i -> i.getGoodsSku().getSalesModel().equals(GoodsSalesModeEnum.WHOLESALE.name())).collect(Collectors.groupingBy(i -> i.getGoodsSku().getGoodsId()));
+        Map<String, List<CartSkuVO>> goodsGroup = tradeDTO.getCheckedSkuList().stream().filter(i -> i.getGoodsSku().getSalesModel().equals(GoodsSalesModeEnum.WHOLESALE.name())).collect(Collectors.groupingBy(i -> i.getGoodsSku().getGoodsId()));
         if (CollUtil.isNotEmpty(goodsGroup)) {
             goodsGroup.forEach((k, v) -> {
                 // 获取购买总数

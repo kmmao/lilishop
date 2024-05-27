@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.SwitchEnum;
+import cn.lili.common.event.TransactionCommitSendMQEvent;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.properties.RocketmqCustomProperties;
 import cn.lili.common.security.context.UserContext;
@@ -21,6 +22,7 @@ import cn.lili.modules.member.entity.enums.EvaluationGradeEnum;
 import cn.lili.modules.member.entity.vo.EvaluationNumberVO;
 import cn.lili.modules.member.entity.vo.MemberEvaluationListVO;
 import cn.lili.modules.member.entity.vo.MemberEvaluationVO;
+import cn.lili.modules.member.entity.vo.StoreRatingVO;
 import cn.lili.modules.member.mapper.MemberEvaluationMapper;
 import cn.lili.modules.member.service.MemberEvaluationService;
 import cn.lili.modules.member.service.MemberService;
@@ -30,7 +32,6 @@ import cn.lili.modules.order.order.entity.enums.CommentStatusEnum;
 import cn.lili.modules.order.order.service.OrderItemService;
 import cn.lili.modules.order.order.service.OrderService;
 import cn.lili.mybatis.util.PageUtil;
-import cn.lili.rocketmq.RocketmqSendCallbackBuilder;
 import cn.lili.rocketmq.tags.GoodsTagsEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -39,12 +40,11 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
@@ -57,11 +57,6 @@ import java.util.Map;
 @Service
 public class MemberEvaluationServiceImpl extends ServiceImpl<MemberEvaluationMapper, MemberEvaluation> implements MemberEvaluationService {
 
-    /**
-     * 会员评价数据层
-     */
-    @Resource
-    private MemberEvaluationMapper memberEvaluationMapper;
     /**
      * 订单
      */
@@ -83,15 +78,13 @@ public class MemberEvaluationServiceImpl extends ServiceImpl<MemberEvaluationMap
     @Autowired
     private GoodsSkuService goodsSkuService;
     /**
-     * rocketMq
-     */
-    @Autowired
-    private RocketMQTemplate rocketMQTemplate;
-    /**
      * rocketMq配置
      */
     @Autowired
     private RocketmqCustomProperties rocketmqCustomProperties;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public IPage<MemberEvaluation> managerQuery(EvaluationQueryParams queryParams) {
@@ -101,7 +94,7 @@ public class MemberEvaluationServiceImpl extends ServiceImpl<MemberEvaluationMap
 
     @Override
     public IPage<MemberEvaluationListVO> queryPage(EvaluationQueryParams evaluationQueryParams) {
-        return memberEvaluationMapper.getMemberEvaluationList(PageUtil.initPage(evaluationQueryParams), evaluationQueryParams.queryWrapper());
+        return this.baseMapper.getMemberEvaluationList(PageUtil.initPage(evaluationQueryParams), evaluationQueryParams.queryWrapper());
     }
 
     @Override
@@ -122,6 +115,9 @@ public class MemberEvaluationServiceImpl extends ServiceImpl<MemberEvaluationMap
         } else {
             //获取用户信息 非自己评价时，读取数据库
             member = memberService.getById(order.getMemberId());
+            if (member == null) {
+                throw new ServiceException(ResultCode.USER_NOT_EXIST);
+            }
         }
         //获取商品信息
         GoodsSku goodsSku = goodsSkuService.getGoodsSkuByIdFromCache(memberEvaluationDTO.getSkuId());
@@ -135,8 +131,8 @@ public class MemberEvaluationServiceImpl extends ServiceImpl<MemberEvaluationMap
         //修改订单货物评价状态为已评价
         orderItemService.updateCommentStatus(orderItem.getSn(), CommentStatusEnum.FINISHED);
         //发送商品评价消息
-        String destination = rocketmqCustomProperties.getGoodsTopic() + ":" + GoodsTagsEnum.GOODS_COMMENT_COMPLETE.name();
-        rocketMQTemplate.asyncSend(destination, JSONUtil.toJsonStr(memberEvaluation), RocketmqSendCallbackBuilder.commonCallback());
+        applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("同步商品评价消息",
+                rocketmqCustomProperties.getGoodsTopic(), GoodsTagsEnum.GOODS_COMMENT_COMPLETE.name(), JSONUtil.toJsonStr(memberEvaluation)));
         return memberEvaluationDTO;
     }
 
@@ -198,6 +194,7 @@ public class MemberEvaluationServiceImpl extends ServiceImpl<MemberEvaluationMap
         evaluationNumberVO.setWorse(worse);
         evaluationNumberVO.setHaveImage(this.count(new QueryWrapper<MemberEvaluation>()
                 .eq("have_image", 1)
+                .eq("status", SwitchEnum.OPEN.name())
                 .eq("goods_id", goodsId)));
 
         return evaluationNumberVO;
@@ -226,6 +223,20 @@ public class MemberEvaluationServiceImpl extends ServiceImpl<MemberEvaluationMap
     @Override
     public long getEvaluationCount(EvaluationQueryParams evaluationQueryParams) {
         return this.count(evaluationQueryParams.queryWrapper());
+    }
+
+    @Override
+    public List<Map<String, Object>> memberEvaluationNum(DateTime startDate, DateTime endDate) {
+        return this.baseMapper.memberEvaluationNum(new QueryWrapper<MemberEvaluation>()
+                .between("create_time", startDate, endDate));
+    }
+
+    @Override
+    public StoreRatingVO getStoreRatingVO(String storeId, String status) {
+        LambdaQueryWrapper<MemberEvaluation> lambdaQueryWrapper = Wrappers.lambdaQuery();
+        lambdaQueryWrapper.eq(MemberEvaluation::getStoreId, storeId);
+        lambdaQueryWrapper.eq(MemberEvaluation::getStatus, SwitchEnum.OPEN.name());
+        return this.baseMapper.getStoreRatingVO(lambdaQueryWrapper);
     }
 
     /**

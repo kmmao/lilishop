@@ -7,7 +7,7 @@ import cn.lili.modules.goods.entity.dos.GoodsSku;
 import cn.lili.modules.goods.entity.dto.GoodsSkuDTO;
 import cn.lili.modules.promotion.entity.dos.PromotionGoods;
 import cn.lili.modules.promotion.entity.dto.search.PromotionGoodsSearchParams;
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.Date;
@@ -32,7 +32,8 @@ public interface PromotionGoodsService extends IService<PromotionGoods> {
      * @return 缓存商品库存key
      */
     static String getPromotionGoodsStockCacheKey(PromotionTypeEnum typeEnum, String promotionId, String skuId) {
-        return "{" + CachePrefix.PROMOTION_GOODS_STOCK.name() + "_" + typeEnum.name() + "}_" + promotionId + "_" + skuId;
+        //ps: 2023-06-09 促销商品库存与普通商品库存不在同一槽内，会导致库存扣减lua脚本无法执行
+        return CachePrefix.SKU_STOCK.getPrefix() + "_" + typeEnum.name() + "_" + promotionId + "_" + skuId;
     }
 
     /**
@@ -48,7 +49,7 @@ public interface PromotionGoodsService extends IService<PromotionGoods> {
     /**
      * 获取sku所有有效活动
      *
-     * @param skus    商品skuId
+     * @param skus 商品skuId
      * @return 促销商品集合
      */
     List<PromotionGoods> findSkuValidPromotions(List<GoodsSkuDTO> skus);
@@ -60,7 +61,7 @@ public interface PromotionGoodsService extends IService<PromotionGoods> {
      * @param pageVo       分页参数
      * @return 促销商品列表
      */
-    IPage<PromotionGoods> pageFindAll(PromotionGoodsSearchParams searchParams, PageVO pageVo);
+    Page<PromotionGoods> pageFindAll(PromotionGoodsSearchParams searchParams, PageVO pageVo);
 
     /**
      * 获取促销商品信息
@@ -138,6 +139,14 @@ public interface PromotionGoodsService extends IService<PromotionGoods> {
     void updatePromotionGoodsStock(List<PromotionGoods> promotionGoodsList);
 
     /**
+     * 更新促销活动商品库存
+     *
+     * @param skuId    商品skuId
+     * @param quantity 库存
+     */
+    void updatePromotionGoodsStock(String skuId, Integer quantity);
+
+    /**
      * 更新促销活动商品索引
      *
      * @param promotionGoods 促销商品信息
@@ -176,7 +185,7 @@ public interface PromotionGoodsService extends IService<PromotionGoods> {
     /**
      * 获取当前商品促销信息
      *
-     * @param dataSku 商品sku信息
+     * @param dataSku  商品sku信息
      * @param cartType 购物车类型
      * @return 当前商品促销信息
      */

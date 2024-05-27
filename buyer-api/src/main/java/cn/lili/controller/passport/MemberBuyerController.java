@@ -3,6 +3,8 @@ package cn.lili.controller.passport;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.enums.ResultUtil;
 import cn.lili.common.exception.ServiceException;
+import cn.lili.common.security.AuthUser;
+import cn.lili.common.security.context.UserContext;
 import cn.lili.common.security.enums.UserEnums;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.member.entity.dos.Member;
@@ -26,7 +28,6 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.validation.constraints.NotNull;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 
@@ -94,7 +95,7 @@ public class MemberBuyerController {
                 deferredResult.setResult(new ResponseEntity<>(ResultUtil.error(ResultCode.ERROR), HttpStatus.OK));
                 Thread.currentThread().interrupt();
             }
-        }, Executors.newCachedThreadPool());
+        });
         return deferredResult;
     }
 
@@ -157,6 +158,28 @@ public class MemberBuyerController {
                                           @RequestHeader String uuid) {
         if (smsUtil.verifyCode(mobile, VerificationEnums.LOGIN, uuid, code)) {
             return ResultUtil.data(memberService.mobilePhoneLogin(mobile));
+        } else {
+            throw new ServiceException(ResultCode.VERIFICATION_SMS_CHECKED_ERROR);
+        }
+    }
+
+    @ApiOperation(value = "绑定手机号")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "username", value = "用户名", required = true, paramType = "query"),
+            @ApiImplicitParam(name = "mobile", value = "手机号", required = true, paramType = "query"),
+            @ApiImplicitParam(name = "code", value = "验证码", required = true, paramType = "query"),
+    })
+    @PostMapping("/bindMobile")
+    public ResultMessage<Object> bindMobile(@NotNull(message = "用户名不能为空") @RequestParam String username,
+                                            @NotNull(message = "手机号为空") @RequestParam String mobile,
+                                            @NotNull(message = "验证码为空") @RequestParam String code,
+                                            @RequestHeader String uuid) {
+        if (smsUtil.verifyCode(mobile, VerificationEnums.BIND_MOBILE, uuid, code)) {
+            Member member = memberService.findByUsername(username);
+            if (member == null) {
+                throw new ServiceException(ResultCode.USER_NOT_EXIST);
+            }
+            return ResultUtil.data(memberService.changeMobile(member.getId(), mobile));
         } else {
             throw new ServiceException(ResultCode.VERIFICATION_SMS_CHECKED_ERROR);
         }
@@ -258,12 +281,9 @@ public class MemberBuyerController {
     }
 
     @ApiOperation(value = "注销账号")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "password", value = "密码", required = true, paramType = "query")
-    })
     @PutMapping("/cancellation")
-    public ResultMessage<Member> cancellation(@NotNull(message = "密码不能为空") @RequestParam String password) {
-        memberService.cancellation(password);
+    public ResultMessage<Member> cancellation() {
+        memberService.cancellation();
         return ResultUtil.success();
     }
 
@@ -271,6 +291,20 @@ public class MemberBuyerController {
     @GetMapping("/refresh/{refreshToken}")
     public ResultMessage<Object> refreshToken(@NotNull(message = "刷新token不能为空") @PathVariable String refreshToken) {
         return ResultUtil.data(this.memberService.refreshToken(refreshToken));
+    }
+
+    @GetMapping("/getImUser")
+    @ApiOperation(value = "获取用户信息")
+    public ResultMessage<Member> getImUser() {
+        AuthUser authUser = UserContext.getCurrentUser();
+        return ResultUtil.data(memberService.getById(authUser.getId()));
+    }
+
+    @GetMapping("/getImUserDetail/{memberId}")
+    @ApiImplicitParam(name = "memberId", value = "店铺Id", required = true, dataType = "String", paramType = "path")
+    @ApiOperation(value = "获取用户信息")
+    public ResultMessage<Member> getImUserDetail(@PathVariable String memberId) {
+        return ResultUtil.data(memberService.getById(memberId));
     }
 
 }

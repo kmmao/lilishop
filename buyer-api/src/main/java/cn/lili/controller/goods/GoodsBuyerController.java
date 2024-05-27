@@ -6,6 +6,7 @@ import cn.lili.common.exception.ServiceException;
 import cn.lili.common.vo.PageVO;
 import cn.lili.common.vo.ResultMessage;
 import cn.lili.modules.goods.entity.dos.Goods;
+import cn.lili.modules.goods.entity.dos.GoodsSku;
 import cn.lili.modules.goods.entity.dto.GoodsSearchParams;
 import cn.lili.modules.goods.entity.vos.GoodsVO;
 import cn.lili.modules.goods.service.GoodsService;
@@ -18,14 +19,13 @@ import cn.lili.modules.search.service.HotWordsService;
 import cn.lili.modules.statistics.aop.PageViewPoint;
 import cn.lili.modules.statistics.aop.enums.PageViewEnum;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.elasticsearch.core.SearchPage;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -102,12 +102,17 @@ public class GoodsBuyerController {
         return ResultUtil.data(goodsService.queryByParams(goodsSearchParams));
     }
 
+    @ApiOperation(value = "获取商品sku列表")
+    @GetMapping("/sku")
+    public ResultMessage<List<GoodsSku>> getSkuByPage(GoodsSearchParams goodsSearchParams) {
+        return ResultUtil.data(goodsSkuService.getGoodsSkuByList(goodsSearchParams));
+    }
+
     @ApiOperation(value = "从ES中获取商品信息")
     @GetMapping("/es")
-    public ResultMessage<SearchPage<EsGoodsIndex>> getGoodsByPageFromEs(EsGoodsSearchDTO goodsSearchParams, PageVO pageVO) {
+    public ResultMessage<Page<EsGoodsIndex>> getGoodsByPageFromEs(EsGoodsSearchDTO goodsSearchParams, PageVO pageVO) {
         pageVO.setNotConvert(true);
-        SearchPage<EsGoodsIndex> esGoodsIndices = goodsSearchService.searchGoods(goodsSearchParams, pageVO);
-        return ResultUtil.data(esGoodsIndices);
+        return ResultUtil.data(goodsSearchService.searchGoodsByPage(goodsSearchParams, pageVO));
     }
 
     @ApiOperation(value = "从ES中获取相关商品品牌名称，分类名称及属性")

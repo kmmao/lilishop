@@ -24,7 +24,7 @@ spring:
   boot:
     admin:
       client:
-        url: http://192.168.0.116:8000
+        url: http://127.0.0.1:8000
   cache:
     type: redis
   # Redis
@@ -241,16 +241,16 @@ lili:
     sk: zhNKVrJK6UPOhqIjn8AQvG37b9sz6
   #域名
   domain:
-    pc: http://192.168.0.116:8888
-    wap: http://192.168.0.116:8888
-    seller: http://192.168.0.116:8888
-    admin: http://192.168.0.116:8888
+    pc: http://127.0.0.1:8888
+    wap: http://127.0.0.1:8888
+    seller: http://127.0.0.1:8888
+    admin: http://127.0.0.1:8888
   #api地址
   api:
     buyer: https://z171l91606.51mypc.cn
-    base: http://192.168.0.116:8888
-    manager: http://192.168.0.116:8888
-    seller: http://192.168.0.116:8888
+    base: http://127.0.0.1:8888
+    manager: http://127.0.0.1:8888
+    seller: http://127.0.0.1:8888
 
   # jwt 细节设定
   jwt-setting:
@@ -282,24 +282,24 @@ lili:
     logstash:
       server: ${LS-HOST:lilishop-ls}:4560
     rocketmq:
-      promotion-topic: lili_promotion_topic
-      promotion-group: lili_promotion_group
-      msg-ext-topic: lili_msg_topic
-      msg-ext-group: lili_msg_group
-      goods-topic: lili_goods_topic
-      goods-group: lili_goods_group
-      order-topic: lili_order_topic
-      order-group: lili_order_group
-      member-topic: lili_member_topic
-      member-group: lili_member_group
-      other-topic: lili_other_topic
-      other-group: lili_other_group
-      notice-topic: lili_notice_topic
-      notice-group: lili_notice_group
-      notice-send-topic: lili_send_notice_topic
-      notice-send-group: lili_send_notice_group
-      after-sale-topic: lili_after_sale_topic
-      after-sale-group: lili_after_sale_group
+      promotion-topic: shop_lili_promotion_topic
+      promotion-group: shop_lili_promotion_group
+      msg-ext-topic: shop_lili_msg_topic
+      msg-ext-group: shop_lili_msg_group
+      goods-topic: shop_lili_goods_topic
+      goods-group: shop_lili_goods_group
+      order-topic: shop_lili_order_topic
+      order-group: shop_lili_order_group
+      member-topic: shop_lili_member_topic
+      member-group: shop_lili_member_group
+      other-topic: shop_lili_other_topic
+      other-group: shop_lili_other_group
+      notice-topic: shop_lili_notice_topic
+      notice-group: shop_lili_notice_group
+      notice-send-topic: shop_lili_send_notice_topic
+      notice-send-group: shop_lili_send_notice_group
+      after-sale-topic: shop_lili_after_sale_topic
+      after-sale-group: shop_lili_after_sale_group
 rocketmq:
   name-server: ${ROCKETMQ-HOST:lilishop-rocketmq}:${ROCKETMQ-PORT:9876}
   isVIPChannel: false

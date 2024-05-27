@@ -209,6 +209,10 @@ public enum CachePrefix {
      */
     PROMOTION,
     /**
+     * 当前优惠券活动
+     */
+    CURRENT_COUPON_ACTIVITY,
+    /**
      * 促销活动
      */
     PROMOTION_GOODS,
@@ -236,6 +240,10 @@ public enum CachePrefix {
      * 积分商品缓存key前缀
      */
     STORE_ID_EXCHANGE,
+    /**
+     * 会员领取标记
+     */
+    MEMBER_COUPON_SIGN,
 
 
     //================交易=================
@@ -441,6 +449,10 @@ public enum CachePrefix {
      * 分销员
      */
     DISTRIBUTION,
+    /**
+     * 邀请人
+     */
+    INVITER,
 
     /**
      * 找回手机
@@ -503,12 +515,11 @@ public enum CachePrefix {
 
     /**
      * 扫码登录
+     *
      * @param str
      * @return
      */
-    QR_CODE_LOGIN_SESSION
-
-    ;
+    QR_CODE_LOGIN_SESSION;
 
 
     public static String removePrefix(String str) {
@@ -543,5 +554,17 @@ public enum CachePrefix {
      */
     public String getPrefix(UserEnums user) {
         return "{" + this.name() + "_" + user.name() + "}_";
+    }
+
+    /**
+     * 获取缓存key值 + 用户端 +自定义前缀
+     * 例如：三端都有用户体系，需要分别登录，如果用户名一致，则redis中的权限可能会冲突出错
+     *
+     * @param user         角色
+     * @param customPrefix 自定义前缀
+     * @return 缓存key值
+     */
+    public String getPrefix(UserEnums user, String customPrefix) {
+        return "{" + this.name() + "_" + user.name() + "}_" + customPrefix + "_";
     }
 }

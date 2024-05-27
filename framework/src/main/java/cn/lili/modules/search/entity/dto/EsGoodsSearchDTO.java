@@ -1,5 +1,7 @@
 package cn.lili.modules.search.entity.dto;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.lili.common.utils.RegularUtil;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -47,4 +49,38 @@ public class EsGoodsSearchDTO {
     @ApiModelProperty("当前商品skuId,根据当前浏览的商品信息来给用户推荐可能喜欢的商品")
     private String currentGoodsId;
 
+    /**
+     * @see cn.lili.common.enums.PromotionTypeEnum
+     */
+    @ApiModelProperty("促销活动类型")
+    private String promotionType;
+
+    @ApiModelProperty(value = "促销活动id")
+    private String promotionsId;
+
+    /**
+     * @see cn.lili.modules.goods.entity.enums.GoodsTypeEnum
+     */
+    @ApiModelProperty(value = "商品类型")
+    private String goodsType;
+
+    @ApiModelProperty("销售模式")
+    private String salesModel;
+
+    /**
+     * @see cn.lili.modules.goods.entity.enums.GoodsTypeEnum
+     */
+    @ApiModelProperty(value = "除了当前商品类型之外")
+    private String neGoodsType;
+
+    @ApiModelProperty("除了销售模式当前销售模式之外")
+    private String neSalesModel;
+
+    //过滤搜索关键字
+    public String getKeyword() {
+        if (CharSequenceUtil.isNotEmpty(keyword)) {
+            RegularUtil.replace(this.keyword);
+        }
+        return keyword;
+    }
 }

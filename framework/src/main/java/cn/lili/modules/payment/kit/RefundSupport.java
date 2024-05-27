@@ -39,11 +39,6 @@ public class RefundSupport {
      */
     @Autowired
     private OrderService orderService;
-    /**
-     * 子订单
-     */
-    @Autowired
-    private OrderItemService orderItemService;
 
     /**
      * 售后退款
@@ -68,33 +63,12 @@ public class RefundSupport {
         Payment payment = (Payment) SpringContextUtil.getBean(paymentMethodEnum.getPlugin());
         payment.refund(refundLog);
 
-        this.updateReturnGoodsNumber(afterSale);
-
         //记录退款流水
         //TODO lk 这里也需要对结算订单"已支付未确认列表"做转移动作
         storeFlowService.update(new UpdateWrapper<StoreFlow>().eq("order_sn",afterSale.getOrderSn()).eq("flow_type", FlowTypeEnum.UNCOMPLETED.name())
                 .set("flow_type",FlowTypeEnum.PAY).set("create_time",new Date()));
         storeFlowService.refundOrder(afterSale);
     }
-
-    /**
-     * 功能描述: 修改子订单中已售后退款商品数量
-     *
-     * @return void
-     * @Author ftyy
-     * @Date 17:33 2021/11/18
-     * @Param [afterSale]
-     **/
-    private void updateReturnGoodsNumber(AfterSale afterSale) {
-        //根据商品id及订单sn获取子订单
-        OrderItem orderItem = orderItemService.getByOrderSnAndSkuId(afterSale.getOrderSn(), afterSale.getSkuId());
-
-        orderItem.setReturnGoodsNumber(afterSale.getNum() + orderItem.getReturnGoodsNumber());
-
-        //修改子订单订单中的退货数量
-        orderItemService.updateById(orderItem);
-    }
-
 
     /**
      * 退款通知

@@ -21,11 +21,17 @@ public interface GoodsStatisticsService extends IService<Goods> {
      * @return 所有的已上架的商品数量
      */
     long goodsNum(GoodsStatusEnum goodsStatusEnum, GoodsAuthEnum goodsAuthEnum);
-
     /**
      * 获取今天的已上架的商品数量
      *
      * @return 今天的已上架的商品数量
      */
     long todayUpperNum();
+
+    /**
+     * 预警库存数
+     * @return
+     */
+    long alertQuantityNum();
+
 }

@@ -15,6 +15,7 @@ import cn.lili.modules.order.aftersale.entity.dos.AfterSale;
 import cn.lili.modules.order.order.entity.dos.Order;
 import cn.lili.modules.order.order.entity.dto.OrderMessage;
 import cn.lili.modules.order.order.entity.enums.OrderPromotionTypeEnum;
+import cn.lili.modules.order.order.entity.enums.OrderStatusEnum;
 import cn.lili.modules.order.order.entity.enums.PayStatusEnum;
 import cn.lili.modules.order.order.service.OrderService;
 import cn.lili.modules.order.trade.entity.enums.AfterSaleStatusEnum;
@@ -134,12 +135,16 @@ public class MemberPointExecute implements MemberRegisterEvent, GoodsCommentComp
     @Override
     public void afterSaleStatusChange(AfterSale afterSale) {
         if (afterSale.getServiceStatus().equals(AfterSaleStatusEnum.COMPLETE.name())) {
+            Order order = orderService.getBySn(afterSale.getOrderSn());
             //获取积分设置
             PointSetting pointSetting = getPointSetting();
+            if (pointSetting.getConsumer() == 0 || !OrderStatusEnum.COMPLETED.name().equals(order.getOrderStatus())) {
+                return;
+            }
             //计算扣除积分数量
-            Double point = CurrencyUtil.mul(pointSetting.getMoney(), afterSale.getActualRefundPrice(), 0);
+            Double point = CurrencyUtil.mul(pointSetting.getConsumer(), afterSale.getActualRefundPrice(), 0);
             //扣除会员积分
-            memberService.updateMemberPoint(point.longValue(), PointTypeEnum.REDUCE.name(), afterSale.getMemberId(), "会员退款，回退积分" + point + "分");
+            memberService.updateMemberPoint(point.longValue(), PointTypeEnum.REDUCE.name(), afterSale.getMemberId(), "会员退款，回退消费赠送积分" + point + "分");
 
         }
     }

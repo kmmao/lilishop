@@ -97,6 +97,8 @@ public class MemberAddressBuyerController {
     @ApiOperation(value = "修改会员收件地址")
     @PutMapping
     public ResultMessage<MemberAddress> editShippingAddress(@Valid MemberAddress shippingAddress) {
+        OperationalJudgment.judgment(memberAddressService.getById(shippingAddress.getId()));
+        shippingAddress.setMemberId(Objects.requireNonNull(UserContext.getCurrentUser()).getId());
         return ResultUtil.data(memberAddressService.updateMemberAddress(shippingAddress));
     }
 

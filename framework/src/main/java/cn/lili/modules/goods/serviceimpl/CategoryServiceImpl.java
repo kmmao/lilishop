@@ -4,24 +4,30 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.lili.cache.Cache;
 import cn.lili.cache.CachePrefix;
 import cn.lili.common.enums.ResultCode;
+import cn.lili.common.event.TransactionCommitSendMQEvent;
 import cn.lili.common.exception.ServiceException;
+import cn.lili.common.properties.RocketmqCustomProperties;
 import cn.lili.modules.goods.entity.dos.Category;
+import cn.lili.modules.goods.entity.dto.CategorySearchParams;
 import cn.lili.modules.goods.entity.vos.CategoryVO;
 import cn.lili.modules.goods.mapper.CategoryMapper;
 import cn.lili.modules.goods.service.CategoryBrandService;
 import cn.lili.modules.goods.service.CategoryParameterGroupService;
 import cn.lili.modules.goods.service.CategoryService;
 import cn.lili.modules.goods.service.CategorySpecificationService;
+import cn.lili.rocketmq.tags.GoodsTagsEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +60,20 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     @Autowired
     private CategorySpecificationService categorySpecificationService;
+
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    /**
+     * rocketMq
+     */
+    @Autowired
+    private RocketMQTemplate rocketMQTemplate;
+    /**
+     * rocketMq配置
+     */
+    @Autowired
+    private RocketmqCustomProperties rocketmqCustomProperties;
 
     @Override
     public List<Category> dbList(String parentId) {
@@ -146,10 +166,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     }
 
     @Override
-    public List<CategoryVO> listAllChildren() {
+    public List<CategoryVO> listAllChildren(CategorySearchParams categorySearchParams) {
 
         //获取全部分类
-        List<Category> list = this.list();
+        List<Category> list = this.list(categorySearchParams.queryWrapper());
 
         //构造分类树
         List<CategoryVO> categoryVOList = new ArrayList<>();
@@ -241,14 +261,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             }
         }
         UpdateWrapper<Category> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq("id", category.getId())
-                .set("name", category.getName())
-                .set("image", category.getImage())
-                .set("sort_order", category.getSortOrder())
-                .set(DELETE_FLAG_COLUMN, category.getDeleteFlag())
-                .set("commission_rate", category.getCommissionRate());
+        updateWrapper.eq("id", category.getId());
         this.baseMapper.update(category, updateWrapper);
         removeCache();
+        applicationEventPublisher.publishEvent(new TransactionCommitSendMQEvent("同步商品分类名称",
+                rocketmqCustomProperties.getGoodsTopic(), GoodsTagsEnum.CATEGORY_GOODS_NAME.name(), category.getId()));
     }
 
 
