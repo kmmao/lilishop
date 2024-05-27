@@ -2,6 +2,7 @@ package cn.lili.common.security.context;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.lili.cache.Cache;
+import cn.lili.cache.CachePrefix;
 import cn.lili.common.enums.ResultCode;
 import cn.lili.common.exception.ServiceException;
 import cn.lili.common.security.AuthUser;
@@ -98,13 +99,15 @@ public class UserContext {
     public static AuthUser getAuthUser(Cache cache, String accessToken) {
         try {
             if (cache.keys("*" + accessToken).isEmpty()) {
-            AuthUser authUser = getAuthUser(accessToken);
-            assert authUser != null;
+                AuthUser authUser = getAuthUser(accessToken);
+                assert authUser != null;
 
-            if (!cache.hasKey(CachePrefix.ACCESS_TOKEN.getPrefix(authUser.getRole(), authUser.getId()) + accessToken)) {
-                throw new ServiceException(ResultCode.USER_AUTHORITY_ERROR);
+                if (!cache.hasKey(CachePrefix.ACCESS_TOKEN.getPrefix(authUser.getRole(), authUser.getId()) + accessToken)) {
+                    throw new ServiceException(ResultCode.USER_AUTHORITY_ERROR);
+                }
+                return getAuthUser(accessToken);
             }
-            return getAuthUser(accessToken);
+            return null;
         } catch (Exception e) {
             return null;
         }
