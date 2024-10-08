@@ -36,7 +36,8 @@ class DdgParentsAssignGoodsSkuServiceImplTest {
     @Test
     void goodsSkuPageByChildId() {
         GoodsDdgSearchParams searchParams = new GoodsDdgSearchParams();
-        searchParams.setChildId("1535195481096314881");
+        searchParams.setChildId("1711268949552820226");
+        searchParams.setPageSize(20);
         IPage<GoodsSkuVO> strings = ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams);
         System.out.println(strings.toString());
     }

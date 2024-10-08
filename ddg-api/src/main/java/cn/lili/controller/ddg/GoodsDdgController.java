@@ -74,6 +74,12 @@ public class GoodsDdgController {
         return ResultUtil.data(ddgParentsAssignGoodsSkuService.getGoodsSkuByChildIdFormAssign(searchParams));
     }
 
+    @ApiOperation(value = "得到默认平台推荐的商品")
+    @GetMapping("/getGoodsSkuByPromotionFlag")
+    public ResultMessage<IPage<GoodsSkuVO>> getGoodsSkuByPromotionFlag(GoodsDdgSearchParams searchParams) {
+        return ResultUtil.data(ddgParentsAssignGoodsSkuService.getGoodsSkuByPromotionFlag(searchParams));
+    }
+
     @ApiOperation(value = "儿童申请采购接口")
     @PostMapping("/addChildApplyBuy")
     public ResultMessage<DdgChildApplyBuy> addChildApplyBuy(DdgChildApplyBuyVO ddgChildApplyBuyVO) {

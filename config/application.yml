@@ -137,6 +137,39 @@ ignored:
     - /buyer/member/evaluation/**/evaluationNumber
     - /buyer/other/appVersion/**
     - /buyer/broadcast/studio/**
+    - /buyer/payment/cashier/**
+    - /buyer/payment/cashierRefund/**
+    - /buyer/other/pageData/**
+    - /buyer/other/article/**
+    - /buyer/goods/**
+    - /buyer/store/**
+    - /buyer/passport/connect/**
+    - /buyer/member/**
+    - /buyer/passport/member/**
+    - /buyer/passport/member/refresh/**
+    - /buyer/promotion/pintuan/**
+    - /buyer/promotion/seckill/**
+    - /buyer/promotion/pointsGoods/**
+    - /buyer/promotion/coupon
+    - /buyer/member/address
+    - /buyer/member/address/**
+    - /buyer/trade/carts
+    - /buyer/trade/carts/**
+    - /buyer/member/**
+    - /buyer/trade/**
+    - /buyer/payment/**
+    - /buyer/order/afterSale
+    - /buyer/order/afterSale/**
+    - /buyer/order/afterSale
+    - /buyer/order/afterSale/**
+    - /buyer/order/order
+    - /buyer/order/order/**
+    - /buyer/other/logistics
+    - /buyer/other/**
+    - /buyer/member/evaluation/**/goodsEvaluation
+    - /buyer/member/evaluation/**/evaluationNumber
+    - /buyer/other/appVersion/**
+    - /buyer/broadcast/studio/**
     - /manager/passport/user/login
     - /manager/passport/user/refresh/**
     - /manager/other/elasticsearch

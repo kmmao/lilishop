@@ -46,6 +46,13 @@ public class GoodsDdgSearchParams extends PageVO {
     private Boolean status;
 
     /**
+     * 儿童端: child
+     * 家长端: parent
+     */
+    @ApiModelProperty(value = "app应用端")
+    private String appType;
+
+    /**
      * @see MemberCouponStatusEnum
      */
     @ApiModelProperty(value = "会员优惠券状态")
@@ -62,6 +69,12 @@ public class GoodsDdgSearchParams extends PageVO {
         queryWrapper.eq(StrUtil.isNotEmpty(childId), "child_id", childId);
         queryWrapper.eq("status", true);
         queryWrapper.like(CharSequenceUtil.isNotEmpty(goodsName), "gs.goods_name", goodsName);
+        return queryWrapper;
+    }
+
+    public <T> QueryWrapper<T> queryGoodsSkuByPromotionFlagWrapper() {
+        QueryWrapper<T> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("promotion_flag", true);
         return queryWrapper;
     }
 

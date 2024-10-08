@@ -40,4 +40,11 @@ public interface DdgParentsAssignGoodsSkuService extends IService<DdgParentsAssi
      * @return 操作状态
      */
     DdgParentsAssignGoodsSku getAssignGoodsSkuByOrderSn(String orderSn);
+
+    /**
+     * 得到默认平台推荐的商品
+     * @param searchParams
+     * @return
+     */
+    IPage<GoodsSkuVO> getGoodsSkuByPromotionFlag(GoodsDdgSearchParams searchParams);
 }
