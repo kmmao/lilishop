@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,15 +78,20 @@ public class DdgParentsAssignGoodsSkuServiceImpl extends ServiceImpl<DdgParentsA
 
         // 计算 positions 数组
         int[] positions = calculatePositions(distinctPromotionList.size());
-
-        // 插入去重后的数据到指定位置
-        for (int i = 0; i < distinctPromotionList.size(); i++) {
-            int position = positions[i];
-            // Adjust the position to fit within the list size
-            if (position > goodsSkuByChildIdList.size()) {
-                position = goodsSkuByChildIdList.size();
+        // 如果goodsSkuByChildIdList为空,则直接赋值
+        if(goodsSkuByChildIdList.isEmpty()){
+            goodsSkuByChildIdList = new ArrayList<>(goodsSkuByChildIdList);
+            goodsSkuByChildIdList.addAll(distinctPromotionList);
+        }else {
+            // 插入去重后的数据到指定位置
+            for (int i = 0; i < distinctPromotionList.size(); i++) {
+                int position = positions[i];
+                // Adjust the position to fit within the list size
+                if (position > goodsSkuByChildIdList.size()) {
+                    position = goodsSkuByChildIdList.size();
+                }
+                goodsSkuByChildIdList.add(position, distinctPromotionList.get(i));
             }
-            goodsSkuByChildIdList.add(position, distinctPromotionList.get(i));
         }
 
         // Ensure the final list size is within the page size limit
